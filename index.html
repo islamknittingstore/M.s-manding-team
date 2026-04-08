@@ -547,17 +547,38 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     </div>
     <div class="form-panel">
       <div class="form-row">
-        <div class="fg"><label>Month</label><input id="ms-month" type="month"></div>
+        <div class="fg"><label>Month</label><input id="ms-month" type="month" oninput="calcAutoMonthlySalary()"></div>
         <div class="fg"><label>Date <small style="color:var(--blue);">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
-        <div class="fg"><label>Worker Name</label><select id="ms-worker"><option value="">-- Select --</option></select></div>
+        <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
       </div>
       <div class="form-row">
         <div class="fg"><label>Company (Auto)</label><input id="ms-company" readonly placeholder="Auto" style="background:#f7fafd;"></div>
         <div class="fg"><label>Supplier (Auto)</label><input id="ms-supplier" readonly placeholder="Auto" style="background:#f7fafd;"></div>
-        <div class="fg"><label>Monthly Salary (৳)</label><input id="ms-salary" type="number" placeholder="e.g. 12000" oninput="calcMonthlySalary()"></div>
+        <div class="fg"><label>Monthly Salary (৳) <small style="color:var(--blue);">অটো হিসাব</small></label><input id="ms-salary" type="number" placeholder="e.g. 12000" oninput="calcMonthlySalary()"><div id="ms-salary-info" style="font-size:11px;color:var(--blue);margin-top:3px;"></div></div>
       </div>
+
+      <!-- অফডে toggle -->
+      <div class="form-row" style="align-items:center;margin-bottom:4px;">
+        <div class="fg" style="flex:0 0 auto;min-width:unset;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:#c0600a;">
+            <input type="checkbox" id="ms-offday" onchange="toggleOffdayFields()" style="width:16px;height:16px;accent-color:#e67e22;">
+            🗓️ অফডে-তে কাজ করিয়েছি
+          </label>
+        </div>
+      </div>
+
+      <!-- অফডে fields — শুধু চেক করলে দেখাবে -->
+      <div id="ms-offday-fields" style="display:none;background:#fef5e7;border:1px solid #f5cca0;border-radius:8px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;">🗓️ অফডে এন্ট্রি — ভাড়া ও লাঞ্চ Bill থেকে কাটবে, শুধু OT worker-এর salary-তে যোগ হবে</div>
+        <div class="form-row">
+          <div class="fg"><label>ওভারটাইম (৳) <small style="color:var(--green);">Worker salary-তে যোগ হবে</small></label><input id="ms-offday-ot" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+          <div class="fg"><label>লাঞ্চ খরচ (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-offday-lunch" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+          <div class="fg"><label>যাতায়াত ভাড়া (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-offday-travel" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="fg"><label>লাঞ্চ খরচ (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-lunch" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
         <div class="fg"><label>যাতায়াত ভাড়া (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-travel" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
@@ -568,12 +589,17 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="result-item">
           <div class="r-label">Worker-কে দিতে হবে</div>
           <div class="r-value" style="color:#6a0dad;" id="ms-r-payable">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">Salary − অন্যান্য কাটা</div>
+          <div style="font-size:10px;color:var(--text-muted);">Salary + OT − অন্যান্য কাটা</div>
         </div>
         <div class="result-item">
           <div class="r-label">Bill থেকে কাটবে</div>
           <div class="r-value" style="color:var(--orange);" id="ms-r-billcut">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">লাঞ্চ + যাতায়াত</div>
+          <div style="font-size:10px;color:var(--text-muted);">লাঞ্চ + যাতায়াত (+ অফডে)</div>
+        </div>
+        <div class="result-item" id="ms-r-ot-wrap" style="display:none;">
+          <div class="r-label">অফডে OT</div>
+          <div class="r-value" style="color:var(--green);" id="ms-r-ot">৳0</div>
+          <div style="font-size:10px;color:var(--text-muted);">Salary-তে যোগ</div>
         </div>
         <div style="margin-left:auto;"><button class="btn" style="background:#6a0dad;color:#fff;" onclick="addMonthlySalary()">＋ Save Monthly</button></div>
       </div>
@@ -586,8 +612,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </span>
       </div>
       <table>
-        <thead><tr><th>#</th><th>Month</th><th>Date</th><th>Worker</th><th>Order</th><th>Style</th><th>Salary</th><th>লাঞ্চ</th><th>যাতায়াত</th><th>Bill কাটা</th><th>অন্যান্য</th><th>Payable</th><th>Note</th><th>Action</th></tr></thead>
-        <tbody id="monthly-salary-list"><tr><td colspan="14" class="no-data">No records</td></tr></tbody>
+        <thead><tr><th>#</th><th>Month</th><th>Date</th><th>Worker</th><th>Order</th><th>Style</th><th>Salary</th><th>অফডে OT</th><th>লাঞ্চ</th><th>যাতায়াত</th><th>Bill কাটা</th><th>অন্যান্য</th><th>Payable</th><th>Note</th><th>Action</th></tr></thead>
+        <tbody id="monthly-salary-list"><tr><td colspan="15" class="no-data">No records</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1427,14 +1453,72 @@ function onMSStyleSelect(){
     document.getElementById('ms-company').value=ct.factory||'';
     document.getElementById('ms-supplier').value=ct.supplier||'';
   }
+  calcAutoMonthlySalary();
 }
+
+function calcAutoMonthlySalary(){
+  const worker=document.getElementById('ms-worker').value;
+  const ctIdx=document.getElementById('ms-style').value;
+  const month=document.getElementById('ms-month').value;
+  if(!worker||ctIdx===''||!month)return;
+
+  // Worker-এর monthly rate বের করো
+  const w=workers.find(x=>x.name===worker);
+  if(!w||w.type!=='monthly'||!w.rate)return;
+  const fullSalary=w.rate;
+
+  // ওই মাসে এই worker-এর সব entry count করো (সব order/style মিলিয়ে)
+  const allEntries=takings.filter(e=>e.worker===worker&&e.date.startsWith(month));
+  const totalDays=allEntries.length;
+  if(totalDays===0){
+    document.getElementById('ms-salary').value=fullSalary;
+    calcMonthlySalary();
+    return;
+  }
+
+  // ওই style-এ কতদিন entry আছে
+  const styleEntries=allEntries.filter(e=>e.ctIdx===+ctIdx);
+  const styleDays=styleEntries.length;
+
+  // হিসাব: fullSalary ÷ totalDays × styleDays
+  const autoSalary=Math.round(fullSalary/totalDays*styleDays);
+
+  document.getElementById('ms-salary').value=autoSalary;
+  // Info দেখাও
+  const infoEl=document.getElementById('ms-salary-info');
+  if(infoEl) infoEl.textContent=`(${fullSalary.toLocaleString()} ÷ ${totalDays} দিন × ${styleDays} দিন = ৳${autoSalary.toLocaleString()})`;
+  calcMonthlySalary();
+}
+function toggleOffdayFields(){
+  const cb=document.getElementById('ms-offday');
+  const fields=document.getElementById('ms-offday-fields');
+  const otWrap=document.getElementById('ms-r-ot-wrap');
+  fields.style.display=cb.checked?'block':'none';
+  if(!cb.checked){
+    document.getElementById('ms-offday-ot').value='0';
+    document.getElementById('ms-offday-lunch').value='0';
+    document.getElementById('ms-offday-travel').value='0';
+  }
+  otWrap.style.display=cb.checked?'flex':'none';
+  calcMonthlySalary();
+}
+
 function calcMonthlySalary(){
   const salary=+document.getElementById('ms-salary').value||0;
   const lunch=+document.getElementById('ms-lunch').value||0;
   const travel=+document.getElementById('ms-travel').value||0;
   const deduct=+document.getElementById('ms-deduct').value||0;
-  document.getElementById('ms-r-payable').textContent='৳'+(salary-deduct).toLocaleString();
-  document.getElementById('ms-r-billcut').textContent='৳'+(lunch+travel).toLocaleString();
+  const isOffday=document.getElementById('ms-offday').checked;
+  const offdayOT=isOffday?(+document.getElementById('ms-offday-ot').value||0):0;
+  const offdayLunch=isOffday?(+document.getElementById('ms-offday-lunch').value||0):0;
+  const offdayTravel=isOffday?(+document.getElementById('ms-offday-travel').value||0):0;
+
+  const totalPayable=(salary+offdayOT)-deduct;
+  const totalBillCut=lunch+travel+offdayLunch+offdayTravel+offdayOT;
+
+  document.getElementById('ms-r-payable').textContent='৳'+totalPayable.toLocaleString();
+  document.getElementById('ms-r-billcut').textContent='৳'+totalBillCut.toLocaleString();
+  if(isOffday) document.getElementById('ms-r-ot').textContent='৳'+offdayOT.toLocaleString();
 }
 function addMonthlySalary(){
   const month=document.getElementById('ms-month').value;
@@ -1448,15 +1532,25 @@ function addMonthlySalary(){
   const lunch=+document.getElementById('ms-lunch').value||0;
   const travel=+document.getElementById('ms-travel').value||0;
   const deduct=+document.getElementById('ms-deduct').value||0;
-  const payable=salary-deduct;
-  const billCut=lunch+travel;
+  const isOffday=document.getElementById('ms-offday').checked;
+  const offdayOT=isOffday?(+document.getElementById('ms-offday-ot').value||0):0;
+  const offdayLunch=isOffday?(+document.getElementById('ms-offday-lunch').value||0):0;
+  const offdayTravel=isOffday?(+document.getElementById('ms-offday-travel').value||0):0;
+
+  const payable=(salary+offdayOT)-deduct;
+  const billCut=lunch+travel+offdayLunch+offdayTravel+offdayOT;
+
   monthlySalaries.push({
     month,date,worker,orderno,ctIdx:+ctIdx,
     style:ct.style,supplier:ct.supplier,factory:ct.factory||'',
     salary,lunch,travel,deduct,payable,billCut,
+    isOffday,offdayOT,offdayLunch,offdayTravel,
     note:document.getElementById('ms-note').value.trim()
   });
-  ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note'].forEach(id=>document.getElementById(id).value='');
+  ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note',
+   'ms-offday-ot','ms-offday-lunch','ms-offday-travel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  document.getElementById('ms-offday').checked=false;
+  toggleOffdayFields();
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
@@ -1479,6 +1573,7 @@ function renderMonthlySalaryList(){
       <td>${e.worker}</td>
       <td><strong>${e.orderno}</strong></td><td>${e.style}</td>
       <td style="color:#6a0dad;font-weight:700;">${taka(e.salary)}</td>
+      <td style="color:var(--green);font-weight:700;">${e.offdayOT?'🗓️ '+taka(e.offdayOT):'-'}</td>
       <td style="color:var(--orange);">${e.lunch?taka(e.lunch):'-'}</td>
       <td style="color:var(--orange);">${e.travel?taka(e.travel):'-'}</td>
       <td style="color:var(--red);font-weight:700;">${e.billCut?taka(e.billCut):'-'}</td>
