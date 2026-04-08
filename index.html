@@ -1856,17 +1856,21 @@ function genWorkerReport(){
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-    const payable=wt.reduce((s,e)=>s+e.wearn,0);
+    // payable = Conv বাদ দিয়ে হাতে পাবে (wearn - conv)
+    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
     const entryConv=wt.reduce((s,e)=>s+e.conv,0);
     const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
+    const remaining=totalPayable-tp;
     h+=rSub(`👷 ${name}`);
-    h+=rRow('Total Payable',taka(payable),'var(--primary)');
-    h+=rRow('Conveyance in Entries',taka(entryConv),'var(--orange)');
+    h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
+    h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
+    h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
     h+=rSub('Payments');
     h+=rRow('Conveyance Paid (ভাড়া)',taka(cp),'var(--orange)');
     h+=rRow('Bill Paid (বেতন)',taka(bp),'var(--red)');
     h+=rRow('Total Paid',taka(tp),'var(--green)');
-    h+=rRow('Remaining Payable',taka(payable-tp),(payable-tp)>0?'var(--red)':'var(--green)');
+    h+=rRow('Remaining Payable',taka(remaining),remaining>0?'var(--red)':'var(--green)');
   });
   document.getElementById('r-worker-result').innerHTML=rBox(h);
 }
@@ -2054,16 +2058,19 @@ function genWorkerReport2(){
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-    const payable=wt.reduce((s,e)=>s+e.wearn,0);
-    const conv=wt.reduce((s,e)=>s+e.conv,0);
+    // payable = Conv বাদ দিয়ে হাতে পাবে (wearn - conv)
+    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
+    const entryConv=wt.reduce((s,e)=>s+e.conv,0);
     const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
-    const rem=payable-tp;
+    const rem=totalPayable-tp;
     h+=rSub(`👷 ${name}`);
     h+=rRow('Entries',wt.length+'টি');
-    h+=rRow('Total Payable',taka(payable),'var(--primary)');
-    h+=rRow('Conveyance in Entries',taka(conv),'var(--orange)');
-    h+=rRow('Conv. Paid',taka(cp),'var(--orange)');
-    h+=rRow('Bill Paid',taka(bp),'var(--red)');
+    h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
+    h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
+    h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
+    h+=rRow('Conv. Paid (আলাদা)',taka(cp),'var(--orange)');
+    h+=rRow('Bill Paid (বেতন)',taka(bp),'var(--red)');
     h+=rRow('Total Paid',taka(tp),'var(--green)');
     h+=rRow('Remaining Payable',taka(rem),rem>0?'var(--red)':'var(--green)');
     if(wt.length){
@@ -2071,7 +2078,8 @@ function genWorkerReport2(){
       const styles=[...new Set(wt.map(e=>e.style))];
       styles.forEach(s=>{
         const se=wt.filter(e=>e.style===s);
-        h+=rRow(s,`${se.length} entries | ${taka(se.reduce((a,e)=>a+e.wearn,0))}`);
+        const sePayable=se.reduce((a,e)=>a+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+        h+=rRow(s,`${se.length} entries | Earned: ${taka(se.reduce((a,e)=>a+e.wearn,0))} | Payable: ${taka(sePayable)}`);
       });
     }
   });
