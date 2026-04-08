@@ -534,6 +534,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <div class="r-value" style="color:var(--green);" id="r-hand-pay">৳0</div>
           <div style="font-size:10px;color:var(--text-muted);">Total − Conv. (Conv. paid হিসেবে ধরা)</div>
         </div>
+        <div class="fg" style="min-width:180px;margin-bottom:0;">
+          <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Remark <small style="color:#999;">(Optional)</small></label>
+          <input id="t-remark" placeholder="e.g. F.Yarne, কাজের বিবরণ..." style="width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+        </div>
         <div style="margin-left:auto;"><button class="btn btn-info" onclick="addTaking()">＋ Save Entry</button></div>
       </div>
     </div>
@@ -626,8 +630,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </span>
       </div>
       <table>
-        <thead><tr><th>#</th><th>Date</th><th>Worker</th><th>Style</th><th>Factory</th><th>Type</th><th>Pcs</th><th>W.Rate</th><th>Daily</th><th>OT</th><th>Conv.</th><th>Payable</th><th>Action</th></tr></thead>
-        <tbody id="taking-list"><tr><td colspan="13" class="no-data">No entries</td></tr></tbody>
+        <thead><tr><th>#</th><th>Date</th><th>Worker</th><th>Style</th><th>Factory</th><th>Type</th><th>Pcs</th><th>W.Rate</th><th>Daily</th><th>OT</th><th>Conv.</th><th>Payable</th><th>Remark</th><th>Action</th></tr></thead>
+        <tbody id="taking-list"><tr><td colspan="14" class="no-data">No entries</td></tr></tbody>
       </table>
     </div>
 </div>
@@ -967,12 +971,6 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <p id="settings-export-info" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
   </div>
   <div class="form-panel">
-    <h5>🔧 Monthly Salary Fix</h5>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">আগের ভুল monthly salary entries (যেখানে প্রতিটাতে full salary ছিল) একবারে সব ঠিক করুন।</p>
-    <button class="btn btn-orange" onclick="fixAllMonthlyEntries()" style="margin-bottom:6px;">🔧 সব Monthly Salary Recalculate করুন</button>
-    <p id="fix-monthly-info" style="font-size:12px;color:var(--green);margin-top:6px;"></p>
-  </div>
-  <div class="form-panel">
     <h5>Data Management</h5>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Warning: Firebase ও Local দুটো থেকেই সব data মুছে যাবে।</p>
     <button class="btn btn-danger" onclick="confirmDelete(()=>{DATA_REF.remove();localStorage.clear();location.reload();},'Firebase ও Local সব data মুছবেন? ফিরে পাওয়া যাবে না!')">🗑️ Clear All Data</button>
@@ -1224,6 +1222,8 @@ DATA_REF.on('value', snap=>{
   }
   _fbLoaded=true;
   setSyncStatus('ok');
+  // সব existing monthly salary entry rebalance করো
+  rebalanceAllMonthlySalaries();
   renderAll();
 }, err=>{
   setSyncStatus('error');
@@ -1312,8 +1312,10 @@ function selectChallanType(type){
 function setSalaryType(type){
   currentSalaryType=type;
   ['daily','piece','mix'].forEach(t=>{
-    document.getElementById('stype-'+t).className='stype-btn'+(type===t?' active-'+t:'');
-    document.getElementById('fields-'+t).className='field-section'+(type===t?' show':'');
+    const btn=document.getElementById('stype-'+t);
+    const fld=document.getElementById('fields-'+t);
+    if(btn) btn.className='stype-btn'+(type===t?' active-'+t:'');
+    if(fld) fld.className='field-section'+(type===t?' show':'');
   });
   calcWorkerEarn();
 }
@@ -1392,6 +1394,26 @@ function onContractSelect(){
   document.getElementById('t-jobtype').value=ct?ct.jobtype:'';
   document.getElementById('t-factory').value=ct?ct.factory:'';
 }
+function calcMonthlyAutoDaily(){
+  const worker=document.getElementById('t-worker').value;
+  const dateVal=document.getElementById('t-date').value;
+  const infoEl=document.getElementById('t-monthly-info');
+  const labelEl=document.getElementById('t-daily-label');
+  if(!worker||!dateVal){if(infoEl)infoEl.textContent='';return;}
+  const w=workers.find(x=>x.name===worker);
+  if(!w||w.type!=='monthly'||!w.rate){if(infoEl)infoEl.textContent='';if(labelEl)labelEl.textContent='Auto';return;}
+  const fullSalary=w.rate;
+  const ym=dateVal.slice(0,7);
+  // এখন পর্যন্ত কতটা entry আছে + নতুন ১টা
+  const existingDays=takings.filter(e=>e.worker===worker&&e.date.startsWith(ym)).length;
+  const totalDays=existingDays+1;
+  const perDay=Math.round(fullSalary/totalDays);
+  document.getElementById('t-daily').value=perDay;
+  if(infoEl) infoEl.textContent=`৳${fullSalary.toLocaleString()} ÷ ${totalDays} দিন = ৳${perDay.toLocaleString()}/দিন`;
+  if(labelEl) labelEl.textContent='অটো (মাসিক)';
+  calcWorkerEarn();
+}
+
 function calcWorkerEarn(){
   let wearn=0,conv=0,handPay=0;
   if(currentSalaryType==='daily'){
@@ -1423,8 +1445,10 @@ function addTaking(){
     daily=+document.getElementById('t-daily-mix').value||0;ot=+document.getElementById('t-ot-mix').value||0;pcs=+document.getElementById('t-pcs-mix').value||0;wrate=+document.getElementById('t-wrate-mix').value||0;conv=+document.getElementById('t-conv-mix').value||0;wearn=daily+ot+(pcs*wrate);coIncome=pcs*ct.rate;
   }
   const payable=Math.max(0,wearn-conv);
-  takings.push({date,worker,ctIdx:+ctIdx,style:ct.style,supplier:ct.supplier,factory:ct.factory,jobtype:ct.jobtype,salaryType:currentSalaryType,pcs,wrate,daily,ot,conv,coIncome,wearn,payable});
+  const remark=document.getElementById('t-remark').value.trim();
+  takings.push({date,worker,ctIdx:+ctIdx,style:ct.style,supplier:ct.supplier,factory:ct.factory,jobtype:ct.jobtype,salaryType:currentSalaryType,pcs,wrate,daily,ot,conv,coIncome,wearn,payable,remark});
   ['t-pcs-piece','t-wrate-piece','t-conv-piece','t-ot-daily','t-conv-daily','t-daily','t-pcs-mix','t-wrate-mix','t-ot-mix','t-conv-mix','t-daily-mix'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  document.getElementById('t-remark').value='';
   document.getElementById('r-wearn').textContent='৳0';
   document.getElementById('r-hand-pay').textContent='৳0';
   save();
@@ -1466,42 +1490,38 @@ function calcAutoMonthlySalary(){
   const worker=document.getElementById('ms-worker').value;
   const ctIdx=document.getElementById('ms-style').value;
   const month=document.getElementById('ms-month').value;
-  if(!worker||ctIdx===''||!month)return;
+  const infoEl=document.getElementById('ms-salary-info');
+  if(!worker||!month){if(infoEl)infoEl.textContent='';return;}
 
+  // Worker-এর monthly rate বের করো
   const w=workers.find(x=>x.name===worker);
-  if(!w||w.type!=='monthly'||!w.rate)return;
+  if(!w||w.type!=='monthly'||!w.rate){if(infoEl)infoEl.textContent='';return;}
   const fullSalary=w.rate;
 
-  // আগের saved monthly entries + এই নতুনটা = totalDays
-  const existingEntries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
-  const totalDays=existingEntries.length+1;
+  // ওই মাসে এই worker-এর Monthly Salary entry কতটা আছে (সব style মিলিয়ে)
+  const existingMS=monthlySalaries.filter(e=>e.worker===worker&&e.month===month).length;
+  // নতুন entry সহ মোট = existingMS + 1
+  const totalEntries=existingMS+1;
 
-  // এই style-এ আগের entries + নতুনটা
-  const styleDays=existingEntries.filter(e=>e.ctIdx===+ctIdx).length+1;
+  if(ctIdx===''){
+    // Style select না করলেও salary দেখাও
+    const perEntry=Math.round(fullSalary/totalEntries);
+    document.getElementById('ms-salary').value=perEntry;
+    if(infoEl) infoEl.textContent=`৳${fullSalary.toLocaleString()} ÷ ${totalEntries} = ৳${perEntry.toLocaleString()}`;
+    calcMonthlySalary();
+    return;
+  }
 
-  const autoSalary=Math.round(fullSalary/totalDays*styleDays);
+  // ওই style-এ কতটা MS entry আছে
+  const styleEntries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month&&e.ctIdx===+ctIdx).length;
+  const styleTotal=styleEntries+1;
+
+  // হিসাব: fullSalary ÷ totalEntries × styleTotal
+  const autoSalary=Math.round(fullSalary/totalEntries*styleTotal);
 
   document.getElementById('ms-salary').value=autoSalary;
-  const infoEl=document.getElementById('ms-salary-info');
-  if(infoEl) infoEl.textContent=`(৳${fullSalary.toLocaleString()} ÷ ${totalDays} এন্ট্রি × ${styleDays} = ৳${autoSalary.toLocaleString()})`;
+  if(infoEl) infoEl.textContent=`৳${fullSalary.toLocaleString()} ÷ ${totalEntries} × ${styleTotal} = ৳${autoSalary.toLocaleString()}`;
   calcMonthlySalary();
-}
-
-function recalcMonthlyEntries(worker,month){
-  const w=workers.find(x=>x.name===worker);
-  if(!w||w.type!=='monthly'||!w.rate)return;
-  const fullSalary=w.rate;
-  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
-  const totalDays=entries.length;
-  if(!totalDays)return;
-  const ctxCounts={};
-  entries.forEach(e=>{ctxCounts[e.ctIdx]=(ctxCounts[e.ctIdx]||0)+1;});
-  entries.forEach(e=>{
-    const styleDays=ctxCounts[e.ctIdx]||1;
-    const newSalary=Math.round(fullSalary/totalDays*styleDays);
-    e.salary=newSalary;
-    e.payable=(newSalary+(e.offdayOT||0))-(e.deduct||0);
-  });
 }
 function toggleOffdayFields(){
   const cb=document.getElementById('ms-offday');
@@ -1561,8 +1581,10 @@ function addMonthlySalary(){
     isOffday,offdayOT,offdayLunch,offdayTravel,
     note:document.getElementById('ms-note').value.trim()
   });
-  // নতুন entry যোগ হওয়ার পর সব আগের entries recalculate করো
-  recalcMonthlyEntries(worker,month);
+
+  // নতুন entry save-এর পর ওই মাসের ওই worker-এর সব entry recalculate
+  rebalanceMonthlySalaries(worker, month);
+
   ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note',
    'ms-offday-ot','ms-offday-lunch','ms-offday-travel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   document.getElementById('ms-offday').checked=false;
@@ -1570,8 +1592,48 @@ function addMonthlySalary(){
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
+  setTimeout(calcAutoMonthlySalary, 200);
 }
-function deleteMonthlySalary(i){const e=monthlySalaries[i];const dw=e?e.worker:'';const dm=e?e.month:'';confirmDelete(()=>{monthlySalaries.splice(i,1);if(dw&&dm)recalcMonthlyEntries(dw,dm);save();},'এই রেকর্ড মুছবেন?');}
+
+// সব worker-এর সব মাসের entry একবারে rebalance করো (existing data fix)
+function rebalanceAllMonthlySalaries(){
+  // unique worker+month combination বের করো
+  const pairs=[...new Set(monthlySalaries.map(e=>e.worker+'|||'+e.month))];
+  pairs.forEach(pair=>{
+    const [worker,month]=pair.split('|||');
+    rebalanceMonthlySalaries(worker,month);
+  });
+}
+
+// ওই মাসের ওই worker-এর সব MS entry সমানভাগে rebalance করো
+function rebalanceMonthlySalaries(worker, month){
+  const w=workers.find(x=>x.name===worker);
+  if(!w||w.type!=='monthly'||!w.rate) return;
+  const fullSalary=w.rate;
+
+  // ওই মাসের ওই worker-এর সব entry
+  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month&&!e.isOffday);
+  const totalEntries=entries.length;
+  if(!totalEntries) return;
+
+  const perEntry=Math.round(fullSalary/totalEntries);
+
+  entries.forEach(e=>{
+    e.salary=perEntry;
+    e.payable=perEntry - (e.deduct||0);
+    e.billCut=(e.lunch||0)+(e.travel||0)+(e.offdayLunch||0)+(e.offdayTravel||0)+(e.offdayOT||0);
+  });
+}
+function deleteMonthlySalary(i){
+  confirmDelete(()=>{
+    const e=monthlySalaries[i];
+    const worker=e?e.worker:'';
+    const month=e?e.month:'';
+    monthlySalaries.splice(i,1);
+    if(worker&&month) rebalanceMonthlySalaries(worker,month);
+    save();
+  },'এই রেকর্ড মুছবেন?');
+}
 function renderMonthlySalaryList(){
   const wF=document.getElementById('msf-worker')?document.getElementById('msf-worker').value:'';
   const mF=document.getElementById('msf-month')?document.getElementById('msf-month').value:'';
@@ -1795,8 +1857,8 @@ function renderTakingList(){
     return true;
   }).slice().reverse();
   const tb=document.getElementById('taking-list');
-  tb.innerHTML=list.length===0?'<tr><td colspan="13" class="no-data">No entries</td></tr>':
-    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${e.date}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:var(--green);font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
+  tb.innerHTML=list.length===0?'<tr><td colspan="14" class="no-data">No entries</td></tr>':
+    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${e.date}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:var(--green);font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td style="font-size:12px;color:#666;">${e.remark||'-'}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
 }
 
 function renderChallanList(){
@@ -1960,75 +2022,149 @@ function genContractReport(){
   document.getElementById('r-contract-result').innerHTML=rBox(h);
 }
 
+function getDaysInMonth(ym){
+  if(!ym)return 31;
+  const [y,m]=ym.split('-').map(Number);
+  return new Date(y,m,0).getDate();
+}
+
+function exportWorkerTableExcel(name,m){
+  const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m))).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const days=getDaysInMonth(m);
+  const year=m?m.split('-')[0]:'';
+  const mon=m?m.split('-')[1]:'';
+
+  // Build rows for all days
+  let rows=[['S.N','Date','Factory Name','Conveyance (৳)','Daily Salary (৳)','Over Time (৳)','Remark']];
+  for(let d=1;d<=days;d++){
+    const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
+    const dayEntries=dateStr?wt.filter(e=>e.date===dateStr):[];
+    if(dayEntries.length===0){
+      rows.push([d, dateStr||'', '', '', '', '', '']);
+    } else {
+      dayEntries.forEach((e,ei)=>{
+        const ct=contracts[e.ctIdx];
+        const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs x ${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
+        rows.push([ei===0?d:'', dateStr, e.factory||'', e.conv||'', e.daily||e.wearn||'', e.ot||'', remark]);
+      });
+    }
+  }
+  const totalConv=wt.reduce((s,e)=>s+e.conv,0);
+  const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
+  const totalOT=wt.reduce((s,e)=>s+(e.ot||0),0);
+  const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+  rows.push(['','','Total Conv =',totalConv, 'Total Salary =',totalWearn-totalOT, totalOT?'OT = '+totalOT:'']);
+  rows.push(['','','','','Net Payable =',totalPayable,'']);
+  rows.push([]);
+  rows.push(['Received By Mendar','','Managing Director','','','Authorized Signature','']);
+
+  // Build CSV
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const bom='\uFEFF';
+  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Worker_Report_${name.replace(/\s+/g,'_')}_${m||'all'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function genWorkerReport(){
-  const wn=document.getElementById('r-worker').value,m=document.getElementById('r-worker-month').value;
+  const wn=document.getElementById('r-worker').value;
+  const m=document.getElementById('r-worker-month').value;
   const wList=wn?[wn]:workers.map(w=>w.name);
   let html='';
 
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m))).slice().sort((a,b)=>a.date.localeCompare(b.date));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-    if(!wt.length&&!wp.length)return;
 
     const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
     const totalOT=wt.reduce((s,e)=>s+(e.ot||0),0);
     const totalConv=wt.reduce((s,e)=>s+e.conv,0);
     const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
-    const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
+    const tp=wp.reduce((s,p)=>s+p.total,0);
     const remaining=totalPayable-tp;
     const monthLabel=m||'All Time';
+    const days=getDaysInMonth(m);
+
+    // Build full month rows
+    let rowsHtml='';
+    let sn=0;
+    for(let d=1;d<=days;d++){
+      const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
+      const dayEntries=dateStr?wt.filter(e=>e.date===dateStr):[];
+      if(dayEntries.length===0){
+        sn++;
+        rowsHtml+=`<tr style="border-bottom:1px solid #eee;">
+          <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
+          <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr||''}</td>
+          <td style="padding:6px 8px;"></td>
+          <td style="padding:6px 8px;text-align:right;"></td>
+          <td style="padding:6px 8px;text-align:right;"></td>
+          <td style="padding:6px 8px;text-align:right;"></td>
+          <td style="padding:6px 8px;"></td>
+        </tr>`;
+      } else {
+        dayEntries.forEach((e,ei)=>{
+          sn++;
+          const ct=contracts[e.ctIdx];
+          const daily=e.daily||0;
+          const ot=e.ot||0;
+          const conv=e.conv||0;
+          const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
+          rowsHtml+=`<tr style="border-bottom:1px solid #eee;background:#f0f9ff;">
+            <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
+            <td style="padding:6px 8px;font-weight:600;">${dateStr}</td>
+            <td style="padding:6px 8px;font-weight:600;">${e.factory||'-'}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${conv?taka(conv):''}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):e.salaryType==='piece'?taka(e.wearn):''}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${ot?taka(ot):''}</td>
+            <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
+          </tr>`;
+        });
+      }
+    }
 
     html+=`
-    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);margin-bottom:24px;overflow:hidden;border:1px solid #dde3ea;">
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:28px;overflow:hidden;border:1px solid #dde3ea;">
+
       <!-- Header -->
-      <div style="background:#1a2a3a;color:#fff;padding:14px 18px;">
-        <div style="font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;text-align:center;letter-spacing:0.5px;">Taking Peoples From Others</div>
+      <div style="background:#1a2a3a;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;">Taking Peoples From Others</div>
+        <button onclick="exportWorkerTableExcel('${name}','${m}')" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">📊 Excel Export</button>
       </div>
-      <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:1px solid #dde3ea;font-size:13px;">
+
+      <!-- Name / Month -->
+      <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #dde3ea;font-size:13px;background:#f7fafd;">
         <span><strong>Name:</strong> ${name}</span>
         <span><strong>Month:</strong> ${monthLabel}</span>
       </div>
 
-      <!-- Entry Table -->
+      <!-- Table -->
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <thead>
             <tr style="background:#2c3e50;color:#cdd8e3;">
-              <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">S.N</th>
-              <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Date</th>
-              <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Factory Name</th>
-              <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Conveyance</th>
-              <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Daily Salary</th>
-              <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Over Time</th>
-              <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Remark</th>
+              <th style="padding:9px 8px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;width:40px;">S.N</th>
+              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Date</th>
+              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Factory Name</th>
+              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Conveyance</th>
+              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Daily Salary</th>
+              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Over Time</th>
+              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Remark</th>
             </tr>
           </thead>
           <tbody>
-            ${wt.map((e,i)=>{
-              const ct=contracts[e.ctIdx];
-              const daily=e.daily||0;
-              const ot=e.ot||0;
-              const conv=e.conv||0;
-              const remark=e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:
-                           e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:
-                           (ct?ct.style:'');
-              return `<tr style="border-bottom:1px solid #eee;${i%2===1?'background:#f9fbfd':''}">
-                <td style="padding:7px 10px;text-align:center;color:#666;">${i+1}</td>
-                <td style="padding:7px 10px;">${e.date}</td>
-                <td style="padding:7px 10px;font-weight:500;">${e.factory||'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:var(--orange);">${conv?taka(conv):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:var(--blue);font-weight:600;">${daily?taka(daily):e.salaryType==='piece'?taka(e.wearn):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:var(--green);font-weight:600;">${ot?taka(ot):'-'}</td>
-                <td style="padding:7px 10px;font-size:12px;color:#666;">${remark}</td>
-              </tr>`;
-            }).join('')}
+            ${rowsHtml}
             <!-- Total Row -->
             <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
-              <td colspan="3" style="padding:9px 10px;text-align:right;font-size:12px;letter-spacing:0.3px;">TOTAL =</td>
-              <td style="padding:9px 10px;text-align:right;color:#f0a500;">${taka(totalConv)}</td>
-              <td style="padding:9px 10px;text-align:right;color:#5dade2;">${taka(totalWearn-totalOT)}</td>
-              <td style="padding:9px 10px;text-align:right;color:#58d68d;">${totalOT?taka(totalOT):'-'}</td>
-              <td style="padding:9px 10px;"></td>
+              <td colspan="3" style="padding:10px 8px;text-align:right;font-size:12px;letter-spacing:0.3px;">Total =</td>
+              <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(totalConv)}</td>
+              <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(totalWearn-totalOT)}</td>
+              <td style="padding:10px 8px;text-align:right;color:#58d68d;">${totalOT?taka(totalOT):'-'}</td>
+              <td style="padding:10px 8px;"></td>
             </tr>
           </tbody>
         </table>
@@ -2036,310 +2172,82 @@ function genWorkerReport(){
 
       <!-- Summary -->
       <div style="padding:14px 18px;background:#f7fafd;border-top:2px solid #dde3ea;">
-        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;font-size:13px;">
-          <div style="text-align:right;">
-            <div style="color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;">Total Daily Salary</div>
-            <div style="font-size:18px;font-weight:700;color:var(--blue);font-family:'Poppins',sans-serif;">${taka(totalWearn-totalOT)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;font-size:13px;align-items:center;">
+          <div style="text-align:center;padding:8px 14px;background:#eaf3fb;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Total Daily Salary</div>
+            <div style="font-size:17px;font-weight:700;color:var(--blue);font-family:'Poppins',sans-serif;">${taka(totalWearn-totalOT)}</div>
           </div>
-          ${totalOT?`<div style="text-align:right;">
-            <div style="color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;">Over Time (OT)</div>
-            <div style="font-size:18px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;">+ ${taka(totalOT)}</div>
+          ${totalOT?`<div style="text-align:center;padding:8px 14px;background:#eafaf1;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">OT</div>
+            <div style="font-size:17px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;">+ ${taka(totalOT)}</div>
           </div>`:''}
-          <div style="text-align:right;">
-            <div style="color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;">Total Earned</div>
-            <div style="font-size:18px;font-weight:700;color:var(--primary);font-family:'Poppins',sans-serif;">${taka(totalWearn)}</div>
+          <div style="text-align:center;padding:8px 14px;background:#fef5e7;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Total Conv.</div>
+            <div style="font-size:17px;font-weight:700;color:var(--orange);font-family:'Poppins',sans-serif;">− ${taka(totalConv)}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;">Total Conv.</div>
-            <div style="font-size:18px;font-weight:700;color:var(--orange);font-family:'Poppins',sans-serif;">− ${taka(totalConv)}</div>
-          </div>
-          <div style="text-align:right;background:#eafaf1;border:2px solid #a9dfbf;border-radius:8px;padding:8px 14px;">
-            <div style="color:#1e8449;font-size:11px;text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">হাতে পাবে (Net Payable)</div>
+          <div style="text-align:center;padding:10px 18px;background:#eafaf1;border:2px solid #a9dfbf;border-radius:8px;">
+            <div style="color:#1e8449;font-size:10px;text-transform:uppercase;font-weight:700;">হাতে পাবে (Net Payable)</div>
             <div style="font-size:22px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;">${taka(totalPayable)}</div>
           </div>
+          ${tp>0?`<div style="text-align:center;padding:8px 14px;background:#fdecea;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">বাকি</div>
+            <div style="font-size:17px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'};font-family:'Poppins',sans-serif;">${taka(remaining)}</div>
+          </div>`:''}
         </div>
       </div>
 
-      <!-- Payment status -->
-      ${tp>0?`<div style="padding:10px 18px;background:#fff;border-top:1px solid #dde3ea;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;font-size:13px;">
-        <span>আগে পেয়েছে: <strong style="color:var(--green);">${taka(tp)}</strong></span>
-        <span style="font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'};">বাকি: ${taka(remaining)}</span>
-      </div>`:''}
-
-      <!-- Signature row -->
-      <div style="padding:16px 18px;border-top:1px solid #dde3ea;display:flex;justify-content:space-between;font-size:12px;color:#888;">
-        <span>Received By Mendar</span>
-        <span>Managing Director</span>
-        <span>Authorized Signature</span>
+      <!-- Signature -->
+      <div style="padding:18px 24px;border-top:1px solid #dde3ea;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;text-align:center;font-size:12px;color:#555;">
+        <div>
+          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Received By Mendar</div>
+        </div>
+        <div>
+          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Managing Director</div>
+        </div>
+        <div>
+          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Authorized Signature</div>
+        </div>
       </div>
     </div>`;
   });
 
-  if(!html) html='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
+  if(!html) html='<div class="no-data">Worker বা Month সিলেক্ট করে Generate করুন</div>';
   document.getElementById('r-worker-result').innerHTML=html;
 }
 
-function genMonthlyReport(){
-  const m=document.getElementById('r-month').value;
-  const me=takings.filter(e=>e.date.startsWith(m));
-  const mp=payments.filter(p=>p.date.startsWith(m)),mb=bills.filter(b=>b.date.startsWith(m)),mc=challans.filter(c=>c.date.startsWith(m));
-  const challanVal=mc.reduce((s,c)=>s+c.value,0);
-  const wc=me.reduce((s,e)=>s+e.wearn,0);
-  const entryConv=me.reduce((s,e)=>s+e.conv,0);
-  const pConv=mp.reduce((s,p)=>s+p.conv,0),pBill=mp.reduce((s,p)=>s+p.bill,0),pTotal=mp.reduce((s,p)=>s+p.total,0);
-  const billRecv=mb.reduce((s,b)=>s+b.amount,0);
-  let h=rHead(`Monthly Summary — ${m}`);
-  h+=rRow('Challan Submitted',taka(challanVal),'var(--blue)');
-  h+=rRow('Bill Received',taka(billRecv),'var(--green)');
-  h+=rRow('Worker Cost',taka(wc),'var(--red)');
-  h+=rRow('Conveyance in Entries',taka(entryConv),'var(--orange)');
-  h+=rSub('Payments to Workers');
-  h+=rRow('Conveyance Paid (ভাড়া)',taka(pConv),'var(--orange)');
-  h+=rRow('Bill Paid (বেতন)',taka(pBill),'var(--red)');
-  h+=rRow('Total Paid',taka(pTotal),'var(--red)');
-  h+=rRow('Net (Bill Recv - Worker Cost)',taka(billRecv-wc),(billRecv-wc)>=0?'var(--green)':'var(--red)');
-  const activeContracts=[...new Set(me.map(e=>e.ctIdx))];
-  if(activeContracts.length){
-    h+=rSub('By Contract');
-    activeContracts.forEach(idx=>{
-      const ct=contracts[idx];if(!ct)return;
-      const cv=mc.filter(c=>c.ctIdx===idx).reduce((s,c)=>s+c.value,0);
-      const br=mb.filter(b=>b.ctIdx===idx).reduce((s,b)=>s+b.amount,0);
-      const ww=me.filter(e=>e.ctIdx===idx).reduce((s,e)=>s+e.wearn,0);
-      h+=rRow(`${ct.style} (${ct.supplier})`,`Challan:${taka(cv)} | Recv:${taka(br)} | Worker:${taka(ww)}`);
-    });
-  }
-  document.getElementById('r-monthly-result').innerHTML=rBox(h);
-}
-
-function showCompaniesPage(){
-  showPage('companies');
-}
-function showOrdersPage(){
-  showPage('orders');
-}
-function switchChallanTab(e,id){
-  document.querySelectorAll('.ch-tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#challan-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  e.target.classList.add('active');
-}
-function switchInnerTab(e,id){
-  document.querySelectorAll('.inner-tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#ch-report .tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  e.target.classList.add('active');
-}
-
-// ===== BILL SUBMIT (Order-based) =====
-function getOrderNumbers(){
-  return [...new Set(contracts.filter(c=>c.orderno).map(c=>c.orderno))];
-}
-function getContractsByOrder(orderno){
-  return contracts.filter(c=>c.orderno===orderno);
-}
-function orderChallanValue(orderno){
-  return getContractsByOrder(orderno).reduce((s,ct)=>{
-    const idx=contracts.indexOf(ct);
-    return s+challanTotalValue(idx);
-  },0);
-}
-function orderBillSubmitTotal(orderno){
-  return billSubmits.filter(b=>b.orderno===orderno).reduce((s,b)=>s+b.amount,0);
-}
-function orderBillRecvTotal(orderno){
-  return bills.filter(b=>b.orderno===orderno).reduce((s,b)=>s+b.amount,0);
-}
-function onBillSubmitOrderSelect(){
-  const orderno=document.getElementById('bs-orderno').value;
-  const wrap=document.getElementById('bs-challan-table-wrap');
-  if(!orderno){wrap.style.display='none';document.getElementById('bs-supplier').value='';return;}
-  const orderContracts=getContractsByOrder(orderno);
-  if(!orderContracts.length){wrap.style.display='none';return;}
-  document.getElementById('bs-supplier').value=orderContracts[0].supplier;
-  // Build challan rows
-  const tbody=document.getElementById('bs-challan-rows');
-  let rows='';
-  challans.forEach((c,cidx)=>{
-    const ct=contracts[c.ctIdx];
-    if(!ct||ct.orderno!==orderno)return;
-    rows+=`<tr><td><input type="checkbox" class="bs-ch-check" data-val="${c.value}" onchange="updateBsTotal()"></td><td>${ct.style}</td><td>${ct.factory||'-'}</td><td>${c.note||('CH-'+(cidx+1))}</td><td>${c.pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.date}</td></tr>`;
-  });
-  tbody.innerHTML=rows||`<tr><td colspan="7" class="no-data">এই Order-এ কোনো Challan নেই</td></tr>`;
-  document.getElementById('bs-check-all').checked=false;
-  updateBsTotal();
-  wrap.style.display='block';
-}
-function toggleAllBsChallans(cb){
-  document.querySelectorAll('.bs-ch-check').forEach(c=>c.checked=cb.checked);
-  updateBsTotal();
-}
-function updateBsTotal(){
-  let total=0;
-  document.querySelectorAll('.bs-ch-check:checked').forEach(c=>total+=parseFloat(c.dataset.val)||0);
-  document.getElementById('bs-selected-total').textContent='৳'+total.toLocaleString();
-}
-function onBillRecvOrderSelect(){
-  const orderno=document.getElementById('b-orderno').value;
-  const sel=document.getElementById('b-submit-sel');
-  document.getElementById('b-submitted-amount').value='';
-  if(!orderno){sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>';return;}
-  const orderSubmits=billSubmits.filter(b=>b.orderno===orderno);
-  sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>'+orderSubmits.map((b,i)=>{
-    const realIdx=billSubmits.indexOf(b);
-    return `<option value="${realIdx}">${b.note||('Invoice-'+(i+1))} — ৳${b.amount.toLocaleString()} (${b.date})</option>`;
-  }).join('');
-}
-function onBillRecvSubmitSelect(){
-  const bidx=document.getElementById('b-submit-sel').value;
-  if(bidx===''){document.getElementById('b-submitted-amount').value='';return;}
-  const bs=billSubmits[+bidx];
-  if(bs) document.getElementById('b-submitted-amount').value=bs.amount.toLocaleString();
-}
-function addBillSubmit(){
-  const date=document.getElementById('bs-date').value;
-  const orderno=document.getElementById('bs-orderno').value;
-  const amount=+document.getElementById('bs-amount').value||0;
-  if(!date||!orderno||!amount) return alert('Date, Order Number ও Amount দিন');
-  const checked=[...document.querySelectorAll('.bs-ch-check:checked')];
-  if(!checked.length) return alert('অন্তত একটা Challan সিলেক্ট করুন');
-  const orderContracts=getContractsByOrder(orderno);
-  const styles=[...new Set(orderContracts.map(c=>c.style))].join(', ');
-  const supplier=orderContracts[0]?orderContracts[0].supplier:'';
-  const challanTotal=checked.reduce((s,c)=>s+(parseFloat(c.dataset.val)||0),0);
-  const note=document.getElementById('bs-note').value.trim();
-  billSubmits.push({date,orderno,styles,supplier,challanTotal,amount,note});
-  // Reset form
-  document.getElementById('bs-amount').value='';
-  document.getElementById('bs-note').value='';
-  document.getElementById('bs-orderno').value='';
-  document.getElementById('bs-supplier').value='';
-  document.getElementById('bs-challan-table-wrap').style.display='none';
-  document.getElementById('bs-challan-rows').innerHTML='';
-  document.getElementById('bs-check-all').checked=false;
-  document.getElementById('bs-selected-total').textContent='৳0';
-  save();
-  // Show success
-  const btn=document.querySelector('[onclick="addBillSubmit()"]');
-  if(btn){const orig=btn.textContent;btn.textContent='✓ Saved!';btn.style.background='var(--green)';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},2000);}
-}
-function deleteBillSubmit(i){confirmDelete(()=>{billSubmits.splice(i,1);save();},'এই রেকর্ড মুছবেন?');}
-function billSubmitTotal(ctIdx){return billSubmits.filter(b=>b.ctIdx===ctIdx).reduce((s,b)=>s+b.amount,0);}
-
-function renderBillSubmitList(){
-  const orderF=document.getElementById('bsf-orderno').value;
-  const mF=document.getElementById('bsf-month').value;
-  const list=billSubmits.filter(b=>{
-    if(orderF&&b.orderno!==orderF)return false;
-    if(mF&&!b.date.startsWith(mF))return false;
-    return true;
-  }).slice().reverse();
-  const tb=document.getElementById('billsubmit-list');
-  if(tb) tb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No records</td></tr>':
-    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="font-size:12px;">${b.styles||'-'}</td><td style="color:var(--blue);font-weight:700;">${taka(b.challanTotal||0)}</td><td style="color:var(--orange);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBillSubmit(${billSubmits.indexOf(b)})">❌</button></td></tr>`).join('');
-  // Order-wise summary
-  const tb2=document.getElementById('billsubmit-summary');
-  if(tb2){
-    const orders=getOrderNumbers();
-    const rows=orders.map(ord=>{
-      const cv=orderChallanValue(ord),bs=orderBillSubmitTotal(ord),br=orderBillRecvTotal(ord);
-      const cts=getContractsByOrder(ord);
-      const styles=[...new Set(cts.map(c=>c.style))].join(', ');
-      const supplier=cts[0]?cts[0].supplier:'';
-      if(!cv&&!bs)return '';
-      return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--orange);font-weight:700;">${taka(bs)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${(cv-bs)>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(cv-bs)}</td></tr>`;
-    }).filter(Boolean).join('');
-    tb2.innerHTML=rows||'<tr><td colspan="7" class="no-data">No data</td></tr>';
-  }
-}
-
-// ===== REPORT WRAPPER FUNCTIONS (for new tab) =====
 function genWorkerReport2(){
   const wn=document.getElementById('rr-worker').value;
   const m=document.getElementById('rr-worker-month').value;
   const wList=wn?[wn]:workers.map(w=>w.name);
   let h=rHead(`Worker Report — ${m||'All Time'}`);
-  let hasAny=false;
   wList.forEach(name=>{
-    // Daily/Piece/Mix এন্ট্রি
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
-    // Monthly salary এন্ট্রি (month field = "2026-04", date field = "2026-04-xx")
-    const wms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m||(e.date&&e.date.startsWith(m))));
-    // Payments
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-
-    if(!wt.length&&!wms.length&&!wp.length) return;
-    hasAny=true;
-
-    // Daily/Piece/Mix হিসাব
+    // payable = Conv বাদ দিয়ে হাতে পাবে (wearn - conv)
+    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
     const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
     const entryConv=wt.reduce((s,e)=>s+e.conv,0);
-    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
-
-    // Monthly salary হিসাব
-    const monthlyEarn=wms.reduce((s,e)=>s+(+e.payable||0),0);
-
-    // সর্বমোট উপার্জন ও payable
-    const grandEarn=totalWearn+monthlyEarn;
-    const grandPayable=totalPayable+monthlyEarn;
-
-    // Payments
     const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
-    const rem=grandPayable-tp;
-
-    h+=rSub(`👷 ${name.toUpperCase()}`);
-
-    // Daily/Piece/Mix entries
-    if(wt.length){
-      h+=rRow('Daily/Piece এন্ট্রি সংখ্যা',wt.length+'টি');
-      h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
-      h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
-      h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
-    }
-
-    // Monthly salary entries
-    if(wms.length){
-      h+=rRow('Monthly Salary এন্ট্রি',wms.length+'টি');
-      h+=rRow('Monthly বেতন মোট',taka(monthlyEarn),'#6a0dad');
-      wms.forEach(e=>{
-        h+=rRow(`  └ ${e.style||''} (${e.month||e.date})`,taka(e.payable||0),'var(--blue)');
-      });
-    }
-
-    // Grand total (daily+monthly উভয় থাকলে)
-    if(wt.length&&wms.length){
-      h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);background:#eaf3fb;font-weight:700;font-size:13px;">
-        <span>🔢 সর্বমোট উপার্জন (Daily + Monthly)</span>
-        <strong style="color:var(--primary);">${taka(grandEarn)}</strong>
-      </div>`;
-      h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);background:#eaf3fb;font-weight:700;font-size:13px;">
-        <span>💰 সর্বমোট Payable</span>
-        <strong style="color:var(--blue);">${taka(grandPayable)}</strong>
-      </div>`;
-    }
-
-    // Payments section
-    h+=rSub('PAYMENTS');
-    h+=rRow('Conveyance Paid (ভাড়া)',taka(cp),'var(--orange)');
+    const rem=totalPayable-tp;
+    h+=rSub(`👷 ${name}`);
+    h+=rRow('Entries',wt.length+'টি');
+    h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
+    h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
+    h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
+    h+=rRow('Conv. Paid (আলাদা)',taka(cp),'var(--orange)');
     h+=rRow('Bill Paid (বেতন)',taka(bp),'var(--red)');
     h+=rRow('Total Paid',taka(tp),'var(--green)');
-    h+=`<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:700;background:${rem>0?'#fdecea':'#eafaf1'};">
-      <span>Remaining Payable (বাকি)</span>
-      <strong style="color:${rem>0?'var(--red)':'var(--green)'};">${taka(rem)}</strong>
-    </div>`;
-
-    // Style breakdown
+    h+=rRow('Remaining Payable',taka(rem),rem>0?'var(--red)':'var(--green)');
     if(wt.length){
-      h+=rSub('Style Breakdown (Daily/Piece)');
+      h+=rSub('Style Breakdown');
       const styles=[...new Set(wt.map(e=>e.style))];
       styles.forEach(s=>{
         const se=wt.filter(e=>e.style===s);
         const sePayable=se.reduce((a,e)=>a+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
-        h+=rRow(s,`${se.length}টি এন্ট্রি | Earned: ${taka(se.reduce((a,e)=>a+e.wearn,0))} | Payable: ${taka(sePayable)}`);
+        h+=rRow(s,`${se.length} entries | Earned: ${taka(se.reduce((a,e)=>a+e.wearn,0))} | Payable: ${taka(sePayable)}`);
       });
     }
   });
-  if(!hasAny) h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি — এই মাসে এন্ট্রি নেই</div>';
   document.getElementById('r-worker-result2').innerHTML=rBox(h);
 }
 
@@ -2583,21 +2491,6 @@ function genSupplierReport(){
 
 setSalaryType('daily');
 renderAll();
-
-function fixAllMonthlyEntries(){
-  // সব unique worker+month combination বের করো
-  const combos=new Set(monthlySalaries.map(e=>e.worker+'||'+e.month));
-  let count=0;
-  combos.forEach(combo=>{
-    const [worker,month]=combo.split('||');
-    recalcMonthlyEntries(worker,month);
-    count++;
-  });
-  save();
-  const info=document.getElementById('fix-monthly-info');
-  if(info) info.textContent=`✅ ${combos.size}টি worker-month combination recalculate সম্পন্ন! (${monthlySalaries.length}টি entry ঠিক হয়েছে)`;
-  renderAll();
-}
 
 function forceSync(){
   setSyncStatus('saving');
