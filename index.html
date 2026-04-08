@@ -967,6 +967,12 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <p id="settings-export-info" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
   </div>
   <div class="form-panel">
+    <h5>🔧 Monthly Salary Fix</h5>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">আগের ভুল monthly salary entries (যেখানে প্রতিটাতে full salary ছিল) একবারে সব ঠিক করুন।</p>
+    <button class="btn btn-orange" onclick="fixAllMonthlyEntries()" style="margin-bottom:6px;">🔧 সব Monthly Salary Recalculate করুন</button>
+    <p id="fix-monthly-info" style="font-size:12px;color:var(--green);margin-top:6px;"></p>
+  </div>
+  <div class="form-panel">
     <h5>Data Management</h5>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Warning: Firebase ও Local দুটো থেকেই সব data মুছে যাবে।</p>
     <button class="btn btn-danger" onclick="confirmDelete(()=>{DATA_REF.remove();localStorage.clear();location.reload();},'Firebase ও Local সব data মুছবেন? ফিরে পাওয়া যাবে না!')">🗑️ Clear All Data</button>
@@ -1462,32 +1468,40 @@ function calcAutoMonthlySalary(){
   const month=document.getElementById('ms-month').value;
   if(!worker||ctIdx===''||!month)return;
 
-  // Worker-এর monthly rate বের করো
   const w=workers.find(x=>x.name===worker);
   if(!w||w.type!=='monthly'||!w.rate)return;
   const fullSalary=w.rate;
 
-  // ওই মাসে এই worker-এর সব entry count করো (সব order/style মিলিয়ে)
-  const allEntries=takings.filter(e=>e.worker===worker&&e.date.startsWith(month));
-  const totalDays=allEntries.length;
-  if(totalDays===0){
-    document.getElementById('ms-salary').value=fullSalary;
-    calcMonthlySalary();
-    return;
-  }
+  // আগের saved monthly entries + এই নতুনটা = totalDays
+  const existingEntries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
+  const totalDays=existingEntries.length+1;
 
-  // ওই style-এ কতদিন entry আছে
-  const styleEntries=allEntries.filter(e=>e.ctIdx===+ctIdx);
-  const styleDays=styleEntries.length;
+  // এই style-এ আগের entries + নতুনটা
+  const styleDays=existingEntries.filter(e=>e.ctIdx===+ctIdx).length+1;
 
-  // হিসাব: fullSalary ÷ totalDays × styleDays
   const autoSalary=Math.round(fullSalary/totalDays*styleDays);
 
   document.getElementById('ms-salary').value=autoSalary;
-  // Info দেখাও
   const infoEl=document.getElementById('ms-salary-info');
-  if(infoEl) infoEl.textContent=`(${fullSalary.toLocaleString()} ÷ ${totalDays} দিন × ${styleDays} দিন = ৳${autoSalary.toLocaleString()})`;
+  if(infoEl) infoEl.textContent=`(৳${fullSalary.toLocaleString()} ÷ ${totalDays} এন্ট্রি × ${styleDays} = ৳${autoSalary.toLocaleString()})`;
   calcMonthlySalary();
+}
+
+function recalcMonthlyEntries(worker,month){
+  const w=workers.find(x=>x.name===worker);
+  if(!w||w.type!=='monthly'||!w.rate)return;
+  const fullSalary=w.rate;
+  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
+  const totalDays=entries.length;
+  if(!totalDays)return;
+  const ctxCounts={};
+  entries.forEach(e=>{ctxCounts[e.ctIdx]=(ctxCounts[e.ctIdx]||0)+1;});
+  entries.forEach(e=>{
+    const styleDays=ctxCounts[e.ctIdx]||1;
+    const newSalary=Math.round(fullSalary/totalDays*styleDays);
+    e.salary=newSalary;
+    e.payable=(newSalary+(e.offdayOT||0))-(e.deduct||0);
+  });
 }
 function toggleOffdayFields(){
   const cb=document.getElementById('ms-offday');
@@ -1547,6 +1561,8 @@ function addMonthlySalary(){
     isOffday,offdayOT,offdayLunch,offdayTravel,
     note:document.getElementById('ms-note').value.trim()
   });
+  // নতুন entry যোগ হওয়ার পর সব আগের entries recalculate করো
+  recalcMonthlyEntries(worker,month);
   ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note',
    'ms-offday-ot','ms-offday-lunch','ms-offday-travel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   document.getElementById('ms-offday').checked=false;
@@ -1555,7 +1571,7 @@ function addMonthlySalary(){
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
 }
-function deleteMonthlySalary(i){confirmDelete(()=>{monthlySalaries.splice(i,1);save();},'এই রেকর্ড মুছবেন?');}
+function deleteMonthlySalary(i){const e=monthlySalaries[i];const dw=e?e.worker:'';const dm=e?e.month:'';confirmDelete(()=>{monthlySalaries.splice(i,1);if(dw&&dm)recalcMonthlyEntries(dw,dm);save();},'এই রেকর্ড মুছবেন?');}
 function renderMonthlySalaryList(){
   const wF=document.getElementById('msf-worker')?document.getElementById('msf-worker').value:'';
   const mF=document.getElementById('msf-month')?document.getElementById('msf-month').value:'';
@@ -2243,34 +2259,87 @@ function genWorkerReport2(){
   const m=document.getElementById('rr-worker-month').value;
   const wList=wn?[wn]:workers.map(w=>w.name);
   let h=rHead(`Worker Report — ${m||'All Time'}`);
+  let hasAny=false;
   wList.forEach(name=>{
+    // Daily/Piece/Mix এন্ট্রি
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
+    // Monthly salary এন্ট্রি (month field = "2026-04", date field = "2026-04-xx")
+    const wms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m||(e.date&&e.date.startsWith(m))));
+    // Payments
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-    // payable = Conv বাদ দিয়ে হাতে পাবে (wearn - conv)
-    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+
+    if(!wt.length&&!wms.length&&!wp.length) return;
+    hasAny=true;
+
+    // Daily/Piece/Mix হিসাব
     const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
     const entryConv=wt.reduce((s,e)=>s+e.conv,0);
+    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+
+    // Monthly salary হিসাব
+    const monthlyEarn=wms.reduce((s,e)=>s+(+e.payable||0),0);
+
+    // সর্বমোট উপার্জন ও payable
+    const grandEarn=totalWearn+monthlyEarn;
+    const grandPayable=totalPayable+monthlyEarn;
+
+    // Payments
     const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
-    const rem=totalPayable-tp;
-    h+=rSub(`👷 ${name}`);
-    h+=rRow('Entries',wt.length+'টি');
-    h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
-    h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
-    h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
-    h+=rRow('Conv. Paid (আলাদা)',taka(cp),'var(--orange)');
+    const rem=grandPayable-tp;
+
+    h+=rSub(`👷 ${name.toUpperCase()}`);
+
+    // Daily/Piece/Mix entries
+    if(wt.length){
+      h+=rRow('Daily/Piece এন্ট্রি সংখ্যা',wt.length+'টি');
+      h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
+      h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
+      h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
+    }
+
+    // Monthly salary entries
+    if(wms.length){
+      h+=rRow('Monthly Salary এন্ট্রি',wms.length+'টি');
+      h+=rRow('Monthly বেতন মোট',taka(monthlyEarn),'#6a0dad');
+      wms.forEach(e=>{
+        h+=rRow(`  └ ${e.style||''} (${e.month||e.date})`,taka(e.payable||0),'var(--blue)');
+      });
+    }
+
+    // Grand total (daily+monthly উভয় থাকলে)
+    if(wt.length&&wms.length){
+      h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);background:#eaf3fb;font-weight:700;font-size:13px;">
+        <span>🔢 সর্বমোট উপার্জন (Daily + Monthly)</span>
+        <strong style="color:var(--primary);">${taka(grandEarn)}</strong>
+      </div>`;
+      h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);background:#eaf3fb;font-weight:700;font-size:13px;">
+        <span>💰 সর্বমোট Payable</span>
+        <strong style="color:var(--blue);">${taka(grandPayable)}</strong>
+      </div>`;
+    }
+
+    // Payments section
+    h+=rSub('PAYMENTS');
+    h+=rRow('Conveyance Paid (ভাড়া)',taka(cp),'var(--orange)');
     h+=rRow('Bill Paid (বেতন)',taka(bp),'var(--red)');
     h+=rRow('Total Paid',taka(tp),'var(--green)');
-    h+=rRow('Remaining Payable',taka(rem),rem>0?'var(--red)':'var(--green)');
+    h+=`<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:700;background:${rem>0?'#fdecea':'#eafaf1'};">
+      <span>Remaining Payable (বাকি)</span>
+      <strong style="color:${rem>0?'var(--red)':'var(--green)'};">${taka(rem)}</strong>
+    </div>`;
+
+    // Style breakdown
     if(wt.length){
-      h+=rSub('Style Breakdown');
+      h+=rSub('Style Breakdown (Daily/Piece)');
       const styles=[...new Set(wt.map(e=>e.style))];
       styles.forEach(s=>{
         const se=wt.filter(e=>e.style===s);
         const sePayable=se.reduce((a,e)=>a+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
-        h+=rRow(s,`${se.length} entries | Earned: ${taka(se.reduce((a,e)=>a+e.wearn,0))} | Payable: ${taka(sePayable)}`);
+        h+=rRow(s,`${se.length}টি এন্ট্রি | Earned: ${taka(se.reduce((a,e)=>a+e.wearn,0))} | Payable: ${taka(sePayable)}`);
       });
     }
   });
+  if(!hasAny) h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি — এই মাসে এন্ট্রি নেই</div>';
   document.getElementById('r-worker-result2').innerHTML=rBox(h);
 }
 
@@ -2514,6 +2583,21 @@ function genSupplierReport(){
 
 setSalaryType('daily');
 renderAll();
+
+function fixAllMonthlyEntries(){
+  // সব unique worker+month combination বের করো
+  const combos=new Set(monthlySalaries.map(e=>e.worker+'||'+e.month));
+  let count=0;
+  combos.forEach(combo=>{
+    const [worker,month]=combo.split('||');
+    recalcMonthlyEntries(worker,month);
+    count++;
+  });
+  save();
+  const info=document.getElementById('fix-monthly-info');
+  if(info) info.textContent=`✅ ${combos.size}টি worker-month combination recalculate সম্পন্ন! (${monthlySalaries.length}টি entry ঠিক হয়েছে)`;
+  renderAll();
+}
 
 function forceSync(){
   setSyncStatus('saving');
