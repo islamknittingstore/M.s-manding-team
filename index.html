@@ -179,7 +179,9 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <p>All Kint of Garments Foreing Yarn, Touch-up, Sheding, Spot &amp; Hole Mending Co.</p>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="exportJSON()" title="JSON Backup Export" style="display:flex;align-items:center;gap:5px;background:var(--green);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">⬇️ Export</button>
+    <label title="JSON Backup Import" style="display:flex;align-items:center;gap:5px;background:var(--orange);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">⬆️ Import<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label>
     <button id="sync-btn" onclick="toggleSyncPopup()">
       <span class="sync-dot loading" id="sync-dot"></span>
       <span id="sync-status">⏳ Loading...</span>
@@ -720,7 +722,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="panel">
       <div class="panel-header">Order-wise Bill Status</div>
       <table>
-        <thead><tr><th>Order No.</th><th>Supplier</th><th>Styles</th><th>Challan Value</th><th>Submitted</th><th>Received</th><th>Pending</th><th>Status</th></tr></thead>
+        <thead><tr><th>Order No.</th><th>Supplier</th><th>Styles</th><th>Challan Value</th><th>Bill Submitted</th><th>Bill Received</th><th>Pending</th><th>Status</th></tr></thead>
         <tbody id="bill-summary-list"><tr><td colspan="8" class="no-data">No data</td></tr></tbody>
       </table>
     </div>
@@ -732,7 +734,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </span>
       </div>
       <table>
-        <thead><tr><th>#</th><th>Date</th><th>Order No.</th><th>Supplier</th><th>Amount</th><th>Note</th><th>Action</th></tr></thead>
+        <thead><tr><th>#</th><th>Date</th><th>Order No.</th><th>Supplier</th><th>Amount Received</th><th>Note</th><th>Action</th></tr></thead>
         <tbody id="bill-list"><tr><td colspan="7" class="no-data">No bills</td></tr></tbody>
       </table>
     </div>
@@ -775,7 +777,6 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div id="rpt-bill" class="inner-tab-content">
       <div class="form-panel">
         <div class="form-row">
-          <div class="fg"><label>Month (Optional)</label></div>
           <div class="fg"><label>Month (Optional)</label><input type="month" id="rr-bill-month"></div>
           <div class="fg-btn"><button class="btn btn-info" onclick="genBillReport()">Generate</button></div>
         </div>
@@ -927,7 +928,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <strong>Sync:</strong> <span id="sync-status-settings">—</span><br>
       <small>ডেটা ৩টা device-এ (২ মোবাইল + ১ পিসি) real-time sync হবে।</small>
     </div>
-    <button class="btn btn-info" onclick="forcSync()" style="margin-bottom:10px;">🔄 Force Sync করুন</button>
+    <button class="btn btn-info" onclick="forceSync()" style="margin-bottom:10px;">🔄 Force Sync করুন</button>
   </div>
   <div class="form-panel">
     <h5>📁 JSON Backup &amp; Restore</h5>
@@ -954,7 +955,7 @@ updateClock();setInterval(updateClock,1000);
 document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 const todayStr=new Date().toISOString().split('T')[0];
 const ymStr=todayStr.slice(0,7);
-['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
+['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date','ms-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
 ['tf-month','ms-month','msf-month','pf-month','r-worker-month','r-month','chf-month','bf-month','r-supplier-month','bsf-month','rr-worker-month','rr-bill-month','rr-month','rr-supplier-month'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=ymStr;});
 
 // ===== FIREBASE REALTIME DATABASE SETUP =====
@@ -1047,7 +1048,6 @@ function closeSyncPopup(){
 function saveAllNow(){
   // Firebase save
   setSyncStatus('saving');
-  if(_saveTimeout)clearTimeout(_saveTimeout);
   DATA_REF.set({
     companies,contracts,workers,takings,payments,
     challans,bills,billSubmits,monthlySalaries
@@ -1083,15 +1083,44 @@ function exportJSON(silent){
   }
 }
 
-// JSON Import
+// JSON Import — Firebase data সুরক্ষিত রেখে import
 function importJSON(input){
   const file=input.files[0];
   if(!file)return;
-  if(!confirm('⚠️ JSON import করলে বর্তমান সব ডেটা replace হবে। নিশ্চিত?')){input.value='';return;}
+
   const reader=new FileReader();
   reader.onload=function(e){
     try{
       const d=JSON.parse(e.target.result);
+
+      // Firebase-এর বর্তমান ডেটা আগে দেখাও
+      const fbTotal=(companies||[]).length+(contracts||[]).length+(workers||[]).length+
+        (takings||[]).length+(payments||[]).length+(challans||[]).length+
+        (bills||[]).length+(billSubmits||[]).length+(monthlySalaries||[]).length;
+      const jsonTotal=(d.companies||[]).length+(d.contracts||[]).length+(d.workers||[]).length+
+        (d.takings||[]).length+(d.payments||[]).length+(d.challans||[]).length+
+        (d.bills||[]).length+(d.billSubmits||[]).length+(d.monthlySalaries||[]).length;
+
+      const choice=window.confirm(
+        '📂 JSON Import\n\n' +
+        '☁️ Firebase-এ আছে: ' + fbTotal + ' entries\n' +
+        '📄 JSON ফাইলে আছে: ' + jsonTotal + ' entries\n\n' +
+        '✅ OK চাপলে → JSON দিয়ে সব REPLACE হবে (Firebase ডেটা মুছবে)\n' +
+        '❌ Cancel চাপলে → Import বাতিল হবে (Firebase ডেটা নিরাপদ)'
+      );
+      if(!choice){input.value='';return;}
+
+      // Double confirmation যদি Firebase-এ বেশি ডেটা থাকে
+      if(fbTotal>jsonTotal){
+        const sure=window.confirm(
+          '⚠️ সতর্কতা!\n\n' +
+          'Firebase-এ ' + fbTotal + 'টি entry আছে কিন্তু JSON-এ মাত্র ' + jsonTotal + 'টি।\n' +
+          'Firebase-এর ' + (fbTotal-jsonTotal) + 'টি entry মুছে যাবে!\n\n' +
+          'সত্যিই replace করবেন?'
+        );
+        if(!sure){input.value='';return;}
+      }
+
       if(d.companies!==undefined)companies=d.companies||[];
       if(d.contracts!==undefined)contracts=d.contracts||[];
       if(d.workers!==undefined)workers=d.workers||[];
@@ -1101,10 +1130,11 @@ function importJSON(input){
       if(d.bills!==undefined)bills=d.bills||[];
       if(d.billSubmits!==undefined)billSubmits=d.billSubmits||[];
       if(d.monthlySalaries!==undefined)monthlySalaries=d.monthlySalaries||[];
-      save();
+
+      save(); // Firebase-এও নতুন ডেটা লিখবে
       const info=document.getElementById('sp-json-info');
       if(info)info.textContent='✅ Import সফল! ডেটা লোড হয়েছে।';
-      alert('✅ JSON import সফল হয়েছে!');
+      alert('✅ JSON import সফল! Firebase-এও update হয়েছে।');
     }catch(err){
       alert('❌ JSON ফাইলে সমস্যা: '+err.message);
     }
@@ -1118,7 +1148,6 @@ let companies=[], contracts=[], workers=[], takings=[], payments=[];
 let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
-let _saveTimeout=null;
 
 // Load from localStorage as fallback first
 function loadLocal(){
@@ -1183,16 +1212,13 @@ function save(){
   localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
   localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
   renderAll();
-  // Debounce Firebase save (500ms)
+  // Immediate Firebase save — প্রতি entry-তেই সাথে সাথে save হবে
   setSyncStatus('saving');
-  if(_saveTimeout)clearTimeout(_saveTimeout);
-  _saveTimeout=setTimeout(()=>{
-    DATA_REF.set({
-      companies,contracts,workers,takings,payments,
-      challans,bills,billSubmits,monthlySalaries
-    }).then(()=>setSyncStatus('ok'))
-      .catch(e=>{setSyncStatus('error');console.error('Firebase save error:',e);});
-  },500);
+  DATA_REF.set({
+    companies,contracts,workers,takings,payments,
+    challans,bills,billSubmits,monthlySalaries
+  }).then(()=>setSyncStatus('ok'))
+    .catch(e=>{setSyncStatus('error');console.error('Firebase save error:',e);});
 }
 
 // Page-to-group mapping
@@ -1238,8 +1264,9 @@ function showPage(id){
   }
 }
 function switchTab(e,id){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  const page=document.getElementById('page-report');
+  page.querySelectorAll(':scope > .tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  page.querySelectorAll(':scope > .tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   e.target.classList.add('active');
 }
@@ -1365,7 +1392,7 @@ function addTaking(){
   }
   const payable=Math.max(0,wearn-conv);
   takings.push({date,worker,ctIdx:+ctIdx,style:ct.style,supplier:ct.supplier,factory:ct.factory,jobtype:ct.jobtype,salaryType:currentSalaryType,pcs,wrate,daily,ot,conv,coIncome,wearn,payable});
-  ['t-pcs-piece','t-wrate-piece','t-conv-piece','t-ot-daily','t-conv-daily','t-pcs-mix','t-wrate-mix','t-ot-mix','t-conv-mix'].forEach(id=>document.getElementById(id).value='0');
+  ['t-pcs-piece','t-wrate-piece','t-conv-piece','t-ot-daily','t-conv-daily','t-daily','t-pcs-mix','t-wrate-mix','t-ot-mix','t-conv-mix','t-daily-mix'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   document.getElementById('r-wearn').textContent='৳0';
   document.getElementById('r-hand-pay').textContent='৳0';
   save();
@@ -1545,7 +1572,7 @@ function billTotalRecv(idx){
 function workerConvPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.conv,0);}
 function workerBillPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.bill,0);}
 function workerTotalPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.total,0);}
-function workerPayable(wn){return takings.filter(e=>e.worker===wn).reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0)+monthlySalaries.filter(e=>e.worker===wn).reduce((s,e)=>s+e.payable,0)-workerTotalPaid(wn);}
+function workerPayable(wn){return takings.filter(e=>e.worker===wn).reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0)+monthlySalaries.filter(e=>e.worker===wn).reduce((s,e)=>s+(+e.payable||0),0)-workerTotalPaid(wn);}
 
 function populateSelects(){
   const suppliers=companies.filter(c=>c.type==='supplier').map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
@@ -1684,12 +1711,22 @@ function renderChallanList(){
 
 function renderBillSummary(){
   const tb=document.getElementById('bill-summary-list');
-  const rows=contracts.map((ct,idx)=>{
-    const cv=challanTotalValue(idx),br=billTotalRecv(idx),inst=bills.filter(b=>b.ctIdx===idx).length;
+  const orders=getOrderNumbers();
+  if(!orders.length){
+    tb.innerHTML='<tr><td colspan="8" class="no-data">No data</td></tr>';
+    return;
+  }
+  const rows=orders.map(ord=>{
+    const cts=getContractsByOrder(ord);
+    const cv=orderChallanValue(ord);
+    const br=orderBillRecvTotal(ord);
+    const bs=orderBillSubmitTotal(ord);
+    const styles=[...new Set(cts.map(c=>c.style))].join(', ');
+    const supplier=cts[0]?cts[0].supplier:'';
     if(cv===0&&br===0) return '';
     const pending=cv-br;
     const status=pending<=0?'<span class="badge badge-green">✅ Cleared</span>':br>0?'<span class="badge badge-orange">🔄 Partial</span>':'<span class="badge badge-red">⏳ Pending</span>';
-    return `<tr><td><strong>${ct.style}</strong></td><td>${ct.supplier}</td><td>${ct.factory}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td>${inst}</td><td>${status}</td></tr>`;
+    return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--orange);font-weight:700;">${taka(bs)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td>${status}</td></tr>`;
   }).filter(Boolean).join('');
   tb.innerHTML=rows||'<tr><td colspan="8" class="no-data">No data</td></tr>';
 }
@@ -1704,7 +1741,7 @@ function renderBillList(){
   }).slice().reverse();
   const tb=document.getElementById('bill-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="7" class="no-data">No bills</td></tr>':
-    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.style}</strong></td><td>${b.supplier}</td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
+    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
 }
 
 function renderPayments(){
@@ -2282,7 +2319,7 @@ function genSupplierReport(){
 setSalaryType('daily');
 renderAll();
 
-function forcSync(){
+function forceSync(){
   setSyncStatus('saving');
   DATA_REF.set({
     companies,contracts,workers,takings,payments,
