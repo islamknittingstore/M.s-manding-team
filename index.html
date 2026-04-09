@@ -2078,24 +2078,39 @@ function genWorkerReport(){
 
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m))).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m)).slice().sort((a,b=>(a.date||'').localeCompare(b.date||'')));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
 
-    const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
-    const totalOT=wt.reduce((s,e)=>s+(e.ot||0),0);
-    const totalConv=wt.reduce((s,e)=>s+e.conv,0);
-    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    // taking থেকে totals
+    const wtWearn=wt.reduce((s,e)=>s+e.wearn,0);
+    const wtOT=wt.reduce((s,e)=>s+(e.ot||0),0);
+    const wtConv=wt.reduce((s,e)=>s+e.conv,0);
+    const wtPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+
+    // monthly salary থেকে totals
+    const msPayable=ms.reduce((s,e)=>s+(+e.payable||0),0);
+    const msOT=ms.reduce((s,e)=>s+(+e.offdayOT||0),0);
+    const msBillCut=ms.reduce((s,e)=>s+(+e.billCut||0),0);
+
+    const totalPayable=wtPayable+msPayable;
+    const totalOT=wtOT+msOT;
+    const totalConv=wtConv;
+    const totalWearn=wtWearn+msPayable;
     const tp=wp.reduce((s,p)=>s+p.total,0);
     const remaining=totalPayable-tp;
     const monthLabel=m||'All Time';
     const days=getDaysInMonth(m);
 
-    // Build full month rows
+    // Build full month rows — taking + monthly salary একসাথে
     let rowsHtml='';
     let sn=0;
     for(let d=1;d<=days;d++){
       const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
-      const dayEntries=dateStr?wt.filter(e=>e.date===dateStr):[];
-      if(dayEntries.length===0){
+      const dayTakings=dateStr?wt.filter(e=>e.date===dateStr):[];
+      const dayMS=dateStr?ms.filter(e=>e.date===dateStr):[];
+      const allDay=[...dayTakings.map(e=>({...e,_type:'taking'})),...dayMS.map(e=>({...e,_type:'monthly'}))];
+
+      if(allDay.length===0){
         sn++;
         rowsHtml+=`<tr style="border-bottom:1px solid #eee;">
           <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
@@ -2107,19 +2122,29 @@ function genWorkerReport(){
           <td style="padding:6px 8px;"></td>
         </tr>`;
       } else {
-        dayEntries.forEach((e,ei)=>{
+        allDay.forEach((e)=>{
           sn++;
-          const ct=contracts[e.ctIdx];
-          const daily=e.daily||0;
-          const ot=e.ot||0;
-          const conv=e.conv||0;
-          const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
-          rowsHtml+=`<tr style="border-bottom:1px solid #eee;background:#f0f9ff;">
+          let conv=0,daily=0,ot=0,factory='',remark='';
+          if(e._type==='taking'){
+            conv=e.conv||0;
+            daily=e.daily||0;
+            ot=e.ot||0;
+            factory=e.factory||'-';
+            remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
+          } else {
+            // monthly salary entry
+            conv=e.travel||0;
+            daily=e.salary||0;
+            ot=e.offdayOT||0;
+            factory=e.factory||'-';
+            remark=`📆 মাসিক${e.isOffday?' (অফডে)':''}${e.note?' — '+e.note:''}`;
+          }
+          rowsHtml+=`<tr style="border-bottom:1px solid #eee;background:${e._type==='monthly'?'#f5f0ff':'#f0f9ff'};">
             <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
             <td style="padding:6px 8px;font-weight:600;">${dateStr}</td>
-            <td style="padding:6px 8px;font-weight:600;">${e.factory||'-'}</td>
+            <td style="padding:6px 8px;font-weight:600;">${factory}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${conv?taka(conv):''}</td>
-            <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):e.salaryType==='piece'?taka(e.wearn):''}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):''}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${ot?taka(ot):''}</td>
             <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
           </tr>`;
@@ -2164,7 +2189,7 @@ function genWorkerReport(){
               <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(totalConv)}</td>
               <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(totalWearn-totalOT)}</td>
               <td style="padding:10px 8px;text-align:right;color:#58d68d;">${totalOT?taka(totalOT):'-'}</td>
-              <td style="padding:10px 8px;"></td>
+              <td style="padding:10px 8px;font-size:11px;color:#a8c0d6;">Daily+Monthly</td>
             </tr>
           </tbody>
         </table>
@@ -2222,24 +2247,59 @@ function genWorkerReport2(){
   let h=rHead(`Worker Report — ${m||'All Time'}`);
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
+    const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
-    // payable = Conv বাদ দিয়ে হাতে পাবে (wearn - conv)
-    const totalPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
-    const totalWearn=wt.reduce((s,e)=>s+e.wearn,0);
+
+    // taking থেকে totals
+    const wtPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    const wtWearn=wt.reduce((s,e)=>s+e.wearn,0);
     const entryConv=wt.reduce((s,e)=>s+e.conv,0);
+
+    // monthly salary থেকে totals
+    const msPayable=ms.reduce((s,e)=>s+(+e.payable||0),0);
+    const msWearn=ms.reduce((s,e)=>s+(+e.salary||0),0);
+    const msOT=ms.reduce((s,e)=>s+(+e.offdayOT||0),0);
+    const msBillCut=ms.reduce((s,e)=>s+(+e.billCut||0),0);
+
+    const totalPayable=wtPayable+msPayable;
+    const totalWearn=wtWearn+msWearn+msOT;
     const cp=wp.reduce((s,p)=>s+p.conv,0),bp=wp.reduce((s,p)=>s+p.bill,0),tp=wp.reduce((s,p)=>s+p.total,0);
     const rem=totalPayable-tp;
+
+    if(!wt.length&&!ms.length&&!wp.length)return;
+
     h+=rSub(`👷 ${name}`);
-    h+=rRow('Entries',wt.length+'টি');
-    h+=rRow('মোট উপার্জন (Total Earned)',taka(totalWearn),'var(--primary)');
-    h+=rRow('Conv. আগাম দেওয়া (Entry-তে)',taka(entryConv),'var(--orange)');
-    h+=rRow('হাতে পাবে (Payable = Earned − Conv)',taka(totalPayable),'var(--blue)');
+    h+=rRow('Daily/Piece Entries',wt.length+'টি');
+    h+=rRow('Monthly Salary Entries',ms.length+'টি','#6a0dad');
+    h+=rRow('মোট উপার্জন — Daily/Piece',taka(wtWearn),'var(--primary)');
+    if(ms.length){
+      h+=rRow('মোট মাসিক বেতন (Salary)',taka(msWearn),'#6a0dad');
+      if(msOT>0) h+=rRow('অফডে OT (মাসিক)',taka(msOT),'var(--green)');
+      if(msBillCut>0) h+=rRow('Bill কাটা (লাঞ্চ+যাতায়াত)',taka(msBillCut),'var(--orange)');
+    }
+    h+=rRow('Conv. আগাম দেওয়া (Daily Entry-তে)',taka(entryConv),'var(--orange)');
+    h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;background:#f0e6ff;">
+      <span>💜 মোট Payable (Daily + Monthly)</span>
+      <strong style="color:#6a0dad;">${taka(totalPayable)}</strong>
+    </div>`;
     h+=rRow('Conv. Paid (আলাদা)',taka(cp),'var(--orange)');
-    h+=rRow('Bill Paid (বেতন)',taka(bp),'var(--red)');
+    h+=rRow('Bill Paid (বেতন দেওয়া)',taka(bp),'var(--red)');
     h+=rRow('Total Paid',taka(tp),'var(--green)');
     h+=rRow('Remaining Payable',taka(rem),rem>0?'var(--red)':'var(--green)');
+
+    // Monthly Salary breakdown
+    if(ms.length){
+      h+=rSub('📆 Monthly Salary Breakdown');
+      ms.forEach(e=>{
+        const ct=contracts[e.ctIdx];
+        const label=`${e.month||e.date||'-'} | ${ct?ct.style:e.style||'-'}${e.isOffday?' 🗓️অফডে':''}${e.note?' — '+e.note:''}`;
+        h+=rRow(label,`Salary:${taka(+e.salary||0)} | OT:${taka(+e.offdayOT||0)} | Payable:${taka(+e.payable||0)}`,'#6a0dad');
+      });
+    }
+
+    // Daily/Piece style breakdown
     if(wt.length){
-      h+=rSub('Style Breakdown');
+      h+=rSub('Style Breakdown (Daily/Piece)');
       const styles=[...new Set(wt.map(e=>e.style))];
       styles.forEach(s=>{
         const se=wt.filter(e=>e.style===s);
@@ -2248,6 +2308,7 @@ function genWorkerReport2(){
       });
     }
   });
+  if(!h.includes('rSub'))h+=`<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>`;
   document.getElementById('r-worker-result2').innerHTML=rBox(h);
 }
 
