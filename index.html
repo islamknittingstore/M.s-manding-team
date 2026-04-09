@@ -211,7 +211,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="sp-info-line">মোট Records: <span id="sp-fb-records">—</span></div>
       <div class="sp-info-line">শেষ Sync: <span id="sp-fb-time">—</span></div>
       <div class="sp-btn-row">
-        <button class="sp-btn sp-btn-blue" onclick="closeSyncPopup();forcSync()">🔄 Force Sync</button>
+        <button class="sp-btn sp-btn-blue" onclick="closeSyncPopup();forceSync()">🔄 Force Sync</button>
         <button class="sp-btn sp-btn-green" onclick="closeSyncPopup();saveAllNow()">💾 Save Now</button>
         <button class="sp-btn sp-btn-gray" onclick="closeSyncPopup();showPage('settings')">⚙️ Settings</button>
       </div>
@@ -705,9 +705,15 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <thead><tr><th><input type="checkbox" id="bs-check-all" onchange="toggleAllBsChallans(this)"></th><th>Style</th><th>Factory</th><th>Challan No.</th><th>Pcs</th><th>Challan Value</th><th>Date</th></tr></thead>
           <tbody id="bs-challan-rows"></tbody>
         </table>
-        <div style="background:#f7fafd;border-top:2px solid var(--border);padding:12px 16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-          <div><span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Selected Challan Value</span><div id="bs-selected-total" style="font-size:22px;font-weight:700;color:var(--blue);">৳0</div></div>
-          <div class="fg" style="max-width:180px;margin-bottom:0;"><label>Bill Amount (৳)</label><input id="bs-amount" type="number" placeholder="জমা দিচ্ছেন কত"></div>
+        <div style="background:#f7fafd;border-top:2px solid var(--border);padding:10px 16px;">
+          <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Selected Challan Value: </span>
+          <strong id="bs-selected-total" style="font-size:16px;font-weight:700;color:var(--blue);">৳0</strong>
+        </div>
+      </div>
+      <!-- Bill Amount & Save — always visible after order select -->
+      <div id="bs-amount-row" style="display:none;margin-top:8px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="fg" style="max-width:200px;margin-bottom:0;"><label>Bill Amount (৳)</label><input id="bs-amount" type="number" placeholder="জমা দিচ্ছেন কত"></div>
           <div class="fg-btn" style="margin-bottom:0;"><button class="btn btn-orange" onclick="addBillSubmit()">＋ Save Bill Submit</button></div>
         </div>
       </div>
@@ -1661,7 +1667,7 @@ function renderMonthlySalaryList(){
   tb.innerHTML=list.length===0?'<tr><td colspan="14" class="no-data">No records</td></tr>':
     list.map((e,i)=>`<tr>
       <td>${list.length-i}</td><td>${e.month}</td>
-      <td style="color:var(--blue);font-weight:600;">${e.date||'-'}</td>
+      <td style="color:var(--blue);font-weight:600;">${fmtDate(e.date)||'-'}</td>
       <td>${e.worker}</td>
       <td><strong>${e.orderno}</strong></td><td>${e.style}</td>
       <td style="color:#6a0dad;font-weight:700;">${taka(e.salary)}</td>
@@ -1742,6 +1748,24 @@ function deleteBill(i){confirmDelete(()=>{bills.splice(i,1);save();},'এই ব
 function deleteContract(i){confirmDelete(()=>{contracts.splice(i,1);save();},'এই contract মুছবেন?');}
 
 function taka(n){return '৳'+(+n||0).toLocaleString();}
+// Date format helpers
+function fmtDate(d){
+  if(!d)return '';
+  const parts=d.split('-');
+  if(parts.length!==3)return d;
+  const [y,mo,day]=parts;
+  const yy=y.slice(-2);
+  return `${day}/${mo}/${yy}`;
+}
+function fmtMonth(m){
+  if(!m)return 'All Time';
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const parts=m.split('-');
+  if(parts.length!==2)return m;
+  const [y,mo]=parts;
+  const mName=months[parseInt(mo,10)-1]||mo;
+  return `${mName} - ${y}`;
+}
 function stypeLabel(t){return{daily:'📅 Daily',piece:'🔢 Piece',mix:'🔀 Mix'}[t]||t;}
 function stypeBadge(t){const m={daily:'badge-blue',piece:'badge-green',mix:'badge-orange'};return `<span class="badge ${m[t]||'badge-gray'}">${stypeLabel(t)}</span>`;}
 function typeBadge(t){const m={daily:'badge-blue',monthly:'badge-green',piece:'badge-orange',mix:'badge-gray'};const l={daily:'Daily',monthly:'Monthly',piece:'Piece',mix:'Mix'};return `<span class="badge ${m[t]||'badge-gray'}">${l[t]||t}</span>`;}
@@ -1787,7 +1811,10 @@ function populateSelects(){
   if(msfWorkerEl){const v=msfWorkerEl.value;msfWorkerEl.innerHTML='<option value="">All Workers</option>'+wOpts;msfWorkerEl.value=v;}
   // Order number dropdowns
   const orderNos=getOrderNumbers();
-  const orderOpts=orderNos.map(o=>`<option value="${o}">${o}</option>`).join('');
+  // Also include ordernos from billSubmits that may not be in contracts
+  const bsOrderNos=[...new Set(billSubmits.map(b=>b.orderno).filter(Boolean))];
+  const allOrderNos=[...new Set([...orderNos,...bsOrderNos])];
+  const orderOpts=allOrderNos.map(o=>`<option value="${o}">${o}</option>`).join('');
   // Monthly salary order dropdown
   const msOrderEl=document.getElementById('ms-orderno');
   if(msOrderEl){const v=msOrderEl.value;msOrderEl.innerHTML='<option value="">-- Select --</option>'+orderNos.map(o=>`<option value="${o}">${o}</option>`).join('');msOrderEl.value=v;}
@@ -1825,21 +1852,26 @@ function orderBillSubmitTotal(ord){return billSubmits.filter(b=>b.orderno===ord)
 function onBillSubmitOrderSelect(){
   const ord=document.getElementById('bs-orderno').value;
   const wrap=document.getElementById('bs-challan-table-wrap');
+  const amtRow=document.getElementById('bs-amount-row');
   const supEl=document.getElementById('bs-supplier');
-  if(!ord){wrap.style.display='none';supEl.value='';return;}
+  if(!ord){wrap.style.display='none';amtRow.style.display='none';supEl.value='';return;}
   const cts=getContractsByOrder(ord);
   supEl.value=cts[0]?cts[0].supplier:'';
   const idxs=contracts.reduce((a,c,i)=>c.orderno===ord?[...a,i]:a,[]);
   const rows=challans.filter(c=>idxs.includes(c.ctIdx));
   const tb=document.getElementById('bs-challan-rows');
-  tb.innerHTML=rows.length===0?'<tr><td colspan="7" class="no-data">এই Order-এ কোনো Challan নেই</td></tr>':
-    rows.map((c,i)=>`<tr>
+  if(rows.length===0){
+    wrap.style.display='none';
+  } else {
+    tb.innerHTML=rows.map((c,i)=>`<tr>
       <td><input type="checkbox" class="bs-ch-chk" data-val="${c.value}" onchange="calcBsSelected()"></td>
       <td>${c.style}</td><td>${c.factory}</td><td>${c.note||'-'}</td>
-      <td>${c.pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.date}</td>
+      <td>${c.pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${fmtDate(c.date)}</td>
     </tr>`).join('');
-  wrap.style.display='block';
-  calcBsSelected();
+    wrap.style.display='block';
+    calcBsSelected();
+  }
+  amtRow.style.display='block';
 }
 function toggleAllBsChallans(el){
   document.querySelectorAll('.bs-ch-chk').forEach(c=>c.checked=el.checked);
@@ -1865,6 +1897,7 @@ function addBillSubmit(){
   document.getElementById('bs-orderno').value='';
   document.getElementById('bs-supplier').value='';
   document.getElementById('bs-challan-table-wrap').style.display='none';
+  document.getElementById('bs-amount-row').style.display='none';
   save();
 }
 function deleteBillSubmit(i){confirmDelete(()=>{billSubmits.splice(i,1);save();},'এই Bill Submit মুছবেন?');}
@@ -1880,7 +1913,7 @@ function renderBillSubmitList(){
   if(!tb)return;
   tb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No records</td></tr>':
     list.map((b,i)=>`<tr>
-      <td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.orderno}</strong></td>
+      <td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno}</strong></td>
       <td>${b.supplier||'-'}</td><td style="font-size:12px;">${b.styles||'-'}</td>
       <td style="color:var(--blue);font-weight:700;">${taka(b.challanVal||0)}</td>
       <td style="color:var(--orange);font-weight:700;">${taka(b.amount)}</td>
@@ -1912,13 +1945,17 @@ function renderBillSubmitList(){
 
 // ===== BILL RECEIVE FUNCTIONS =====
 function onBillRecvOrderSelect(){
-  const ord=document.getElementById('b-orderno').value;
+  const ord=(document.getElementById('b-orderno').value||'').trim();
   const sel=document.getElementById('b-submit-sel');
   document.getElementById('b-submitted-amount').value='';
   if(!ord){sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>';return;}
-  const submits=billSubmits.filter(b=>b.orderno===ord);
+  const submits=billSubmits.map((b,i)=>({b,i})).filter(({b})=>(b.orderno||'').trim()===ord);
+  if(submits.length===0){
+    sel.innerHTML='<option value="">-- কোনো Bill Submit নেই --</option>';
+    return;
+  }
   sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>'+
-    submits.map((b,i)=>`<option value="${billSubmits.indexOf(b)}">${b.date} — ${taka(b.amount)}${b.note?' ('+b.note+')':''}</option>`).join('');
+    submits.map(({b,i})=>`<option value="${i}">${fmtDate(b.date)} — ${taka(b.amount)}${b.note?' ('+b.note+')':''}</option>`).join('');
 }
 function onBillRecvSubmitSelect(){
   const idx=document.getElementById('b-submit-sel').value;
@@ -1962,7 +1999,7 @@ function renderContracts(){
       const idx=contracts.indexOf(c);
       const cv=challanTotalValue(idx),br=billTotalRecv(idx),pending=cv-br,pcs=challanTotalPcs(idx);
       const unitLabel=c.unit==='goj'?'গজ':'পিছ';
-      return `<tr><td>${i+1}</td><td>${c.date}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:var(--blue);font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:var(--blue);font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
     }).join('');
 }
 
@@ -1989,7 +2026,7 @@ function renderTakingList(){
   }).slice().reverse();
   const tb=document.getElementById('taking-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="14" class="no-data">No entries</td></tr>':
-    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${e.date}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:var(--green);font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td style="font-size:12px;color:#666;">${e.remark||'-'}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
+    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(e.date)}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:var(--green);font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td style="font-size:12px;color:#666;">${e.remark||'-'}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
 }
 
 function renderChallanList(){
@@ -2002,7 +2039,7 @@ function renderChallanList(){
   }).slice().reverse();
   const tb=document.getElementById('challan-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="11" class="no-data">No challans</td></tr>':
-    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${c.date}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
+    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(c.date)}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
 
   const tb2=document.getElementById('challan-summary');
   const rows=contracts.map((ct,idx)=>{
@@ -2045,7 +2082,7 @@ function renderBillList(){
   }).slice().reverse();
   const tb=document.getElementById('bill-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="7" class="no-data">No bills</td></tr>':
-    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
+    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
 }
 
 function renderPayments(){
@@ -2059,7 +2096,7 @@ function renderPayments(){
   const list=payments.filter(p=>{if(wF&&p.worker!==wF)return false;if(mF&&!p.date.startsWith(mF))return false;return true;}).slice().reverse();
   const pb=document.getElementById('payment-list');
   pb.innerHTML=list.length===0?'<tr><td colspan="8" class="no-data">No payments</td></tr>':
-    list.map((p,i)=>`<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${p.date}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`).join('');
+    list.map((p,i)=>`<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${fmtDate(p.date)}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`).join('');
 }
 
 function renderDashboard(){
@@ -2079,7 +2116,7 @@ function renderDashboard(){
   tb.innerHTML=contracts.length===0?'<tr><td colspan="12" class="no-data">No contracts</td></tr>':
     contracts.map((c,i)=>{
       const pcs=challanTotalPcs(i),cv=challanTotalValue(i),br=billTotalRecv(i),pending=cv-br;
-      return `<tr><td>${c.date}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}</td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td></tr>`;
+      return `<tr><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}</td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td></tr>`;
     }).join('');
 
   const rt=document.getElementById('d-recent-taking');
@@ -2087,7 +2124,7 @@ function renderDashboard(){
   rt.innerHTML=rta.length===0?'<tr><td colspan="4" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td>${e.worker}</td><td>${e.style}</td><td>${stypeBadge(e.salaryType)}</td><td style="color:var(--green);font-weight:700;">${taka(e.wearn)}</td></tr>`).join('');
   const rb=document.getElementById('d-recent-bills');
   const rba=bills.slice(-5).reverse();
-  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style}</strong></td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.date}</td></tr>`).join('');
+  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style}</strong></td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
 }
 
 // REPORTS
@@ -2103,7 +2140,7 @@ function genDailyReport(){
   const entryConv=de.reduce((s,e)=>s+e.conv,0);
   const pConv=dp.reduce((s,p)=>s+p.conv,0),pBill=dp.reduce((s,p)=>s+p.bill,0),pTotal=dp.reduce((s,p)=>s+p.total,0);
   const billRecv=db.reduce((s,b)=>s+b.amount,0),challanVal=dc.reduce((s,c)=>s+c.value,0);
-  let h=rHead(`Daily Report — ${date}`);
+  let h=rHead(`Daily Report — ${fmtDate(date)}`);
   h+=rRow('Challan Submitted',taka(challanVal),'var(--blue)');
   h+=rRow('Bill Received',taka(billRecv),'var(--green)');
   h+=rRow('Worker Payable',taka(wPay),'var(--red)');
@@ -2134,7 +2171,7 @@ function genContractReport(){
     const totalCost=wc+monthlyCost+monthlyBillCut;
     const ctBills=bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
     h+=rSub(`${ct.style} | ${ct.supplier} → ${ct.factory}${ct.buyer?' (Buyer: '+ct.buyer+')':''}`);
-    h+=rRow('Date',ct.date);
+    h+=rRow('Date',fmtDate(ct.date));
     h+=rRow('Job Type',ct.jobtype);
     h+=rRow('Rate per Piece',taka(ct.rate));
     h+=rRow('Total Challan Pcs',pcs+' pcs');
@@ -2147,7 +2184,7 @@ function genContractReport(){
     if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'var(--orange)');
     h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'var(--red)');
     h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'var(--green)':'var(--red)');
-    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{h+=rRow(`#${i+1} (${b.date})${b.note?' — '+b.note:''}`,taka(b.amount),'var(--green)');});}
+    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(b.amount),'var(--green)');});}
   });
   if(!idxList.length)h+=`<div class="no-data">No data</div>`;
   document.getElementById('r-contract-result').innerHTML=rBox(h);
@@ -2171,12 +2208,12 @@ function exportWorkerTableExcel(name,m){
     const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
     const dayEntries=dateStr?wt.filter(e=>e.date===dateStr):[];
     if(dayEntries.length===0){
-      rows.push([d, dateStr||'', '', '', '', '', '']);
+      rows.push([d, dateStr?fmtDate(dateStr):'', '', '', '', '', '']);
     } else {
       dayEntries.forEach((e,ei)=>{
         const ct=contracts[e.ctIdx];
         const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs x ${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
-        rows.push([ei===0?d:'', dateStr, e.factory||'', e.conv||'', e.daily||e.wearn||'', e.ot||'', remark]);
+        rows.push([ei===0?d:'', dateStr?fmtDate(dateStr):'', e.factory||'', e.conv||'', e.daily||e.wearn||'', e.ot||'', remark]);
       });
     }
   }
@@ -2229,7 +2266,7 @@ function genWorkerReport(){
     const totalWearn=wtWearn+msPayable;
     const tp=wp.reduce((s,p)=>s+p.total,0);
     const remaining=totalPayable-tp;
-    const monthLabel=m||'All Time';
+    const monthLabel=m?fmtMonth(m):'All Time';
     const days=getDaysInMonth(m);
 
     // Build full month rows — taking + monthly salary একসাথে
@@ -2245,7 +2282,7 @@ function genWorkerReport(){
         sn++;
         rowsHtml+=`<tr style="border-bottom:1px solid #eee;">
           <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
-          <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr||''}</td>
+          <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr?fmtDate(dateStr):''}</td>
           <td style="padding:6px 8px;"></td>
           <td style="padding:6px 8px;text-align:right;"></td>
           <td style="padding:6px 8px;text-align:right;"></td>
@@ -2272,7 +2309,7 @@ function genWorkerReport(){
           }
           rowsHtml+=`<tr style="border-bottom:1px solid #eee;background:${e._type==='monthly'?'#f5f0ff':'#f0f9ff'};">
             <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
-            <td style="padding:6px 8px;font-weight:600;">${dateStr}</td>
+            <td style="padding:6px 8px;font-weight:600;">${fmtDate(dateStr)}</td>
             <td style="padding:6px 8px;font-weight:600;">${factory}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${conv?taka(conv):''}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):''}</td>
@@ -2375,7 +2412,7 @@ function genWorkerReport2(){
   const wn=document.getElementById('rr-worker').value;
   const m=document.getElementById('rr-worker-month').value;
   const wList=wn?[wn]:workers.map(w=>w.name);
-  let h=rHead(`Worker Report — ${m||'All Time'}`);
+  let h=rHead(`Worker Report — ${m?fmtMonth(m):'All Time'}`);
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
     const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m));
@@ -2423,7 +2460,7 @@ function genWorkerReport2(){
       h+=rSub('📆 Monthly Salary Breakdown');
       ms.forEach(e=>{
         const ct=contracts[e.ctIdx];
-        const label=`${e.month||e.date||'-'} | ${ct?ct.style:e.style||'-'}${e.isOffday?' 🗓️অফডে':''}${e.note?' — '+e.note:''}`;
+        const label=`${e.month?fmtMonth(e.month):fmtDate(e.date)||'-'} | ${ct?ct.style:e.style||'-'}${e.isOffday?' 🗓️অফডে':''}${e.note?' — '+e.note:''}`;
         h+=rRow(label,`Salary:${taka(+e.salary||0)} | OT:${taka(+e.offdayOT||0)} | Payable:${taka(+e.payable||0)}`,'#6a0dad');
       });
     }
@@ -2446,7 +2483,7 @@ function genWorkerReport2(){
 function genBillReport(){
   const m=document.getElementById('rr-bill-month').value;
   const orders=getOrderNumbers();
-  let h=rHead(`Bill Report${m?' — '+m:''}`);
+  let h=rHead(`Bill Report${m?' — '+fmtMonth(m):''}`);
   let grandChallan=0,grandSubmit=0,grandRecv=0;
   orders.forEach(ord=>{
     const cv=orderChallanValue(ord);
@@ -2466,7 +2503,7 @@ function genBillReport(){
     h+=rRow('Pending (Challan - Received)',taka(cv-br),(cv-br)>0?'var(--red)':'var(--green)');
     if(inst.length){
       h+=rSub('Payments Received');
-      inst.forEach((b,i)=>{h+=rRow(`#${i+1} (${b.date})${b.note?' — '+b.note:''}`,taka(b.amount),'var(--green)');});
+      inst.forEach((b,i)=>{h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(b.amount),'var(--green)');});
     }
   });
   if(orders.length>1){
@@ -2494,7 +2531,7 @@ function genMonthlyReport2(){
   const pConv=mp.reduce((s,p)=>s+p.conv,0),pBill=mp.reduce((s,p)=>s+p.bill,0),pTotal=mp.reduce((s,p)=>s+p.total,0);
   const billRecv=mb.reduce((s,b)=>s+b.amount,0);
   const billSubmitAmt=mbs.reduce((s,b)=>s+b.amount,0);
-  let h=rHead(`Monthly Summary — ${m}`);
+  let h=rHead(`Monthly Summary — ${fmtMonth(m)}`);
   h+=rRow('Challan Submitted',taka(challanVal),'var(--blue)');
   h+=rRow('Bill Submitted to Supplier',taka(billSubmitAmt),'var(--orange)');
   h+=rRow('Bill Received',taka(billRecv),'var(--green)');
@@ -2524,7 +2561,7 @@ function genSupplierReport2(){
   const supplierF=document.getElementById('rr-supplier').value;
   const m=document.getElementById('rr-supplier-month').value;
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier Report${m?' — '+m:''}${supplierF?' — '+supplierF:''}`);
+  let h=rHead(`Supplier Report${m?' — '+fmtMonth(m):''}${supplierF?' — '+supplierF:''}`);
   let grandC=0,grandB=0,grandW=0;
   supplierList.forEach(sup=>{
     const supContracts=contracts.filter(c=>c.supplier===sup);
@@ -2574,7 +2611,7 @@ function genStylePLReport(){
     return true;
   });
 
-  let h=rHead(`Style-wise P&L Report${m?' — '+m:''}${orderF?' — Order: '+orderF:''}`);
+  let h=rHead(`Style-wise P&L Report${m?' — '+fmtMonth(m):''}${orderF?' — Order: '+orderF:''}`);
   let grandChallan=0,grandWorker=0,grandBillRecv=0,grandProfit=0;
 
   filtered.forEach(idx=>{
@@ -2639,7 +2676,7 @@ function genSupplierReport(){
   const supplierF=document.getElementById('r-supplier-sel').value;
   const m=document.getElementById('r-supplier-month').value;
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier-wise Report${m?' — '+m:''}${supplierF?' — '+supplierF:''}`);
+  let h=rHead(`Supplier-wise Report${m?' — '+fmtMonth(m):''}${supplierF?' — '+supplierF:''}`);
   let grandChallan=0,grandBillRecv=0,grandWorkerCost=0,grandProfit=0;
 
   supplierList.forEach(sup=>{
