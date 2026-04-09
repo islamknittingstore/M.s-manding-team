@@ -1302,6 +1302,20 @@ function switchTab(e,id){
   document.getElementById('tab-'+id).classList.add('active');
   e.target.classList.add('active');
 }
+function switchChallanTab(e,id){
+  const page=document.getElementById('page-challan');
+  page.querySelectorAll('.ch-tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  page.querySelectorAll('#challan-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+}
+function switchInnerTab(e,id){
+  const report=document.getElementById('ch-report');
+  report.querySelectorAll('.inner-tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  report.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+}
 function selectEntryType(type){
   // entry type handled by selectWorkEntryType
 }
@@ -1799,6 +1813,123 @@ function populateSelects(){
     if(el){const v=el.value;el.innerHTML='<option value="">All Suppliers</option>'+supList.map(s=>`<option value="${s}">${s}</option>`).join('');el.value=v;}
   });
 }
+
+// ===== HELPER FUNCTIONS =====
+function getOrderNumbers(){return[...new Set(contracts.map(c=>c.orderno).filter(Boolean))];}
+function getContractsByOrder(ord){return contracts.filter(c=>c.orderno===ord);}
+function orderChallanValue(ord){const idxs=contracts.reduce((a,c,i)=>c.orderno===ord?[...a,i]:a,[]);return idxs.reduce((s,i)=>s+challanTotalValue(i),0);}
+function orderBillRecvTotal(ord){return bills.filter(b=>b.orderno===ord).reduce((s,b)=>s+b.amount,0);}
+function orderBillSubmitTotal(ord){return billSubmits.filter(b=>b.orderno===ord).reduce((s,b)=>s+b.amount,0);}
+
+// ===== BILL SUBMIT FUNCTIONS =====
+function onBillSubmitOrderSelect(){
+  const ord=document.getElementById('bs-orderno').value;
+  const wrap=document.getElementById('bs-challan-table-wrap');
+  const supEl=document.getElementById('bs-supplier');
+  if(!ord){wrap.style.display='none';supEl.value='';return;}
+  const cts=getContractsByOrder(ord);
+  supEl.value=cts[0]?cts[0].supplier:'';
+  const idxs=contracts.reduce((a,c,i)=>c.orderno===ord?[...a,i]:a,[]);
+  const rows=challans.filter(c=>idxs.includes(c.ctIdx));
+  const tb=document.getElementById('bs-challan-rows');
+  tb.innerHTML=rows.length===0?'<tr><td colspan="7" class="no-data">এই Order-এ কোনো Challan নেই</td></tr>':
+    rows.map((c,i)=>`<tr>
+      <td><input type="checkbox" class="bs-ch-chk" data-val="${c.value}" onchange="calcBsSelected()"></td>
+      <td>${c.style}</td><td>${c.factory}</td><td>${c.note||'-'}</td>
+      <td>${c.pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.date}</td>
+    </tr>`).join('');
+  wrap.style.display='block';
+  calcBsSelected();
+}
+function toggleAllBsChallans(el){
+  document.querySelectorAll('.bs-ch-chk').forEach(c=>c.checked=el.checked);
+  calcBsSelected();
+}
+function calcBsSelected(){
+  const total=[...document.querySelectorAll('.bs-ch-chk:checked')].reduce((s,c)=>s+(+c.dataset.val||0),0);
+  document.getElementById('bs-selected-total').textContent=taka(total);
+}
+function addBillSubmit(){
+  const date=document.getElementById('bs-date').value;
+  const orderno=document.getElementById('bs-orderno').value;
+  const amount=+document.getElementById('bs-amount').value||0;
+  if(!date||!orderno||!amount)return alert('Date, Order Number ও Bill Amount দিন');
+  const cts=getContractsByOrder(orderno);
+  const supplier=cts[0]?cts[0].supplier:'';
+  const styles=[...new Set(cts.map(c=>c.style))].join(', ');
+  const challanVal=[...document.querySelectorAll('.bs-ch-chk:checked')].reduce((s,c)=>s+(+c.dataset.val||0),0);
+  billSubmits.push({date,orderno,supplier,styles,challanVal,amount,note:document.getElementById('bs-note').value.trim()});
+  document.getElementById('bs-date').value='';
+  document.getElementById('bs-amount').value='';
+  document.getElementById('bs-note').value='';
+  document.getElementById('bs-orderno').value='';
+  document.getElementById('bs-supplier').value='';
+  document.getElementById('bs-challan-table-wrap').style.display='none';
+  save();
+}
+function deleteBillSubmit(i){confirmDelete(()=>{billSubmits.splice(i,1);save();},'এই Bill Submit মুছবেন?');}
+function renderBillSubmitList(){
+  const ordF=document.getElementById('bsf-orderno')?document.getElementById('bsf-orderno').value:'';
+  const mF=document.getElementById('bsf-month')?document.getElementById('bsf-month').value:'';
+  const list=billSubmits.filter(b=>{
+    if(ordF&&b.orderno!==ordF)return false;
+    if(mF&&!b.date.startsWith(mF))return false;
+    return true;
+  }).slice().reverse();
+  const tb=document.getElementById('billsubmit-list');
+  if(!tb)return;
+  tb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No records</td></tr>':
+    list.map((b,i)=>`<tr>
+      <td>${list.length-i}</td><td>${b.date}</td><td><strong>${b.orderno}</strong></td>
+      <td>${b.supplier||'-'}</td><td style="font-size:12px;">${b.styles||'-'}</td>
+      <td style="color:var(--blue);font-weight:700;">${taka(b.challanVal||0)}</td>
+      <td style="color:var(--orange);font-weight:700;">${taka(b.amount)}</td>
+      <td>${b.note||'-'}</td>
+      <td><button class="btn btn-danger" onclick="deleteBillSubmit(${billSubmits.indexOf(b)})">❌</button></td>
+    </tr>`).join('');
+  // Summary table
+  const stb=document.getElementById('billsubmit-summary');
+  if(!stb)return;
+  const orders=getOrderNumbers();
+  stb.innerHTML=orders.length===0?'<tr><td colspan="7" class="no-data">No data</td></tr>':
+    orders.map(ord=>{
+      const cv=orderChallanValue(ord);
+      const bs=orderBillSubmitTotal(ord);
+      const br=orderBillRecvTotal(ord);
+      const cts=getContractsByOrder(ord);
+      const supplier=cts[0]?cts[0].supplier:'-';
+      const styles=[...new Set(cts.map(c=>c.style))].join(', ');
+      const pending=cv-br;
+      const status=pending<=0?'<span class="badge badge-green">✅ Cleared</span>':br>0?'<span class="badge badge-orange">🔄 Partial</span>':'<span class="badge badge-red">⏳ Pending</span>';
+      return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td>
+        <td style="color:var(--blue);font-weight:700;">${taka(cv)}</td>
+        <td style="color:var(--orange);font-weight:700;">${taka(bs)}</td>
+        <td style="color:var(--green);font-weight:700;">${taka(br)}</td>
+        <td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td>
+        <td>${status}</td></tr>`;
+    }).join('');
+}
+
+// ===== BILL RECEIVE FUNCTIONS =====
+function onBillRecvOrderSelect(){
+  const ord=document.getElementById('b-orderno').value;
+  const sel=document.getElementById('b-submit-sel');
+  document.getElementById('b-submitted-amount').value='';
+  if(!ord){sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>';return;}
+  const submits=billSubmits.filter(b=>b.orderno===ord);
+  sel.innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>'+
+    submits.map((b,i)=>`<option value="${billSubmits.indexOf(b)}">${b.date} — ${taka(b.amount)}${b.note?' ('+b.note+')':''}</option>`).join('');
+}
+function onBillRecvSubmitSelect(){
+  const idx=document.getElementById('b-submit-sel').value;
+  const el=document.getElementById('b-submitted-amount');
+  if(idx===''){el.value='';return;}
+  const bs=billSubmits[+idx];
+  el.value=bs?bs.amount:'';
+}
+
+// ===== MONTHLY REPORT ALIAS =====
+function genMonthlyReport(){genMonthlyReport2();}
 
 function renderAll(){
   try{populateSelects();}catch(e){console.error('populateSelects',e);}
