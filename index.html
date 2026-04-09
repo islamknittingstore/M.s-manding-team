@@ -283,8 +283,11 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     </div>
   </div>
 
+  <!-- Personal Account -->
+  <a onclick="showPage('personal')" id="nav-personal" style="margin-top:8px;border:1px solid #c0392b44;background:#1f1010;"><span class="icon">💰</span> My Personal Account</a>
+
   <!-- Settings -->
-  <a onclick="showPage('settings')" id="nav-settings" style="margin-top:8px;"><span class="icon">⚙️</span> Settings</a>
+  <a onclick="showPage('settings')" id="nav-settings"><span class="icon">⚙️</span> Settings</a>
 </div>
 
 <div class="main">
@@ -955,6 +958,105 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   </div>
 </div>
 
+<!-- MY PERSONAL ACCOUNT -->
+<div id="page-personal" class="page">
+  <div class="page-header">
+    <h2>💰 My Personal Account</h2>
+    <p>আমার নিজের পকেটের লেনদেনের হিসাব — কোম্পানির সাথে সম্পর্কহীন</p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card c-red">
+      <div class="lbl">মোট দিয়েছি</div>
+      <div class="val">৳<span id="pa-total-debit">0</span></div>
+      <div class="sub">আমার পকেট থেকে গেছে</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="lbl">মোট ফেরত পেয়েছি</div>
+      <div class="val">৳<span id="pa-total-credit">0</span></div>
+      <div class="sub">ফেরত এসেছে</div>
+    </div>
+    <div class="stat-card c-orange">
+      <div class="lbl">মোট বকেয়া (আমার পাওনা)</div>
+      <div class="val">৳<span id="pa-total-due">0</span></div>
+      <div class="sub">এখনো ফেরত পাইনি</div>
+    </div>
+  </div>
+
+  <!-- Person-wise Summary -->
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-header">👤 ব্যক্তি-ভিত্তিক বকেয়া সারসংক্ষেপ</div>
+    <table>
+      <thead><tr><th>#</th><th>নাম</th><th>ধরন</th><th>মোট নিয়েছে</th><th>মোট দিয়েছে</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead>
+      <tbody id="pa-person-summary"><tr><td colspan="7" class="no-data">কোনো ডেটা নেই</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Add Transaction -->
+  <div class="form-panel">
+    <h5>➕ নতুন লেনদেন যোগ করুন</h5>
+    <div class="form-row">
+      <div class="fg" style="min-width:160px;">
+        <label>ধরন (Type)</label>
+        <select id="pa-cat">
+          <option value="worker">শ্রমিক (Worker)</option>
+          <option value="partner">পার্টনার (Partner)</option>
+          <option value="other">অন্যান্য (Other)</option>
+        </select>
+      </div>
+      <div class="fg" style="min-width:160px;">
+        <label>নাম</label>
+        <input id="pa-name" placeholder="ব্যক্তির নাম লিখুন">
+      </div>
+      <div class="fg" style="min-width:120px;">
+        <label>লেনদেন</label>
+        <select id="pa-txtype">
+          <option value="debit">💸 দিয়েছি (Debit)</option>
+          <option value="credit">💚 ফেরত পেয়েছি (Credit)</option>
+        </select>
+      </div>
+      <div class="fg" style="min-width:120px;">
+        <label>পরিমাণ (৳)</label>
+        <input id="pa-amount" type="number" placeholder="0" min="1">
+      </div>
+      <div class="fg" style="min-width:130px;">
+        <label>তারিখ</label>
+        <input id="pa-date" type="date">
+      </div>
+      <div class="fg" style="min-width:160px;">
+        <label>কারণ / নোট</label>
+        <input id="pa-note" placeholder="যেমন: বাজার খরচ, ধার...">
+      </div>
+      <div class="fg-btn"><button class="btn btn-success" onclick="addPersonalTx()">＋ Add</button></div>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="panel">
+    <div class="panel-header">📋 লেনদেনের ইতিহাস
+      <span class="ph-right">
+        <select id="pa-filter-cat" onchange="renderPersonalAccount()">
+          <option value="">সব ধরন</option>
+          <option value="worker">শ্রমিক</option>
+          <option value="partner">পার্টনার</option>
+          <option value="other">অন্যান্য</option>
+        </select>
+        <input type="month" id="pa-filter-month" onchange="renderPersonalAccount()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <select id="pa-filter-txtype" onchange="renderPersonalAccount()">
+          <option value="">সব লেনদেন</option>
+          <option value="debit">দিয়েছি</option>
+          <option value="credit">ফেরত পেয়েছি</option>
+        </select>
+      </span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>তারিখ</th><th>নাম</th><th>ধরন</th><th>লেনদেন</th><th>পরিমাণ (৳)</th><th>কারণ/নোট</th><th>Action</th></tr></thead>
+      <tbody id="pa-tx-list"><tr><td colspan="8" class="no-data">কোনো লেনদেন নেই</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div id="page-settings" class="page">
   <div class="page-header"><h2>⚙️ Settings</h2></div>
@@ -991,8 +1093,8 @@ updateClock();setInterval(updateClock,1000);
 document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 const todayStr=new Date().toISOString().split('T')[0];
 const ymStr=todayStr.slice(0,7);
-['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date','ms-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
-['tf-month','ms-month','msf-month','pf-month','r-worker-month','r-month','chf-month','bf-month','r-supplier-month','bsf-month','rr-worker-month','rr-bill-month','rr-month','rr-supplier-month'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=ymStr;});
+['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date','ms-date','pa-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
+['tf-month','ms-month','msf-month','pf-month','r-worker-month','r-month','chf-month','bf-month','r-supplier-month','bsf-month','rr-worker-month','rr-bill-month','rr-month','rr-supplier-month','pa-filter-month'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=ymStr;});
 
 // ===== FIREBASE REALTIME DATABASE SETUP =====
 const firebaseConfig = {
@@ -2264,6 +2366,7 @@ function genWorkerReport(){
     const totalOT=wtOT+msOT;
     const totalConv=wtConv;
     const totalWearn=wtWearn+msPayable;
+    const totalLunch=ms.reduce((s,e)=>s+(+e.lunch||0),0);
     const tp=wp.reduce((s,p)=>s+p.total,0);
     const remaining=totalPayable-tp;
     const monthLabel=m?fmtMonth(m):'All Time';
@@ -2287,16 +2390,18 @@ function genWorkerReport(){
           <td style="padding:6px 8px;text-align:right;"></td>
           <td style="padding:6px 8px;text-align:right;"></td>
           <td style="padding:6px 8px;text-align:right;"></td>
+          <td style="padding:6px 8px;text-align:right;"></td>
           <td style="padding:6px 8px;"></td>
         </tr>`;
       } else {
         allDay.forEach((e)=>{
           sn++;
-          let conv=0,daily=0,ot=0,factory='',remark='';
+          let conv=0,daily=0,ot=0,lunch=0,factory='',remark='';
           if(e._type==='taking'){
             conv=e.conv||0;
             daily=e.daily||0;
             ot=e.ot||0;
+            lunch=0;
             factory=e.factory||'-';
             remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
           } else {
@@ -2304,6 +2409,7 @@ function genWorkerReport(){
             conv=e.travel||0;
             daily=e.salary||0;
             ot=e.offdayOT||0;
+            lunch=e.lunch||0;
             factory=e.factory||'-';
             remark=`📆 মাসিক${e.isOffday?' (অফডে)':''}${e.note?' — '+e.note:''}`;
           }
@@ -2314,6 +2420,7 @@ function genWorkerReport(){
             <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${conv?taka(conv):''}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):''}</td>
             <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${ot?taka(ot):''}</td>
+            <td style="padding:6px 8px;text-align:right;color:#fb923c;font-weight:700;">${lunch?taka(lunch):''}</td>
             <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
           </tr>`;
         });
@@ -2346,6 +2453,7 @@ function genWorkerReport(){
               <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Conveyance</th>
               <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Daily Salary</th>
               <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Over Time</th>
+              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:#fb923c;">🍽️ Lunch</th>
               <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Remark</th>
             </tr>
           </thead>
@@ -2357,6 +2465,7 @@ function genWorkerReport(){
               <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(totalConv)}</td>
               <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(totalWearn-totalOT)}</td>
               <td style="padding:10px 8px;text-align:right;color:#58d68d;">${totalOT?taka(totalOT):'-'}</td>
+              <td style="padding:10px 8px;text-align:right;color:#fb923c;">${totalLunch?taka(totalLunch):'-'}</td>
               <td style="padding:10px 8px;font-size:11px;color:#a8c0d6;">Daily+Monthly</td>
             </tr>
           </tbody>
@@ -2458,11 +2567,52 @@ function genWorkerReport2(){
     // Monthly Salary breakdown
     if(ms.length){
       h+=rSub('📆 Monthly Salary Breakdown');
-      ms.forEach(e=>{
-        const ct=contracts[e.ctIdx];
-        const label=`${e.month?fmtMonth(e.month):fmtDate(e.date)||'-'} | ${ct?ct.style:e.style||'-'}${e.isOffday?' 🗓️অফডে':''}${e.note?' — '+e.note:''}`;
-        h+=rRow(label,`Salary:${taka(+e.salary||0)} | OT:${taka(+e.offdayOT||0)} | Payable:${taka(+e.payable||0)}`,'#6a0dad');
-      });
+      h+=`<div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:#2c1a4a;color:#d8b4fe;">
+              <th style="padding:7px 10px;text-align:left;font-weight:600;">#</th>
+              <th style="padding:7px 10px;text-align:left;font-weight:600;">Month</th>
+              <th style="padding:7px 10px;text-align:left;font-weight:600;">Style</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">Salary</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">OT</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">🍽️ লাঞ্চ</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">যাতায়াত</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">অন্যান্য কাটা</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;">Payable</th>
+              <th style="padding:7px 10px;text-align:left;font-weight:600;">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ms.map((e,i)=>{
+              const ct=contracts[e.ctIdx];
+              const styleLabel=(ct?ct.style:e.style||'-')+(e.isOffday?' 🗓️অফডে':'');
+              return `<tr style="background:${i%2===0?'#1e1030':'#17082a'};border-bottom:1px solid #3d1f6a;">
+                <td style="padding:7px 10px;color:#a8c0d6;">${i+1}</td>
+                <td style="padding:7px 10px;color:#c4b5fd;font-weight:600;">${e.month?fmtMonth(e.month):fmtDate(e.date)||'-'}</td>
+                <td style="padding:7px 10px;color:#e2d9f3;">${styleLabel}</td>
+                <td style="padding:7px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(+e.salary||0)}</td>
+                <td style="padding:7px 10px;text-align:right;color:#4ade80;">${(+e.offdayOT||0)?taka(+e.offdayOT):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#fb923c;font-weight:600;">${(+e.lunch||0)?taka(+e.lunch):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#fb923c;">${(+e.travel||0)?taka(+e.travel):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#f87171;">${(+e.deduct||0)?taka(+e.deduct):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(+e.payable||0)}</td>
+                <td style="padding:7px 10px;color:#94a3b8;font-size:11px;">${e.note||'-'}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#2c1a4a;border-top:2px solid #7c3aed;">
+              <td colspan="3" style="padding:8px 10px;color:#d8b4fe;font-weight:700;font-size:12px;">মোট</td>
+              <td style="padding:8px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.salary||0),0))}</td>
+              <td style="padding:8px 10px;text-align:right;color:#4ade80;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.offdayOT||0),0))}</td>
+              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.lunch||0),0))}</td>
+              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.travel||0),0))}</td>
+              <td style="padding:8px 10px;text-align:right;color:#f87171;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.deduct||0),0))}</td>
+              <td style="padding:8px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(ms.reduce((s,e)=>s+(+e.payable||0),0))}</td>
+              <td style="padding:8px 10px;"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
     }
 
     // Daily/Piece style breakdown
@@ -2718,8 +2868,148 @@ function genSupplierReport(){
 }
 
 
+// ===== MY PERSONAL ACCOUNT =====
+let personalTxs = [];
+const PA_REF = fbdb.ref('personalAccount');
+
+// Load from localStorage fallback
+personalTxs = JSON.parse(localStorage.getItem('personalTxs') || '[]');
+
+// Real-time Firebase sync for personal account
+PA_REF.on('value', snap => {
+  const d = snap.val();
+  if (d && Array.isArray(d)) {
+    personalTxs = d;
+    localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
+  } else if (d && typeof d === 'object' && !Array.isArray(d)) {
+    // convert object to array if needed
+    personalTxs = Object.values(d);
+    localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
+  }
+  renderPersonalAccount();
+}, err => { console.error('PA Firebase error:', err); });
+
+function savePersonal() {
+  localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
+  PA_REF.set(personalTxs)
+    .then(() => {})
+    .catch(e => console.error('PA save error:', e));
+  renderPersonalAccount();
+}
+
+function addPersonalTx() {
+  const cat    = document.getElementById('pa-cat').value;
+  const name   = document.getElementById('pa-name').value.trim();
+  const txtype = document.getElementById('pa-txtype').value;
+  const amount = parseFloat(document.getElementById('pa-amount').value);
+  const date   = document.getElementById('pa-date').value;
+  const note   = document.getElementById('pa-note').value.trim();
+
+  if (!name)   { alert('নাম দিন!'); return; }
+  if (!amount || amount <= 0) { alert('সঠিক পরিমাণ দিন!'); return; }
+  if (!date)   { alert('তারিখ দিন!'); return; }
+
+  personalTxs.push({ id: Date.now(), cat, name, txtype, amount, date, note });
+  savePersonal();
+
+  // Reset only amount & note
+  document.getElementById('pa-amount').value = '';
+  document.getElementById('pa-note').value   = '';
+}
+
+function deletePersonalTx(id) {
+  if (!confirm('এই লেনদেন মুছবেন?')) return;
+  personalTxs = personalTxs.filter(t => t.id !== id);
+  savePersonal();
+}
+
+function renderPersonalAccount() {
+  const filterCat    = (document.getElementById('pa-filter-cat')    || {}).value || '';
+  const filterMonth  = (document.getElementById('pa-filter-month')   || {}).value || '';
+  const filterTxtype = (document.getElementById('pa-filter-txtype')  || {}).value || '';
+
+  let filtered = personalTxs.filter(t => {
+    if (filterCat    && t.cat    !== filterCat)              return false;
+    if (filterMonth  && !t.date.startsWith(filterMonth))     return false;
+    if (filterTxtype && t.txtype !== filterTxtype)           return false;
+    return true;
+  });
+
+  // Sort by date desc
+  filtered.sort((a, b) => b.date.localeCompare(a.date));
+
+  // Transaction list
+  const tbody = document.getElementById('pa-tx-list');
+  if (!tbody) return;
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data">কোনো লেনদেন নেই</td></tr>';
+  } else {
+    const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
+    tbody.innerHTML = filtered.map((t, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${t.date}</td>
+        <td><strong>${t.name}</strong></td>
+        <td><span class="badge badge-blue">${catLabel[t.cat] || t.cat}</span></td>
+        <td>${t.txtype === 'debit'
+          ? '<span class="badge badge-red">💸 দিয়েছি</span>'
+          : '<span class="badge badge-green">💚 ফেরত পেয়েছি</span>'}</td>
+        <td style="font-weight:700;color:${t.txtype === 'debit' ? 'var(--red)' : 'var(--green)'};">
+          ${t.txtype === 'debit' ? '-' : '+'}৳${t.amount.toLocaleString('en-BD')}
+        </td>
+        <td style="color:var(--text-muted);font-size:12px;">${t.note || '—'}</td>
+        <td><button class="btn btn-danger" onclick="deletePersonalTx(${t.id})">🗑️</button></td>
+      </tr>`).join('');
+  }
+
+  // Summary cards — use ALL data (no filter)
+  const totalDebit  = personalTxs.filter(t => t.txtype === 'debit').reduce((s, t) => s + t.amount, 0);
+  const totalCredit = personalTxs.filter(t => t.txtype === 'credit').reduce((s, t) => s + t.amount, 0);
+  const totalDue    = totalDebit - totalCredit;
+  const fmt = n => n.toLocaleString('en-BD');
+  const el = id => document.getElementById(id);
+  if (el('pa-total-debit'))  el('pa-total-debit').textContent  = fmt(totalDebit);
+  if (el('pa-total-credit')) el('pa-total-credit').textContent = fmt(totalCredit);
+  if (el('pa-total-due'))    el('pa-total-due').textContent    = fmt(Math.max(0, totalDue));
+
+  // Person-wise summary — group by name+cat
+  const personMap = {};
+  personalTxs.forEach(t => {
+    const key = t.name + '||' + t.cat;
+    if (!personMap[key]) personMap[key] = { name: t.name, cat: t.cat, debit: 0, credit: 0 };
+    if (t.txtype === 'debit')  personMap[key].debit  += t.amount;
+    if (t.txtype === 'credit') personMap[key].credit += t.amount;
+  });
+  const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
+  const persons  = Object.values(personMap).sort((a, b) => (b.debit - b.credit) - (a.debit - a.credit));
+  const sumBody  = document.getElementById('pa-person-summary');
+  if (sumBody) {
+    if (!persons.length) {
+      sumBody.innerHTML = '<tr><td colspan="7" class="no-data">কোনো ডেটা নেই</td></tr>';
+    } else {
+      sumBody.innerHTML = persons.map((p, i) => {
+        const due = p.debit - p.credit;
+        return `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${p.name}</strong></td>
+          <td><span class="badge badge-blue">${catLabel[p.cat] || p.cat}</span></td>
+          <td style="color:var(--red);font-weight:600;">৳${fmt(p.debit)}</td>
+          <td style="color:var(--green);font-weight:600;">৳${fmt(p.credit)}</td>
+          <td style="font-weight:700;color:${due > 0 ? 'var(--red)' : 'var(--green)'};">৳${fmt(Math.abs(due))}</td>
+          <td>${due > 0
+            ? '<span class="badge badge-red">বকেয়া আছে</span>'
+            : due === 0
+              ? '<span class="badge badge-gray">পরিশোধ</span>'
+              : '<span class="badge badge-green">অতিরিক্ত দিয়েছে</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
 setSalaryType('daily');
 renderAll();
+renderPersonalAccount();
 
 function forceSync(){
   setSyncStatus('saving');
