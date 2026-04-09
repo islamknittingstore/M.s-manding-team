@@ -2078,7 +2078,7 @@ function genWorkerReport(){
 
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m))).slice().sort((a,b)=>a.date.localeCompare(b.date));
-    const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m)).slice().sort((a,b=>(a.date||'').localeCompare(b.date||'')));
+    const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
 
     // taking থেকে totals
