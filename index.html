@@ -1207,7 +1207,7 @@ function showLoginError(msg) {
   document.getElementById('login-error').textContent = msg;
 }
 
-function initApp() {
+let _appInitialized = false;
 
 let _lastSyncTime = null;
 let _fbConnected = false;
@@ -1400,7 +1400,11 @@ function loadLocal(){
 }
 
 // initApp() — called after successful login
-// Listen for Firebase changes (real-time sync)
+function initApp() {
+  if (_appInitialized) return;
+  _appInitialized = true;
+
+  // Listen for Firebase changes (real-time sync)
   setSyncStatus('loading');
   loadLocal();
   renderAll();
