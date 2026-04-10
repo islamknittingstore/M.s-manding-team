@@ -155,6 +155,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .sp-footer .fi.loading{background:var(--blue);animation:pulse-dot 0.7s infinite;}
 .sp-last-note{font-size:11px;color:#4a6a85;text-align:center;padding:6px 14px 10px;}
 .entry-type-btns{display:flex;gap:12px;margin-bottom:20px;}
+.ljpanel{animation:fadeIn 0.18s ease;}
 .entry-type-btn{flex:1;padding:16px;border-radius:10px;border:2px solid var(--border);cursor:pointer;text-align:center;background:#fff;transition:all 0.18s;font-family:'Poppins',sans-serif;}
 .entry-type-btn.active-taking{border-color:var(--blue);background:#eaf3fb;}
 .entry-type-btn.active-challan{border-color:var(--blue);background:#eaf3fb;}
@@ -202,6 +203,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .acc-body.open{display:block;}
 .acc-body a{font-size:12.5px;padding:7px 12px;}
 @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}.two-col{grid-template-columns:1fr;}.entry-type-btns{flex-direction:column;}}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 </style>
 </head>
 <body>
@@ -244,17 +246,23 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <button onclick="exportJSON()" title="JSON Backup Export" style="display:flex;align-items:center;gap:5px;background:var(--green);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">⬇️ Export</button>
-    <label title="JSON Backup Import" style="display:flex;align-items:center;gap:5px;background:var(--orange);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">⬆️ Import<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label>
-    <button id="sync-btn" onclick="toggleSyncPopup()">
-      <span class="sync-dot loading" id="sync-dot"></span>
-      <span id="sync-status">⏳ Loading...</span>
-    </button>
-    <div class="topbar-right" id="clock"></div>
     <div style="display:flex;align-items:center;gap:6px;background:#f0f4f8;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--primary);">
       <span>👤</span><span id="topbar-user" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     </div>
     <button onclick="doLogout()" title="Logout" style="display:flex;align-items:center;gap:5px;background:var(--red);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">🚪 Logout</button>
+    <!-- Local JSON Connected Indicator — hidden by default, shown when connected -->
+    <button id="localfile-topbar-btn" onclick="toggleSyncPopup()" title="Local JSON File কানেক্টেড আছে — Sync Popup খুলুন"
+      style="display:none;align-items:center;gap:5px;background:#0d3320;color:#58d68d;border:1.5px solid #27ae60;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:all 0.2s;box-shadow:0 0 0 3px rgba(39,174,96,0.18);"
+      onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
+      <span style="width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block;animation:pulse-dot 1.5s infinite;flex-shrink:0;"></span>
+      📂 <span id="localfile-topbar-name" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    </button>
+    <button id="sync-btn">
+      <span class="sync-dot loading" id="sync-dot"></span>
+      <span id="sync-status">⏳ Loading...</span>
+    </button>
+    <button onclick="toggleSyncPopup()" title="Sync Popup" style="display:flex;align-items:center;gap:5px;background:#1a3a5c;color:#a8c0d6;border:1.5px solid #2d5a8e;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">🔄 Sync</button>
+    <div class="topbar-right" id="clock"></div>
   </div>
 </div>
 
@@ -281,43 +289,97 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="sp-btn-row">
         <button class="sp-btn sp-btn-blue" onclick="closeSyncPopup();forceSync()">🔄 Force Sync</button>
         <button class="sp-btn sp-btn-green" onclick="closeSyncPopup();saveAllNow()">💾 Save Now</button>
-        <button class="sp-btn sp-btn-gray" onclick="closeSyncPopup();showPage('settings')">⚙️ Settings</button>
       </div>
     </div>
   </div>
 
-  <!-- JSON Card -->
-  <div class="sp-card">
-    <div class="sp-card-header">
-      <span class="sp-ind ok"></span>
-      📁 JSON Backup
+  <!-- Live JSON Card -->
+  <div class="sp-card" style="border:1px solid #27ae6055;">
+    <div class="sp-card-header" style="color:#27ae60;">
+      <span class="sp-ind" id="sp-ljson-dot" style="background:#555;"></span>
+      🔗 Live JSON কানেকশন
     </div>
     <div class="sp-card-body">
-      <div class="sp-info-line" id="sp-json-info">ডেটা ব্যাকআপ রাখতে Export করুন</div>
+      <div class="sp-info-line" id="sp-ljson-info" style="color:#a8c0d6;">সংযুক্ত নয়</div>
       <div class="sp-btn-row">
-        <button class="sp-btn sp-btn-green" onclick="exportJSON()">⬇️ Export JSON</button>
-        <button class="sp-btn sp-btn-orange" onclick="document.getElementById('json-import-input').click()">⬆️ Import JSON</button>
+        <button class="sp-btn sp-btn-green" onclick="closeSyncPopup();showPage('settings')">⚡ Connect JSON</button>
+        <button class="sp-btn sp-btn-gray" id="sp-ljson-reload-btn" onclick="reloadLiveJSON()" style="display:none;">🔄 Reload</button>
       </div>
-      <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJSON(this)">
+    </div>
+  </div>
+
+  <!-- JSON Local File Card -->
+  <div class="sp-card" style="border:1px solid #e67e2255;">
+    <div class="sp-card-header" style="color:#e67e22;">
+      <span class="sp-ind" id="sp-localfile-dot" style="background:#555;"></span>
+      📂 JSON Local File
+    </div>
+    <div class="sp-card-body">
+      <div class="sp-info-line" id="sp-localfile-info">কোনো File Connect নেই</div>
+      <div class="sp-info-line" id="sp-localfile-mode-info" style="color:#7a9bb8;font-size:11px;">💡 "Connect File" চাপলে JSON file select করুন। প্রতি entry-তে auto-save হবে।</div>
+      <div class="sp-btn-row">
+        <button class="sp-btn sp-btn-orange" onclick="openLocalFileModal()">📂 Connect File</button>
+        <button class="sp-btn sp-btn-red" id="sp-localfile-disconnect-btn" onclick="disconnectLocalFile()" style="display:none;font-size:11px;">✕ Disconnect</button>
+      </div>
     </div>
   </div>
 
   <!-- Save All Now -->
   <button class="sp-save-all" onclick="saveAllNow()">
-    💾 Save All Now — Firebase + JSON
+    💾 Save All Now — Firebase
   </button>
-
-  <!-- Danger Zone -->
-  <div style="margin:0 10px 10px;display:flex;gap:7px;">
-    <button class="sp-btn sp-btn-red" style="flex:1;justify-content:center;font-size:12px;" onclick="closeSyncPopup();confirmDelete(()=>{DATA_REF.remove();localStorage.clear();location.reload();},'Firebase ও Local সব data মুছবেন? ফিরে পাওয়া যাবে না!')">🗑️ সব Data মুছুন</button>
-  </div>
 
   <!-- Footer -->
   <div class="sp-footer">
     <span><i class="fi" id="foot-fb-dot"></i> Firebase</span>
-    <span><i class="fi ok"></i> JSON</span>
+    <span><i class="fi" id="foot-localfile-dot" style="background:#555;"></i> Local File</span>
     <span id="sp-footer-time" style="margin-left:auto;"></span>
   </div>
+</div>
+
+<div id="localfile-modal-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.65);" onclick="closeLocalFileModal()"></div>
+<div id="localfile-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:340px;background:#1a2535;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.55);z-index:2001;overflow:hidden;font-family:'Roboto',sans-serif;">
+  <div style="background:#1e2e42;color:#e8f0f8;padding:14px 16px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2d3f55;">
+    📂 JSON File কানেকশন
+    <button onclick="closeLocalFileModal()" style="background:none;border:none;color:#7a9bb8;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+  <div style="padding:14px 16px 6px;color:#a8c0d6;font-size:12px;text-align:center;">ফাইল কানেক্ট করার ধরন বেছে নিন</div>
+  <div style="padding:6px 14px 16px;display:flex;flex-direction:column;gap:10px;">
+
+    <!-- ✅ Create New -->
+    <button onclick="localFileCreateNew()" style="width:100%;padding:13px 14px;background:#0d2137;border:2px solid #2980b9;border-radius:10px;font-size:13px;font-weight:700;color:#5dade2;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:20px;line-height:1.2;">📄</span>
+      <span>
+        নতুন ফাইল তৈরি করুন
+        <div style="font-size:11px;font-weight:400;color:#6a8faf;margin-top:3px;">Firebase ডেটা অক্ষুণ্ণ থাকবে — নতুন ফাইলে auto-save শুরু হবে</div>
+      </span>
+    </button>
+
+    <!-- ✅ Open Existing SAFE -->
+    <button onclick="localFileConnectOnly()" style="width:100%;padding:13px 14px;background:#0d2a1a;border:2px solid #27ae60;border-radius:10px;font-size:13px;font-weight:700;color:#58d68d;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:20px;line-height:1.2;">🔗</span>
+      <span>
+        পুরনো ফাইল কানেক্ট করুন
+        <span style="background:#27ae60;color:#fff;font-size:9px;padding:1px 6px;border-radius:6px;margin-left:5px;vertical-align:middle;">SAFE</span>
+        <div style="font-size:11px;font-weight:400;color:#4a9e6a;margin-top:3px;">Firebase ডেটা মুছবে না — শুধু নতুন entry JSON-এও save হবে</div>
+      </span>
+    </button>
+
+    <!-- 🔄 JSON Reload — REPLACE -->
+    <button onclick="localFileEmergencyRestore()" style="width:100%;padding:13px 14px;background:#2a1a0a;border:2px solid #e67e22;border-radius:10px;font-size:13px;font-weight:700;color:#f0a500;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:20px;line-height:1.2;">🔄</span>
+      <span>
+        JSON Reload করুন
+        <span style="background:#e67e22;color:#fff;font-size:9px;padding:1px 6px;border-radius:6px;margin-left:5px;vertical-align:middle;">⚠️ REPLACE</span>
+        <div style="font-size:11px;font-weight:400;color:#a07030;margin-top:3px;">JSON ফাইলের ডেটা Firebase-এ replace হবে — Firebase সমস্যায় ব্যবহার করুন</div>
+      </span>
+    </button>
+
+    <button onclick="closeLocalFileModal()" style="width:100%;padding:10px;background:#0d1a26;border:1px solid #2d3f55;border-radius:8px;font-size:13px;color:#6a8faf;cursor:pointer;">বাতিল করুন</button>
+  </div>
+</div>
+<input type="file" id="localfile-open-input" accept=".json" style="display:none;" onchange="localFileOnOpen(this)">
+<input type="file" id="localfile-safe-input" accept=".json" style="display:none;" onchange="localFileOnOpen(this)">
 </div>
 
 <div class="layout">
@@ -1135,6 +1197,121 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 <!-- SETTINGS -->
 <div id="page-settings" class="page">
   <div class="page-header"><h2>⚙️ Settings</h2></div>
+
+  <!-- ===== LIVE JSON CONNECTION PANEL ===== -->
+  <div class="form-panel" style="border:2px solid #27ae60;border-radius:12px;padding:0;overflow:hidden;margin-bottom:18px;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1e8449,#27ae60);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🔗</span>
+        <div>
+          <div style="color:#fff;font-size:15px;font-weight:700;font-family:'Poppins',sans-serif;">Live JSON ডেটা কানেকশন</div>
+          <div style="color:#a9dfbf;font-size:12px;margin-top:1px;">Google Sheets, GitHub বা যেকোনো Public JSON URL থেকে লাইভ ডেটা লোড করুন</div>
+        </div>
+      </div>
+      <div id="ljson-status-badge" style="display:flex;align-items:center;gap:6px;background:#ffffff22;border-radius:20px;padding:5px 12px;font-size:12px;color:#fff;font-weight:600;">
+        <span id="ljson-badge-dot" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:0.4;display:inline-block;"></span>
+        <span id="ljson-badge-text">সংযুক্ত নয়</span>
+      </div>
+    </div>
+
+    <!-- Connection Type Tabs -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e8f5e9;background:#f8fffe;">
+      <button id="ljt-sheets" onclick="switchLJTab('sheets')" style="flex:1;padding:10px 6px;border:none;background:#27ae60;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Roboto',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.15s;">
+        🟢 Google Sheets
+      </button>
+      <button id="ljt-github" onclick="switchLJTab('github')" style="flex:1;padding:10px 6px;border:none;background:#f0faf4;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:'Roboto',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.15s;">
+        🐙 GitHub Raw
+      </button>
+      <button id="ljt-custom" onclick="switchLJTab('custom')" style="flex:1;padding:10px 6px;border:none;background:#f0faf4;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:'Roboto',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.15s;">
+        🌐 Custom URL
+      </button>
+    </div>
+
+    <!-- Tab Content Area -->
+    <div style="padding:16px 18px;">
+
+      <!-- Google Sheets Tab -->
+      <div id="ljpanel-sheets" class="ljpanel">
+        <div style="background:#e8f5e9;border:1px solid #a9dfbf;border-radius:8px;padding:10px 13px;font-size:12px;color:#1e8449;margin-bottom:13px;line-height:1.6;">
+          📌 <strong>কীভাবে করবেন:</strong> Google Sheets → File → Share → Publish to Web → CSV বা JSON হিসেবে publish করুন → লিংকটি নিচে paste করুন।<br>
+          <span style="color:#888;">ফরম্যাট:</span> <code style="background:#c8e6c9;padding:1px 5px;border-radius:3px;font-size:11px;">https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:json</code>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="ljson-sheets-url" type="url" placeholder="Google Sheets JSON URL এখানে paste করুন..."
+            style="flex:1;min-width:220px;padding:9px 12px;border:1px solid #a9dfbf;border-radius:7px;font-size:13px;background:#fff;color:#333;"
+            oninput="lJsonUrlChanged()">
+          <button onclick="testLiveJSON('sheets')" style="background:#27ae60;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">🔍 Test</button>
+          <button onclick="connectLiveJSON('sheets')" style="background:#1e8449;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">⚡ Connect</button>
+        </div>
+      </div>
+
+      <!-- GitHub Raw Tab -->
+      <div id="ljpanel-github" class="ljpanel" style="display:none;">
+        <div style="background:#e8f5e9;border:1px solid #a9dfbf;border-radius:8px;padding:10px 13px;font-size:12px;color:#1e8449;margin-bottom:13px;line-height:1.6;">
+          📌 <strong>কীভাবে করবেন:</strong> GitHub-এ আপনার .json ফাইলটি খুলুন → "Raw" বাটনে ক্লিক করুন → সেই URL কপি করুন।<br>
+          <span style="color:#888;">ফরম্যাট:</span> <code style="background:#c8e6c9;padding:1px 5px;border-radius:3px;font-size:11px;">https://raw.githubusercontent.com/user/repo/main/data.json</code>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="ljson-github-url" type="url" placeholder="https://raw.githubusercontent.com/..."
+            style="flex:1;min-width:220px;padding:9px 12px;border:1px solid #a9dfbf;border-radius:7px;font-size:13px;background:#fff;color:#333;"
+            oninput="lJsonUrlChanged()">
+          <button onclick="testLiveJSON('github')" style="background:#27ae60;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">🔍 Test</button>
+          <button onclick="connectLiveJSON('github')" style="background:#1e8449;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">⚡ Connect</button>
+        </div>
+      </div>
+
+      <!-- Custom URL Tab -->
+      <div id="ljpanel-custom" class="ljpanel" style="display:none;">
+        <div style="background:#e8f5e9;border:1px solid #a9dfbf;border-radius:8px;padding:10px 13px;font-size:12px;color:#1e8449;margin-bottom:13px;line-height:1.6;">
+          📌 <strong>যেকোনো Public JSON URL</strong> ব্যবহার করতে পারবেন। URL-টি publicly accessible হতে হবে এবং valid JSON return করতে হবে।<br>
+          <span style="color:#f39c12;font-weight:600;">⚠️ CORS policy-র কারণে কিছু URL কাজ নাও করতে পারে।</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="ljson-custom-url" type="url" placeholder="https://example.com/data.json"
+            style="flex:1;min-width:220px;padding:9px 12px;border:1px solid #a9dfbf;border-radius:7px;font-size:13px;background:#fff;color:#333;"
+            oninput="lJsonUrlChanged()">
+          <button onclick="testLiveJSON('custom')" style="background:#27ae60;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">🔍 Test</button>
+          <button onclick="connectLiveJSON('custom')" style="background:#1e8449;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">⚡ Connect</button>
+        </div>
+      </div>
+
+      <!-- Result / Status Box -->
+      <div id="ljson-result-box" style="display:none;margin-top:13px;border-radius:8px;padding:11px 14px;font-size:13px;"></div>
+
+      <!-- Active Connection Info -->
+      <div id="ljson-active-info" style="display:none;margin-top:14px;background:#eafaf1;border:1px solid #a9dfbf;border-radius:8px;padding:12px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:12px;color:#888;margin-bottom:3px;">✅ সক্রিয় সংযোগ</div>
+            <div id="ljson-active-url" style="font-size:12px;color:#1e8449;font-weight:600;word-break:break-all;"></div>
+            <div id="ljson-last-loaded" style="font-size:11px;color:#888;margin-top:3px;"></div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            <button onclick="reloadLiveJSON()" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;">🔄 Reload</button>
+            <button onclick="disconnectLiveJSON()" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;">❌ Disconnect</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-reload toggle -->
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#555;font-weight:500;">
+          <input type="checkbox" id="ljson-auto-reload" style="width:16px;height:16px;accent-color:#27ae60;cursor:pointer;" onchange="toggleAutoReload()">
+          🔁 Auto-Reload চালু রাখুন
+        </label>
+        <select id="ljson-reload-interval" onchange="changeReloadInterval()" style="padding:5px 9px;border:1px solid #a9dfbf;border-radius:6px;font-size:12px;color:#333;background:#fff;">
+          <option value="30">প্রতি ৩০ সেকেন্ডে</option>
+          <option value="60" selected>প্রতি ১ মিনিটে</option>
+          <option value="300">প্রতি ৫ মিনিটে</option>
+          <option value="600">প্রতি ১০ মিনিটে</option>
+        </select>
+        <span id="ljson-next-reload" style="font-size:11px;color:#888;"></span>
+      </div>
+    </div>
+  </div>
+  <!-- ===== END LIVE JSON CONNECTION PANEL ===== -->
+
   <div class="form-panel">
     <h5>☁️ Firebase Sync Status</h5>
     <div style="background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--blue);">
@@ -1318,20 +1495,25 @@ function closeSyncPopup(){
   document.getElementById('sync-overlay').classList.remove('open');
 }
 
-// Save All Now — Firebase + JSON একসাথে
+// Save All Now — Firebase save + local file write (যদি কানেক্টেড থাকে)
 function saveAllNow(){
-  // Firebase save
   setSyncStatus('saving');
   DATA_REF.set({
     companies,contracts,workers,takings,payments,
     challans,bills,billSubmits,monthlySalaries
-  }).then(()=>{
+  }).then(async ()=>{
     setSyncStatus('ok');
-    // JSON auto-download
-    exportJSON(true);
-    const info=document.getElementById('sp-json-info');
-    if(info)info.textContent='✅ Firebase + JSON উভয়ে সেভ হয়েছে!';
-  }).catch(e=>{setSyncStatus('error');alert('❌ Firebase save failed: '+e.message);});
+    // Local file কানেক্টেড থাকলে সেখানেও লিখো — download নয়
+    if(_localFileConnected && _localFileHandle){
+      await writeLocalFile();
+      showFloatNotif('✅ Firebase + Local File — উভয়ে সেভ হয়েছে!', 'success');
+    } else {
+      showFloatNotif('✅ Firebase-এ সেভ হয়েছে!', 'success');
+    }
+  }).catch(e=>{
+    setSyncStatus('error');
+    showFloatNotif('❌ Firebase save failed: '+e.message, 'error');
+  });
 }
 
 // JSON Export
@@ -1437,48 +1619,92 @@ function loadLocal(){
 }
 
 // initApp() — called after successful login
+let _renderPending = false;
+function scheduleRender(){
+  if(_renderPending) return;
+  _renderPending = true;
+  setTimeout(()=>{ _renderPending=false; renderAll(); }, 50);
+}
+
 function initApp() {
   if (_appInitialized) return;
   _appInitialized = true;
 
-  // Listen for Firebase changes (real-time sync)
+  // localStorage থেকে সাথে সাথে load করো — UI ফটাফট দেখাবে
   setSyncStatus('loading');
   loadLocal();
   renderAll();
 
+  // Local file indicator update করো (login হওয়ার পর)
+  _refreshLocalFileIndicator();
+
+  // Firebase background-এ load হবে — UI block করবে না
   DATA_REF.on('value', snap=>{
-  const d=snap.val();
-  if(d){
-    companies   =d.companies      ||[];
-    contracts   =d.contracts      ||[];
-    workers     =d.workers        ||[];
-    takings     =d.takings        ||[];
-    payments    =d.payments       ||[];
-    challans    =d.challans       ||[];
-    bills       =d.bills          ||[];
-    billSubmits =d.billSubmits    ||[];
-    monthlySalaries=d.monthlySalaries||[];
-    // Also update localStorage as backup
-    localStorage.setItem('companies',JSON.stringify(companies));
-    localStorage.setItem('contracts',JSON.stringify(contracts));
-    localStorage.setItem('workers',JSON.stringify(workers));
-    localStorage.setItem('takings',JSON.stringify(takings));
-    localStorage.setItem('payments',JSON.stringify(payments));
-    localStorage.setItem('challans',JSON.stringify(challans));
-    localStorage.setItem('bills',JSON.stringify(bills));
-    localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
-    localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
-  }
-  _fbLoaded=true;
-  setSyncStatus('ok');
-  // সব existing monthly salary entry rebalance করো
-  rebalanceAllMonthlySalaries();
-  renderAll();
-}, err=>{
-  setSyncStatus('error');
-  console.error('Firebase read error:',err);
-});
+    const d=snap.val();
+    if(d){
+      companies      = d.companies       || [];
+      contracts      = d.contracts       || [];
+      workers        = d.workers         || [];
+      takings        = d.takings         || [];
+      payments       = d.payments        || [];
+      challans       = d.challans        || [];
+      bills          = d.bills           || [];
+      billSubmits    = d.billSubmits     || [];
+      monthlySalaries= d.monthlySalaries || [];
+      // localStorage backup
+      localStorage.setItem('companies',       JSON.stringify(companies));
+      localStorage.setItem('contracts',       JSON.stringify(contracts));
+      localStorage.setItem('workers',         JSON.stringify(workers));
+      localStorage.setItem('takings',         JSON.stringify(takings));
+      localStorage.setItem('payments',        JSON.stringify(payments));
+      localStorage.setItem('challans',        JSON.stringify(challans));
+      localStorage.setItem('bills',           JSON.stringify(bills));
+      localStorage.setItem('billSubmits',     JSON.stringify(billSubmits));
+      localStorage.setItem('monthlySalaries', JSON.stringify(monthlySalaries));
+    }
+    _fbLoaded = true;
+    setSyncStatus('ok');
+    rebalanceAllMonthlySalaries(); // payable fix
+    scheduleRender(); // debounced — একবারই render হবে
+  }, err=>{
+    setSyncStatus('error');
+    console.error('Firebase read error:', err);
+  });
 } // end initApp()
+
+// Login হওয়ার পর local file indicator সঠিকভাবে দেখাও
+function _refreshLocalFileIndicator(){
+  const topbarBtn  = document.getElementById('localfile-topbar-btn');
+  const topbarName = document.getElementById('localfile-topbar-name');
+  if(!topbarBtn) return;
+
+  const savedName = _localFileName || localStorage.getItem('localfile_name') || '';
+
+  if(_localFileConnected && _localFileHandle){
+    // ✅ সক্রিয়ভাবে কানেক্টেড
+    const shortName = savedName.length > 18 ? savedName.slice(0,16)+'…' : (savedName||'Connected');
+    topbarBtn.style.display    = 'flex';
+    topbarBtn.style.background = '#0d3320';
+    topbarBtn.style.color      = '#58d68d';
+    topbarBtn.style.borderColor= '#27ae60';
+    topbarBtn.style.boxShadow  = '0 0 0 3px rgba(39,174,96,0.18)';
+    topbarBtn.title = '✅ Local JSON কানেক্টেড — Sync Popup খুলুন';
+    if(topbarName) topbarName.textContent = shortName;
+  } else if(savedName){
+    // ⚠️ আগে কানেক্ট ছিল, reconnect দরকার
+    const shortName = savedName.length > 18 ? savedName.slice(0,16)+'…' : savedName;
+    topbarBtn.style.display    = 'flex';
+    topbarBtn.style.background = '#2a1a00';
+    topbarBtn.style.color      = '#f0a500';
+    topbarBtn.style.borderColor= '#e67e22';
+    topbarBtn.style.boxShadow  = '0 0 0 3px rgba(230,126,34,0.18)';
+    topbarBtn.title = '⚠️ Local JSON আগে কানেক্ট ছিল — পুনরায় Connect করুন';
+    if(topbarName) topbarName.textContent = '⚠️ '+shortName;
+  } else {
+    // কোনো ফাইল নেই — লুকাও
+    topbarBtn.style.display = 'none';
+  }
+}
 
 function confirmDelete(fn,msg){if(confirm(msg||'Are you sure?'))fn();}
 
@@ -1861,7 +2087,8 @@ function addMonthlySalary(){
     if(!date||!worker) return alert('Date ও Worker Name দিন');
   } else {
     if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
-    if(!isOffday && !salary) return alert('Salary দিন অথবা অফডে টিক দিন');
+    const otVal=+document.getElementById('ms-ot').value||0;
+    if(!isOffday && !salary && !otVal) return alert('Salary অথবা OT দিন, অথবা অফডে টিক দিন');
   }
 
   const ct=(ctIdx!==''&&ctIdx!==null)?contracts[+ctIdx]:null;
@@ -1870,7 +2097,7 @@ function addMonthlySalary(){
   const travel=+document.getElementById('ms-travel').value||0;
   const deduct=+document.getElementById('ms-deduct').value||0;
 
-  const payable=(salary+ot)-deduct;
+  const payable=(salary+ot)-deduct;  // salary + OT - deduct
   const billCut=lunch+travel;
   const effectiveMonth=month||date.substring(0,7);
 
@@ -1929,26 +2156,30 @@ function rebalanceMonthlySalaries(worker, month){
     const perEntry=Math.round(fullSalary/totalNormal);
     normalEntries.forEach(e=>{
       e.salary=perEntry;
-      const ot=e.ot||e.offdayOT||0;
-      e.payable=(perEntry+ot)-(e.deduct||0);
-      e.billCut=(e.lunch||0)+(e.travel||0);
+      const ot=Number(e.ot)||Number(e.offdayOT)||0;
+      const deduct=Number(e.deduct)||0;
+      e.payable=(perEntry+ot)-deduct;
+      e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
     });
   }
 
   // অফডে entry: salary=0, payable=শুধু OT
   entries.filter(e=>e.offday).forEach(e=>{
     e.salary=0;
-    const ot=e.ot||0;
-    e.payable=ot-(e.deduct||0);
-    e.billCut=(e.lunch||0)+(e.travel||0);
+    const ot=Number(e.ot)||0;
+    const deduct=Number(e.deduct)||0;
+    e.payable=ot-deduct;
+    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 
   // এবসেন্ট entry: salary = -(মূল বেতন÷26), পরিবর্তন করা যাবে না
   entries.filter(e=>e.absent).forEach(e=>{
     const cut=-(Math.round(fullSalary/26));
     e.salary=cut;
-    e.payable=cut+(e.ot||0)-(e.deduct||0);
-    e.billCut=(e.lunch||0)+(e.travel||0);
+    const ot=Number(e.ot)||0;
+    const deduct=Number(e.deduct)||0;
+    e.payable=cut+ot-deduct;
+    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 }
 function deleteMonthlySalary(i){
@@ -3322,6 +3553,512 @@ setInterval(()=>{
   const footTime=document.getElementById('sp-footer-time');
   if(footTime&&_lastSyncTime)footTime.textContent=_lastSyncTime.toLocaleTimeString('en-BD',{hour:'2-digit',minute:'2-digit'});
 },1000);
+
+// ===== LIVE JSON CONNECTION SYSTEM =====
+let _ljsonActiveUrl = '';
+let _ljsonActiveType = '';
+let _ljsonAutoReloadTimer = null;
+let _ljsonNextReloadAt = null;
+let _ljsonCurrentTab = 'sheets';
+
+function switchLJTab(tab){
+  _ljsonCurrentTab = tab;
+  ['sheets','github','custom'].forEach(t=>{
+    const btn = document.getElementById('ljt-'+t);
+    const panel = document.getElementById('ljpanel-'+t);
+    if(t===tab){
+      btn.style.background='#27ae60'; btn.style.color='#fff'; btn.style.fontWeight='700';
+      if(panel) panel.style.display='block';
+    } else {
+      btn.style.background='#f0faf4'; btn.style.color='#555'; btn.style.fontWeight='600';
+      if(panel) panel.style.display='none';
+    }
+  });
+  document.getElementById('ljson-result-box').style.display='none';
+}
+
+function getLJUrl(type){
+  return (document.getElementById('ljson-'+type+'-url')||{}).value||'';
+}
+
+function lJsonUrlChanged(){
+  document.getElementById('ljson-result-box').style.display='none';
+}
+
+function showLJResult(msg, type){
+  const box = document.getElementById('ljson-result-box');
+  box.style.display='block';
+  const colors = {
+    success: {bg:'#eafaf1', border:'#a9dfbf', color:'#1e8449'},
+    error:   {bg:'#fdecea', border:'#f5b7b1', color:'#c0392b'},
+    loading: {bg:'#eaf3fb', border:'#b3d7f0', color:'#1a6fa8'},
+    warning: {bg:'#fef5e7', border:'#f5cca0', color:'#c0600a'}
+  };
+  const c = colors[type]||colors.loading;
+  box.style.background=c.bg; box.style.border='1px solid '+c.border; box.style.color=c.color;
+  box.innerHTML=msg;
+}
+
+function setLJBadge(connected, text){
+  const dot = document.getElementById('ljson-badge-dot');
+  const txt = document.getElementById('ljson-badge-text');
+  const spDot = document.getElementById('sp-ljson-dot');
+  const spInfo = document.getElementById('sp-ljson-info');
+  const spBtn = document.getElementById('sp-ljson-reload-btn');
+  if(dot){ dot.style.background=connected?'#fff':'#fff'; dot.style.opacity=connected?'1':'0.4'; }
+  if(connected){ dot.style.animation='pulse-dot 1.2s infinite'; } else { dot.style.animation='none'; }
+  if(txt) txt.textContent=text||'সংযুক্ত নয়';
+  if(spDot){ spDot.style.background=connected?'#27ae60':'#555'; }
+  if(spInfo) spInfo.textContent=connected?('🟢 '+(_ljsonActiveUrl.length>35?_ljsonActiveUrl.slice(0,35)+'...':_ljsonActiveUrl)):'সংযুক্ত নয়';
+  if(spBtn) spBtn.style.display=connected?'flex':'none';
+}
+
+async function testLiveJSON(type){
+  const url = getLJUrl(type);
+  if(!url){ showLJResult('⚠️ একটি URL লিখুন।', 'warning'); return; }
+  showLJResult('⏳ URL পরীক্ষা করা হচ্ছে...', 'loading');
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    let text = await res.text();
+    // Handle Google Sheets gviz response
+    if(text.startsWith('/*O_o*/') || text.includes('google.visualization.Query.setResponse')){
+      text = text.replace(/^.*?setResponse\(/,'').replace(/\);?\s*$/,'');
+    }
+    const data = JSON.parse(text);
+    const keys = Object.keys(data).join(', ');
+    showLJResult(`✅ <strong>সফলভাবে লোড হয়েছে!</strong><br>📊 Keys: <code>${keys.slice(0,120)}</code><br><small>এখন "Connect" বাটনে ক্লিক করুন।</small>`, 'success');
+  } catch(e){
+    showLJResult(`❌ <strong>লোড ব্যর্থ:</strong> ${e.message}<br><small>URL সঠিক কিনা এবং publicly accessible কিনা নিশ্চিত করুন।</small>`, 'error');
+  }
+}
+
+async function connectLiveJSON(type){
+  const url = getLJUrl(type);
+  if(!url){ showLJResult('⚠️ একটি URL লিখুন।', 'warning'); return; }
+  showLJResult('⏳ ডেটা লোড হচ্ছে...', 'loading');
+  setLJBadge(false, 'লোড হচ্ছে...');
+  try {
+    await doLJLoad(url);
+    _ljsonActiveUrl = url;
+    _ljsonActiveType = type;
+    localStorage.setItem('ljson_url', url);
+    localStorage.setItem('ljson_type', type);
+    showLJResult('✅ <strong>সফলভাবে কানেক্ট হয়েছে!</strong> ডেটা লোড করা হয়েছে।', 'success');
+    setLJBadge(true, '🟢 Connected');
+    updateLJActiveInfo();
+    renderAll();
+    if(document.getElementById('ljson-auto-reload').checked) startAutoReload();
+  } catch(e){
+    showLJResult(`❌ <strong>কানেকশন ব্যর্থ:</strong> ${e.message}`, 'error');
+    setLJBadge(false, 'ব্যর্থ');
+  }
+}
+
+async function doLJLoad(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  let text = await res.text();
+  if(text.startsWith('/*O_o*/') || text.includes('google.visualization.Query.setResponse')){
+    text = text.replace(/^.*?setResponse\(/,'').replace(/\);?\s*$/,'');
+  }
+  const data = JSON.parse(text);
+  // Merge data keys that match our data structure
+  const keys = ['companies','contracts','workers','takings','payments','challans','bills','billSubmits','monthlySalaries'];
+  let loaded = 0;
+  keys.forEach(k=>{ if(Array.isArray(data[k])){ window[k]=data[k]; loaded++; } });
+  if(loaded===0) throw new Error('JSON-এ চেনা কোনো data key পাওয়া যায়নি।');
+  _ljsonNextReloadAt = null;
+}
+
+async function reloadLiveJSON(){
+  if(!_ljsonActiveUrl){ showLJResult('⚠️ কোনো URL কানেক্ট নেই।','warning'); return; }
+  showLJResult('🔄 Reload হচ্ছে...','loading');
+  try {
+    await doLJLoad(_ljsonActiveUrl);
+    renderAll();
+    document.getElementById('ljson-last-loaded').textContent='শেষ লোড: '+new Date().toLocaleTimeString('en-BD');
+    showLJResult('✅ ডেটা সফলভাবে refresh হয়েছে।','success');
+  } catch(e){
+    showLJResult('❌ Reload ব্যর্থ: '+e.message,'error');
+  }
+}
+
+function disconnectLiveJSON(){
+  if(!confirm('Live JSON connection বন্ধ করবেন?')) return;
+  _ljsonActiveUrl=''; _ljsonActiveType='';
+  localStorage.removeItem('ljson_url'); localStorage.removeItem('ljson_type');
+  stopAutoReload();
+  setLJBadge(false, 'সংযুক্ত নয়');
+  updateLJActiveInfo();
+  document.getElementById('ljson-result-box').style.display='none';
+}
+
+function updateLJActiveInfo(){
+  const info = document.getElementById('ljson-active-info');
+  const urlEl = document.getElementById('ljson-active-url');
+  const lastEl = document.getElementById('ljson-last-loaded');
+  if(_ljsonActiveUrl){
+    info.style.display='block';
+    urlEl.textContent=_ljsonActiveUrl;
+    lastEl.textContent='শেষ লোড: '+new Date().toLocaleTimeString('en-BD');
+  } else {
+    info.style.display='none';
+  }
+}
+
+function startAutoReload(){
+  stopAutoReload();
+  const secs = parseInt(document.getElementById('ljson-reload-interval').value)||60;
+  _ljsonAutoReloadTimer = setInterval(async ()=>{
+    if(_ljsonActiveUrl){ await reloadLiveJSON(); }
+  }, secs*1000);
+  updateNextReloadLabel(secs);
+}
+
+function stopAutoReload(){
+  if(_ljsonAutoReloadTimer){ clearInterval(_ljsonAutoReloadTimer); _ljsonAutoReloadTimer=null; }
+  document.getElementById('ljson-next-reload').textContent='';
+}
+
+function updateNextReloadLabel(secs){
+  const el=document.getElementById('ljson-next-reload');
+  if(el) el.textContent=`(প্রতি ${secs>=60?Math.round(secs/60)+' মিনিটে':secs+' সেকেন্ডে'} auto-reload)`;
+}
+
+function toggleAutoReload(){
+  const on=document.getElementById('ljson-auto-reload').checked;
+  if(on && _ljsonActiveUrl){ startAutoReload(); }
+  else { stopAutoReload(); }
+}
+
+function changeReloadInterval(){
+  if(document.getElementById('ljson-auto-reload').checked && _ljsonActiveUrl){ startAutoReload(); }
+}
+
+// Restore saved JSON connection on load
+(function restoreLJConnection(){
+  const savedUrl=localStorage.getItem('ljson_url');
+  const savedType=localStorage.getItem('ljson_type')||'custom';
+  if(savedUrl){
+    _ljsonActiveUrl=savedUrl; _ljsonActiveType=savedType;
+    const inp=document.getElementById('ljson-'+savedType+'-url');
+    if(inp) inp.value=savedUrl;
+    setLJBadge(true,'🟢 Connected');
+    updateLJActiveInfo();
+    // Auto-load silently
+    doLJLoad(savedUrl).then(()=>{ renderAll(); }).catch(()=>{ setLJBadge(false,'⚠️ Load ব্যর্থ'); });
+  }
+})();
+// ===== END LIVE JSON CONNECTION SYSTEM =====
+
+// ===== LOCAL FILE AUTOSAVE SYSTEM =====
+let _localFileHandle = null;        // File System Access API handle
+let _localFileConnected = false;
+let _localFileName = '';
+let _localFileMode = 'safe';        // 'safe' = no data load | 'restore' = replace firebase
+
+// ---- Floating Notification Helper ----
+function showFloatNotif(msg, type){
+  // Remove existing
+  const old=document.getElementById('float-notif-box');
+  if(old) old.remove();
+
+  const colors={
+    success:{bg:'#1a4a2a',border:'#27ae60',icon:'✅'},
+    warning:{bg:'#4a2a0a',border:'#e67e22',icon:'⚠️'},
+    error:  {bg:'#4a0a0a',border:'#c0392b',icon:'❌'}
+  };
+  const c=colors[type]||colors.success;
+  const div=document.createElement('div');
+  div.id='float-notif-box';
+  div.style.cssText=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;
+    background:${c.bg};border:2px solid ${c.border};border-radius:12px;
+    padding:13px 18px;font-size:13px;color:#e8f0f8;font-family:'Roboto',sans-serif;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);max-width:320px;text-align:center;line-height:1.6;
+    animation:fadeInUp 0.3s ease;`;
+  div.innerHTML=msg.replace(/\n/g,'<br>');
+  document.body.appendChild(div);
+  // Auto remove after 4 seconds
+  setTimeout(()=>{ if(div.parentNode) div.style.opacity='0'; div.style.transition='opacity 0.5s'; setTimeout(()=>div.remove(),500); },4000);
+}
+
+function openLocalFileModal(){
+  document.getElementById('localfile-modal-overlay').style.display='block';
+  document.getElementById('localfile-modal').style.display='block';
+}
+function closeLocalFileModal(){
+  document.getElementById('localfile-modal-overlay').style.display='none';
+  document.getElementById('localfile-modal').style.display='none';
+}
+
+// ---- Create New File ----
+async function localFileCreateNew(){
+  closeLocalFileModal();
+  // File System Access API supported?
+  if(window.showSaveFilePicker){
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'ms_mending_autosave.json',
+        types:[{description:'JSON File',accept:{'application/json':['.json']}}]
+      });
+      _localFileHandle = handle;
+      _localFileName = handle.name;
+      _localFileConnected = true;
+      _localFileMode = 'safe';
+      localStorage.setItem('localfile_name', _localFileName);
+      localStorage.setItem('localfile_mode', 'safe');
+      updateLocalFileUI(true);
+      await writeLocalFile(); // প্রথমবার সব ডেটা লিখে দাও
+      showFloatNotif('✅ নতুন ফাইল তৈরি ও কানেক্ট হয়েছে!\n' + _localFileName + '\nFirebase ডেটা অক্ষুণ্ণ — নতুন entry থেকে auto-save শুরু।', 'success');
+    } catch(e){
+      if(e.name!=='AbortError') alert('❌ ফাইল তৈরি করা যায়নি: '+e.message);
+    }
+  } else {
+    // Fallback: download করো
+    exportJSON(false);
+    showFloatNotif('⚠️ আপনার ব্রাউজার Auto-Save সাপোর্ট করে না।\nফাইল Download হয়েছে।', 'warning');
+  }
+}
+
+// ---- Connect Existing File (SAFE — Firebase ডেটা অক্ষুণ্ণ থাকবে) ----
+function localFileConnectOnly(){
+  closeLocalFileModal();
+  if(window.showOpenFilePicker){
+    window.showOpenFilePicker({
+      types:[{description:'JSON File',accept:{'application/json':['.json']}}],
+      multiple:false
+    }).then(async handles=>{
+      const handle = handles[0];
+      _localFileHandle = handle;
+      _localFileName = handle.name;
+      _localFileConnected = true;
+      _localFileMode = 'safe'; // safe mode
+      localStorage.setItem('localfile_name', _localFileName);
+      localStorage.setItem('localfile_mode', 'safe');
+      updateLocalFileUI(true);
+      // Firebase ডেটা দিয়ে JSON ফাইল overwrite করে sync করে রাখো
+      await writeLocalFile();
+      showFloatNotif('✅ ফাইল কানেক্ট হয়েছে!\nFirebase ডেটা অক্ষুণ্ণ আছে। নতুন entry থেকে JSON-এও save হবে।', 'success');
+    }).catch(e=>{ if(e.name!=='AbortError') alert('❌ ফাইল খোলা যায়নি: '+e.message); });
+  } else {
+    // Fallback: শুধু নাম সেভ, লোড করবো না
+    _localFileMode = 'safe';
+    localStorage.setItem('localfile_mode', 'safe');
+    document.getElementById('localfile-safe-input').click();
+  }
+}
+
+// ---- Emergency Restore (JSON → Firebase REPLACE) ----
+function localFileEmergencyRestore(){
+  closeLocalFileModal();
+  if(window.showOpenFilePicker){
+    window.showOpenFilePicker({
+      types:[{description:'JSON File',accept:{'application/json':['.json']}}],
+      multiple:false
+    }).then(async handles=>{
+      const handle = handles[0];
+      const file = await handle.getFile();
+      const text = await file.text();
+      try {
+        const d = JSON.parse(text);
+        const keys=['companies','contracts','workers','takings','payments','challans','bills','billSubmits','monthlySalaries'];
+        let loaded=0;
+        keys.forEach(k=>{ if(Array.isArray(d[k])) loaded++; });
+        if(loaded===0) throw new Error('JSON-এ চেনা কোনো data key পাওয়া যায়নি।');
+
+        const fbTotal=(companies||[]).length+(contracts||[]).length+(workers||[]).length+
+          (takings||[]).length+(payments||[]).length+(challans||[]).length+
+          (bills||[]).length+(billSubmits||[]).length+(monthlySalaries||[]).length;
+        const jsonTotal=(d.companies||[]).length+(d.contracts||[]).length+(d.workers||[]).length+
+          (d.takings||[]).length+(d.payments||[]).length+(d.challans||[]).length+
+          (d.bills||[]).length+(d.billSubmits||[]).length+(d.monthlySalaries||[]).length;
+
+        // ⚠️ সতর্কতামূলক confirmation
+        const sure = confirm(
+          '⚠️ EMERGENCY RESTORE — সতর্কতা!\n\n' +
+          '🔥 Firebase-এ এখন আছে: ' + fbTotal + ' entries\n' +
+          '📄 JSON ফাইলে আছে: ' + jsonTotal + ' entries\n\n' +
+          '❗ এটি Firebase-এর সব ডেটা DELETE করে JSON ফাইলের ডেটা দিয়ে REPLACE করবে!\n\n' +
+          'শুধুমাত্র Firebase-এ সমস্যা হলে এটি ব্যবহার করুন।\n\n' +
+          'সত্যিই Replace করবেন? এই কাজ পূর্বাবস্থায় ফেরানো যাবে না!'
+        );
+        if(!sure) return;
+
+        // Second confirmation
+        if(fbTotal > 0){
+          const sure2 = confirm(
+            '🚨 শেষ সুযোগ!\n\n' +
+            'Firebase-এর ' + fbTotal + 'টি entry মুছে যাবে এবং JSON-এর ' + jsonTotal + 'টি entry দিয়ে replace হবে।\n\n' +
+            'OK = এগিয়ে যান | Cancel = বাতিল করুন'
+          );
+          if(!sure2) return;
+        }
+
+        // Load JSON data
+        keys.forEach(k=>{ if(Array.isArray(d[k])) window[k]=d[k]; });
+
+        // Set as connected file too
+        _localFileHandle = handle;
+        _localFileName = handle.name;
+        _localFileConnected = true;
+        _localFileMode = 'safe';
+        localStorage.setItem('localfile_name', _localFileName);
+        localStorage.setItem('localfile_mode', 'safe');
+        updateLocalFileUI(true);
+
+        // Firebase-এ save করো
+        save();
+        showFloatNotif('🚨 Emergency Restore সম্পন্ন!\nJSON ফাইলের ডেটা Firebase-এ replace হয়েছে।\nফাইলটি এখন থেকে auto-save হবে।', 'warning');
+      } catch(e){
+        alert('❌ JSON ফাইলে সমস্যা: '+e.message);
+      }
+    }).catch(e=>{ if(e.name!=='AbortError') alert('❌ ফাইল খোলা যায়নি: '+e.message); });
+  } else {
+    // Fallback for unsupported browsers
+    _localFileMode = 'restore';
+    localStorage.setItem('localfile_mode', 'restore');
+    document.getElementById('localfile-open-input').click();
+  }
+}
+
+// ---- Open Existing File (legacy — kept for fallback input) ----
+function localFileOpenExisting(){
+  localFileConnectOnly();
+}
+
+// Fallback for browsers without File System Access API
+function localFileOnOpen(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const d = JSON.parse(e.target.result);
+      const keys=['companies','contracts','workers','takings','payments','challans','bills','billSubmits','monthlySalaries'];
+
+      if(_localFileMode === 'restore'){
+        // Emergency restore mode — ডেটা লোড করো
+        const fbTotal=(companies||[]).length+(contracts||[]).length+(workers||[]).length+
+          (takings||[]).length+(payments||[]).length+(challans||[]).length+
+          (bills||[]).length+(billSubmits||[]).length+(monthlySalaries||[]).length;
+        const jsonTotal=(d.companies||[]).length+(d.contracts||[]).length+(d.workers||[]).length+
+          (d.takings||[]).length+(d.payments||[]).length+(d.challans||[]).length+
+          (d.bills||[]).length+(d.billSubmits||[]).length+(d.monthlySalaries||[]).length;
+        const sure = confirm('⚠️ Emergency Restore!\nFirebase: '+fbTotal+' entries → JSON: '+jsonTotal+' entries\nReplace করবেন?');
+        if(!sure){input.value='';return;}
+        keys.forEach(k=>{ if(Array.isArray(d[k])) window[k]=d[k]; });
+        _localFileName = file.name;
+        _localFileConnected = true;
+        localStorage.setItem('localfile_name', _localFileName);
+        localStorage.setItem('localfile_mode', 'safe');
+        save();
+        updateLocalFileUI(true);
+        showFloatNotif('🚨 Emergency Restore সম্পন্ন! Firebase replace হয়েছে।', 'warning');
+      } else {
+        // Safe mode — শুধু connect, ডেটা লোড করবো না
+        _localFileName = file.name;
+        _localFileConnected = true;
+        localStorage.setItem('localfile_name', _localFileName);
+        localStorage.setItem('localfile_mode', 'safe');
+        updateLocalFileUI(true);
+        showFloatNotif('✅ ফাইল কানেক্ট হয়েছে (Safe Mode)!\nFirebase ডেটা অক্ষুণ্ণ। Auto-save সাপোর্ট নেই — "Download Backup" ব্যবহার করুন।', 'success');
+      }
+    } catch(err){ alert('❌ JSON ফাইলে সমস্যা: '+err.message); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ---- Write to file (auto-save) ----
+async function writeLocalFile(){
+  if(!_localFileHandle || !_localFileConnected) return;
+  try {
+    const writable = await _localFileHandle.createWritable();
+    const data = {
+      exportedAt: new Date().toISOString(),
+      version: 'v2-localfile',
+      companies, contracts, workers, takings, payments,
+      challans, bills, billSubmits, monthlySalaries
+    };
+    await writable.write(JSON.stringify(data, null, 2));
+    await writable.close();
+    // footer dot সবুজ করো
+    const dot = document.getElementById('foot-localfile-dot');
+    if(dot){ dot.style.background='#27ae60'; }
+  } catch(e){
+    console.warn('Local file write error:', e.message);
+  }
+}
+
+// ---- Download Backup (fallback) ----
+function downloadLocalFileBackup(){
+  exportJSON(false);
+}
+
+// ---- Disconnect ----
+function disconnectLocalFile(){
+  if(!confirm('Local File connection বন্ধ করবেন?')) return;
+  _localFileHandle = null;
+  _localFileConnected = false;
+  _localFileName = '';
+  localStorage.removeItem('localfile_name');
+  updateLocalFileUI(false);
+}
+
+// ---- UI update ----
+function updateLocalFileUI(connected){
+  const dot = document.getElementById('sp-localfile-dot');
+  const info = document.getElementById('sp-localfile-info');
+  const modeInfo = document.getElementById('sp-localfile-mode-info');
+  const disBtn = document.getElementById('sp-localfile-disconnect-btn');
+  const footDot = document.getElementById('foot-localfile-dot');
+  if(dot){ dot.style.background = connected ? '#27ae60' : '#555'; }
+  if(info){ info.textContent = connected ? ('🟢 '+_localFileName) : 'কোনো File Connect নেই'; }
+  if(modeInfo){
+    if(connected){
+      modeInfo.innerHTML = '🔒 <strong style="color:#27ae60;">Safe Mode</strong> — Firebase ডেটা অক্ষুণ্ণ, নতুন entry JSON-এ save হচ্ছে';
+      modeInfo.style.color='#27ae60';
+    } else {
+      modeInfo.innerHTML = '💡 "Connect File" চাপলে JSON file select করুন।';
+      modeInfo.style.color='#7a9bb8';
+    }
+  }
+  if(disBtn){ disBtn.style.display = connected ? 'flex' : 'none'; }
+  if(footDot){ footDot.style.background = connected ? '#27ae60' : '#555'; }
+  // Topbar indicator — _refreshLocalFileIndicator দিয়ে update করো
+  if(connected){
+    _refreshLocalFileIndicator();
+  } else {
+    // disconnect হলে topbar button লুকাও
+    const topbarBtn = document.getElementById('localfile-topbar-btn');
+    if(topbarBtn) topbarBtn.style.display = 'none';
+  }
+}
+
+// save() function-এ local file write hook করো
+const _origSave = save;
+window.save = function(){
+  _origSave();
+  if(_localFileConnected && _localFileHandle){
+    writeLocalFile();
+  }
+};
+
+// Restore saved name on load — শুধু variable set, UI update initApp()-এ হবে
+(function restoreLocalFile(){
+  const name = localStorage.getItem('localfile_name');
+  const mode = localStorage.getItem('localfile_mode')||'safe';
+  if(name){
+    _localFileName    = name;
+    _localFileMode    = mode;
+    _localFileConnected = false; // page reload-এ handle নেই, reconnect দরকার
+    // sync popup info update (app-wrapper visible হওয়ার আগেও ঠিক থাকে)
+    const info = document.getElementById('sp-localfile-info');
+    if(info) info.textContent = '⚠️ আগে: '+name+' — পুনরায় Connect করুন';
+  }
+})();
+// ===== END LOCAL FILE AUTOSAVE SYSTEM =====
 </script>
 </body>
 </html>
