@@ -1054,11 +1054,31 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 
   <!-- Person-wise Summary -->
   <div class="panel" style="margin-bottom:16px;">
-    <div class="panel-header">👤 ব্যক্তি-ভিত্তিক বকেয়া সারসংক্ষেপ</div>
+    <div class="panel-header">👤 ব্যক্তি-ভিত্তিক বকেয়া সারসংক্ষেপ
+      <span class="ph-right">
+        <input type="month" id="pa-summary-month" onchange="renderPersonalAccount()" placeholder="মাস ফিল্টার" style="padding:5px 8px;border:1px solid #3a5a7a;border-radius:6px;font-size:12px;background:#1e2e42;color:#c8daea;">
+        <input type="number" id="pa-summary-year" onchange="renderPersonalAccount()" placeholder="বছর" min="2020" max="2099" style="width:80px;padding:5px 8px;border:1px solid #3a5a7a;border-radius:6px;font-size:12px;background:#1e2e42;color:#c8daea;">
+        <button onclick="document.getElementById('pa-summary-month').value='';document.getElementById('pa-summary-year').value='';renderPersonalAccount();" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">✕ Clear</button>
+      </span>
+    </div>
     <table>
-      <thead><tr><th>#</th><th>নাম</th><th>ধরন</th><th>মোট নিয়েছে</th><th>মোট দিয়েছে</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead>
+      <thead><tr><th>#</th><th>নাম</th><th>ধরন</th><th>মোট দিয়েছি</th><th>মোট ফেরত</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead>
       <tbody id="pa-person-summary"><tr><td colspan="7" class="no-data">কোনো ডেটা নেই</td></tr></tbody>
     </table>
+  </div>
+
+  <!-- Person Detail on click -->
+  <div id="pa-person-detail" style="display:none;margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-header" id="pa-detail-header">📊 লেনদেনের বিস্তারিত
+        <span class="ph-right"><button onclick="document.getElementById('pa-person-detail').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ বন্ধ</button></span>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>তারিখ</th><th>মাস</th><th>লেনদেন</th><th>পরিমাণ</th><th>কারণ/নোট</th></tr></thead>
+        <tbody id="pa-detail-list"></tbody>
+      </table>
+      <div id="pa-detail-summary" style="padding:10px 14px;background:#f7fafd;border-top:1px solid var(--border);font-size:13px;"></div>
+    </div>
   </div>
 
   <!-- Add Transaction -->
@@ -1104,6 +1124,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   <div class="panel">
     <div class="panel-header">📋 লেনদেনের ইতিহাস
       <span class="ph-right">
+        <input id="pa-filter-name" placeholder="নাম খুঁজুন..." onchange="renderPersonalAccount()" oninput="renderPersonalAccount()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:110px;">
         <select id="pa-filter-cat" onchange="renderPersonalAccount()">
           <option value="">সব ধরন</option>
           <option value="worker">শ্রমিক</option>
@@ -1196,7 +1217,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 // Check session on load
 (function(){
-  const s = sessionStorage.getItem('erp_user');
+  const s = localStorage.getItem('erp_user');
   if(s){
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display = 'block';
@@ -1216,7 +1237,7 @@ function doLogin() {
   if (!uname || !pass) { showLoginError('Username ও Password দিন!'); return; }
   const found = USERS.find(u => u.username === uname && u.password === pass);
   if (found) {
-    sessionStorage.setItem('erp_user', uname);
+    localStorage.setItem('erp_user', uname);
     document.getElementById('login-error').textContent = '';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display = 'block';
@@ -1229,7 +1250,7 @@ function doLogin() {
 
 function doLogout() {
   if (!confirm('লগআউট করবেন?')) return;
-  sessionStorage.removeItem('erp_user');
+  localStorage.removeItem('erp_user');
   location.reload();
 }
 
@@ -2486,164 +2507,190 @@ function genWorkerReport(){
     const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
     const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
 
-    // taking থেকে totals
-    const wtWearn=wt.reduce((s,e)=>s+e.wearn,0);
-    const wtOT=wt.reduce((s,e)=>s+(e.ot||0),0);
-    const wtConv=wt.reduce((s,e)=>s+e.conv,0);
-    const wtPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    if(!wt.length&&!ms.length&&!wp.length) return;
 
-    // monthly salary থেকে totals
-    const msPayable=ms.reduce((s,e)=>s+(+e.payable||0),0);
-    const msOT=ms.reduce((s,e)=>s+(+e.offdayOT||0),0);
-    const msBillCut=ms.reduce((s,e)=>s+(+e.billCut||0),0);
+    const wtWearn   = wt.reduce((s,e)=>s+e.wearn,0);
+    const wtOT      = wt.reduce((s,e)=>s+(e.ot||0),0);
+    const wtConv    = wt.reduce((s,e)=>s+e.conv,0);
+    const wtPayable = wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
+    const msPayable = ms.reduce((s,e)=>s+(+e.payable||0),0);
+    const msOT      = ms.reduce((s,e)=>s+(+e.offdayOT||0),0);
+    const msBillCut = ms.reduce((s,e)=>s+(+e.billCut||0),0);
+    const totalPayable = wtPayable+msPayable;
+    const tp = wp.reduce((s,p)=>s+p.total,0);
+    const remaining = totalPayable-tp;
+    const monthLabel = m?fmtMonth(m):'All Time';
+    const days = getDaysInMonth(m);
 
-    const totalPayable=wtPayable+msPayable;
-    const totalOT=wtOT+msOT;
-    const totalConv=wtConv;
-    const totalWearn=wtWearn+msPayable;
-    const totalLunch=ms.reduce((s,e)=>s+(+e.lunch||0),0);
-    const tp=wp.reduce((s,p)=>s+p.total,0);
-    const remaining=totalPayable-tp;
-    const monthLabel=m?fmtMonth(m):'All Time';
-    const days=getDaysInMonth(m);
-
-    // Build full month rows — taking + monthly salary একসাথে
-    let rowsHtml='';
-    let sn=0;
-    for(let d=1;d<=days;d++){
-      const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
-      const dayTakings=dateStr?wt.filter(e=>e.date===dateStr):[];
-      const dayMS=dateStr?ms.filter(e=>e.date===dateStr):[];
-      const allDay=[...dayTakings.map(e=>({...e,_type:'taking'})),...dayMS.map(e=>({...e,_type:'monthly'}))];
-
-      if(allDay.length===0){
-        sn++;
-        rowsHtml+=`<tr style="border-bottom:1px solid #eee;">
-          <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
-          <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr?fmtDate(dateStr):''}</td>
-          <td style="padding:6px 8px;"></td>
-          <td style="padding:6px 8px;text-align:right;"></td>
-          <td style="padding:6px 8px;text-align:right;"></td>
-          <td style="padding:6px 8px;text-align:right;"></td>
-          <td style="padding:6px 8px;text-align:right;"></td>
-          <td style="padding:6px 8px;"></td>
-        </tr>`;
-      } else {
-        allDay.forEach((e)=>{
-          sn++;
-          let conv=0,daily=0,ot=0,lunch=0,factory='',remark='';
-          if(e._type==='taking'){
-            conv=e.conv||0;
-            daily=e.daily||0;
-            ot=e.ot||0;
-            lunch=0;
-            factory=e.factory||'-';
-            remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
-          } else {
-            // monthly salary entry
-            conv=e.travel||0;
-            daily=e.salary||0;
-            ot=e.offdayOT||0;
-            lunch=e.lunch||0;
-            factory=e.factory||'-';
-            remark=`📆 মাসিক${e.isOffday?' (অফডে)':''}${e.note?' — '+e.note:''}`;
-          }
-          rowsHtml+=`<tr style="border-bottom:1px solid #eee;background:${e._type==='monthly'?'#f5f0ff':'#f0f9ff'};">
-            <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
-            <td style="padding:6px 8px;font-weight:600;">${fmtDate(dateStr)}</td>
-            <td style="padding:6px 8px;font-weight:600;">${factory}</td>
-            <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${conv?taka(conv):''}</td>
-            <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${daily?taka(daily):''}</td>
-            <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${ot?taka(ot):''}</td>
-            <td style="padding:6px 8px;text-align:right;color:#fb923c;font-weight:700;">${lunch?taka(lunch):''}</td>
-            <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
-          </tr>`;
-        });
-      }
-    }
-
-    html+=`
-    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:28px;overflow:hidden;border:1px solid #dde3ea;">
-
-      <!-- Header -->
+    html+=`<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:28px;overflow:hidden;border:1px solid #dde3ea;">
       <div style="background:#1a2a3a;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;">Taking Peoples From Others</div>
+        <div style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;">👷 ${name}</div>
         <button onclick="exportWorkerTableExcel('${name}','${m}')" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">📊 Excel Export</button>
       </div>
-
-      <!-- Name / Month -->
       <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #dde3ea;font-size:13px;background:#f7fafd;">
         <span><strong>Name:</strong> ${name}</span>
         <span><strong>Month:</strong> ${monthLabel}</span>
-      </div>
+      </div>`;
 
-      <!-- Table -->
+    // ===== TABLE 1: DAILY / PIECE =====
+    if(wt.length>0){
+      let dailyRows='';
+      let sn=0;
+      for(let d=1;d<=days;d++){
+        const dateStr=m?`${m}-${String(d).padStart(2,'0')}`:null;
+        const dayTakings=dateStr?wt.filter(e=>e.date===dateStr):wt;
+        if(dayTakings.length===0){
+          sn++;
+          dailyRows+=`<tr style="border-bottom:1px solid #eee;">
+            <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
+            <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr?fmtDate(dateStr):''}</td>
+            <td colspan="6" style="padding:6px 8px;"></td>
+          </tr>`;
+        } else {
+          dayTakings.forEach(e=>{
+            sn++;
+            const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
+            dailyRows+=`<tr style="border-bottom:1px solid #eee;background:#f0f9ff;">
+              <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
+              <td style="padding:6px 8px;font-weight:600;">${fmtDate(e.date)}</td>
+              <td style="padding:6px 8px;">${e.factory||'-'}</td>
+              <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${e.conv?taka(e.conv):''}</td>
+              <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${e.daily?taka(e.daily):taka(e.wearn)}</td>
+              <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${e.ot?taka(e.ot):''}</td>
+              <td style="padding:6px 8px;text-align:right;color:var(--red);font-weight:700;">${(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))?taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)):''}</td>
+              <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
+            </tr>`;
+          });
+        }
+      }
+      html+=`
+      <div style="padding:8px 14px;background:#dbeafe;font-size:12px;font-weight:700;color:#1e40af;border-bottom:1px solid #bfdbfe;text-transform:uppercase;letter-spacing:0.5px;">
+        📅 Daily / Piece Worker — Entry Table
+      </div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <thead>
-            <tr style="background:#2c3e50;color:#cdd8e3;">
-              <th style="padding:9px 8px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;width:40px;">S.N</th>
-              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Date</th>
-              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Factory Name</th>
-              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Conveyance</th>
-              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Daily Salary</th>
-              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Over Time</th>
-              <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:#fb923c;">🍽️ Lunch</th>
-              <th style="padding:9px 8px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Remark</th>
+            <tr style="background:#1e3a5f;color:#cdd8e3;">
+              <th style="padding:9px 8px;text-align:center;width:40px;">S.N</th>
+              <th style="padding:9px 8px;text-align:left;">Date</th>
+              <th style="padding:9px 8px;text-align:left;">Factory</th>
+              <th style="padding:9px 8px;text-align:right;">Conveyance</th>
+              <th style="padding:9px 8px;text-align:right;">Daily Salary</th>
+              <th style="padding:9px 8px;text-align:right;">Over Time</th>
+              <th style="padding:9px 8px;text-align:right;">Payable</th>
+              <th style="padding:9px 8px;text-align:left;">Remark</th>
             </tr>
           </thead>
           <tbody>
-            ${rowsHtml}
-            <!-- Total Row -->
+            ${dailyRows}
             <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
-              <td colspan="3" style="padding:10px 8px;text-align:right;font-size:12px;letter-spacing:0.3px;">Total =</td>
-              <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(totalConv)}</td>
-              <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(totalWearn-totalOT)}</td>
-              <td style="padding:10px 8px;text-align:right;color:#58d68d;">${totalOT?taka(totalOT):'-'}</td>
-              <td style="padding:10px 8px;text-align:right;color:#fb923c;">${totalLunch?taka(totalLunch):'-'}</td>
-              <td style="padding:10px 8px;font-size:11px;color:#a8c0d6;">Daily+Monthly</td>
+              <td colspan="3" style="padding:10px 8px;text-align:right;font-size:12px;">Total =</td>
+              <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(wtConv)}</td>
+              <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(wtWearn-wtOT)}</td>
+              <td style="padding:10px 8px;text-align:right;color:#58d68d;">${wtOT?taka(wtOT):'-'}</td>
+              <td style="padding:10px 8px;text-align:right;color:#86efac;">${taka(wtPayable)}</td>
+              <td style="padding:10px 8px;"></td>
             </tr>
           </tbody>
         </table>
       </div>
+      <div style="padding:10px 16px;background:#eff6ff;border-top:1px solid #bfdbfe;display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
+        <span>মোট Earn: <strong style="color:var(--blue);">${taka(wtWearn)}</strong></span>
+        <span>Conveyance: <strong style="color:var(--orange);">-${taka(wtConv)}</strong></span>
+        <span>Net Payable: <strong style="color:var(--green);">${taka(wtPayable)}</strong></span>
+      </div>`;
+    }
 
-      <!-- Summary -->
+    // ===== TABLE 2: MONTHLY SALARY =====
+    if(ms.length>0){
+      const totalLunch  = ms.reduce((s,e)=>s+(+e.lunch||0),0);
+      const totalTravel = ms.reduce((s,e)=>s+(+e.travel||0),0);
+      const totalDeduct = ms.reduce((s,e)=>s+(+e.deduct||0),0);
+      const totalSalary = ms.reduce((s,e)=>s+(+e.salary||0),0);
+      html+=`
+      <div style="padding:8px 14px;background:#f3e8ff;font-size:12px;font-weight:700;color:#7c3aed;border-bottom:1px solid #ddd6fe;border-top:3px solid #7c3aed;text-transform:uppercase;letter-spacing:0.5px;">
+        📆 Monthly Salary Worker — Salary Table
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:#2c1a4a;color:#d8b4fe;">
+              <th style="padding:8px 10px;text-align:center;">#</th>
+              <th style="padding:8px 10px;text-align:left;">Month</th>
+              <th style="padding:8px 10px;text-align:left;">Style / Factory</th>
+              <th style="padding:8px 10px;text-align:right;">Salary</th>
+              <th style="padding:8px 10px;text-align:right;">OT</th>
+              <th style="padding:8px 10px;text-align:right;">🍽️ Lunch</th>
+              <th style="padding:8px 10px;text-align:right;">যাতায়াত</th>
+              <th style="padding:8px 10px;text-align:right;">কাটা</th>
+              <th style="padding:8px 10px;text-align:right;">Payable</th>
+              <th style="padding:8px 10px;text-align:left;">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ms.map((e,i)=>{
+              const ct=contracts[e.ctIdx];
+              const styleLabel=(ct?ct.style:e.style||'-')+(e.isOffday?' 🗓️অফডে':'');
+              return `<tr style="background:${i%2===0?'#1e1030':'#17082a'};border-bottom:1px solid #3d1f6a;">
+                <td style="padding:7px 10px;color:#a8c0d6;text-align:center;">${i+1}</td>
+                <td style="padding:7px 10px;color:#c4b5fd;font-weight:600;">${e.month?fmtMonth(e.month):fmtDate(e.date)||'-'}</td>
+                <td style="padding:7px 10px;color:#e2d9f3;">${styleLabel}<br><span style="font-size:11px;color:#94a3b8;">${e.factory||''}</span></td>
+                <td style="padding:7px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(+e.salary||0)}</td>
+                <td style="padding:7px 10px;text-align:right;color:#4ade80;">${(+e.offdayOT||0)?taka(+e.offdayOT):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#fb923c;">${(+e.lunch||0)?taka(+e.lunch):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#fb923c;">${(+e.travel||0)?taka(+e.travel):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#f87171;">${(+e.deduct||0)?taka(+e.deduct):'-'}</td>
+                <td style="padding:7px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(+e.payable||0)}</td>
+                <td style="padding:7px 10px;color:#94a3b8;font-size:11px;">${e.note||'-'}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#2c1a4a;border-top:2px solid #7c3aed;">
+              <td colspan="3" style="padding:8px 10px;color:#d8b4fe;font-weight:700;">মোট</td>
+              <td style="padding:8px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(totalSalary)}</td>
+              <td style="padding:8px 10px;text-align:right;color:#4ade80;font-weight:700;">${taka(msOT)}</td>
+              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(totalLunch)}</td>
+              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(totalTravel)}</td>
+              <td style="padding:8px 10px;text-align:right;color:#f87171;font-weight:700;">${taka(totalDeduct)}</td>
+              <td style="padding:8px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(msPayable)}</td>
+              <td style="padding:8px 10px;"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:10px 16px;background:#faf5ff;border-top:1px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
+        <span>Salary: <strong style="color:#7c3aed;">${taka(totalSalary)}</strong></span>
+        ${msOT?`<span>OT: <strong style="color:var(--green);">+${taka(msOT)}</strong></span>`:''}
+        <span>Bill Cut: <strong style="color:var(--orange);">-${taka(msBillCut)}</strong></span>
+        <span>Net Payable: <strong style="color:#7c3aed;">${taka(msPayable)}</strong></span>
+      </div>`;
+    }
+
+    // ===== GRAND SUMMARY =====
+    html+=`
       <div style="padding:14px 18px;background:#f7fafd;border-top:2px solid #dde3ea;">
         <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;font-size:13px;align-items:center;">
-          <div style="text-align:center;padding:8px 14px;background:#eaf3fb;border-radius:8px;">
-            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Total Daily Salary</div>
-            <div style="font-size:17px;font-weight:700;color:var(--blue);font-family:'Poppins',sans-serif;">${taka(totalWearn-totalOT)}</div>
-          </div>
-          ${totalOT?`<div style="text-align:center;padding:8px 14px;background:#eafaf1;border-radius:8px;">
-            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">OT</div>
-            <div style="font-size:17px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;">+ ${taka(totalOT)}</div>
+          ${wt.length?`<div style="text-align:center;padding:8px 14px;background:#eff6ff;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Daily Payable</div>
+            <div style="font-size:16px;font-weight:700;color:var(--blue);">${taka(wtPayable)}</div>
           </div>`:''}
-          <div style="text-align:center;padding:8px 14px;background:#fef5e7;border-radius:8px;">
-            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Total Conv.</div>
-            <div style="font-size:17px;font-weight:700;color:var(--orange);font-family:'Poppins',sans-serif;">− ${taka(totalConv)}</div>
-          </div>
+          ${ms.length?`<div style="text-align:center;padding:8px 14px;background:#faf5ff;border-radius:8px;">
+            <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Monthly Payable</div>
+            <div style="font-size:16px;font-weight:700;color:#7c3aed;">${taka(msPayable)}</div>
+          </div>`:''}
           <div style="text-align:center;padding:10px 18px;background:#eafaf1;border:2px solid #a9dfbf;border-radius:8px;">
-            <div style="color:#1e8449;font-size:10px;text-transform:uppercase;font-weight:700;">হাতে পাবে (Net Payable)</div>
-            <div style="font-size:22px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;">${taka(totalPayable)}</div>
+            <div style="color:#1e8449;font-size:10px;text-transform:uppercase;font-weight:700;">মোট Payable</div>
+            <div style="font-size:22px;font-weight:700;color:var(--green);">${taka(totalPayable)}</div>
           </div>
           ${tp>0?`<div style="text-align:center;padding:8px 14px;background:#fdecea;border-radius:8px;">
             <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">বাকি</div>
-            <div style="font-size:17px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'};font-family:'Poppins',sans-serif;">${taka(remaining)}</div>
+            <div style="font-size:17px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'};">${taka(remaining)}</div>
           </div>`:''}
         </div>
       </div>
-
-      <!-- Signature -->
       <div style="padding:18px 24px;border-top:1px solid #dde3ea;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;text-align:center;font-size:12px;color:#555;">
-        <div>
-          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Received By Mendar</div>
-        </div>
-        <div>
-          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Managing Director</div>
-        </div>
-        <div>
-          <div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Authorized Signature</div>
-        </div>
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Received By Mendar</div></div>
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Managing Director</div></div>
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Authorized Signature</div></div>
       </div>
     </div>`;
   });
@@ -3059,27 +3106,29 @@ function deletePersonalTx(id) {
 }
 
 function renderPersonalAccount() {
+  const filterName   = ((document.getElementById('pa-filter-name')   || {}).value || '').toLowerCase().trim();
   const filterCat    = (document.getElementById('pa-filter-cat')    || {}).value || '';
   const filterMonth  = (document.getElementById('pa-filter-month')   || {}).value || '';
   const filterTxtype = (document.getElementById('pa-filter-txtype')  || {}).value || '';
+  const summaryMonth = (document.getElementById('pa-summary-month')  || {}).value || '';
+  const summaryYear  = (document.getElementById('pa-summary-year')   || {}).value || '';
 
+  // --- Transaction list filter ---
   let filtered = personalTxs.filter(t => {
-    if (filterCat    && t.cat    !== filterCat)              return false;
-    if (filterMonth  && !t.date.startsWith(filterMonth))     return false;
-    if (filterTxtype && t.txtype !== filterTxtype)           return false;
+    if (filterName   && !t.name.toLowerCase().includes(filterName)) return false;
+    if (filterCat    && t.cat    !== filterCat)                      return false;
+    if (filterMonth  && !t.date.startsWith(filterMonth))             return false;
+    if (filterTxtype && t.txtype !== filterTxtype)                   return false;
     return true;
   });
-
-  // Sort by date desc
   filtered.sort((a, b) => b.date.localeCompare(a.date));
 
-  // Transaction list
   const tbody = document.getElementById('pa-tx-list');
   if (!tbody) return;
+  const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="8" class="no-data">কোনো লেনদেন নেই</td></tr>';
   } else {
-    const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
     tbody.innerHTML = filtered.map((t, i) => `
       <tr>
         <td>${i + 1}</td>
@@ -3097,36 +3146,40 @@ function renderPersonalAccount() {
       </tr>`).join('');
   }
 
-  // Summary cards — use ALL data (no filter)
+  // --- Summary cards (all time) ---
+  const fmt = n => n.toLocaleString('en-BD');
+  const el  = id => document.getElementById(id);
   const totalDebit  = personalTxs.filter(t => t.txtype === 'debit').reduce((s, t) => s + t.amount, 0);
   const totalCredit = personalTxs.filter(t => t.txtype === 'credit').reduce((s, t) => s + t.amount, 0);
-  const totalDue    = totalDebit - totalCredit;
-  const fmt = n => n.toLocaleString('en-BD');
-  const el = id => document.getElementById(id);
   if (el('pa-total-debit'))  el('pa-total-debit').textContent  = fmt(totalDebit);
   if (el('pa-total-credit')) el('pa-total-credit').textContent = fmt(totalCredit);
-  if (el('pa-total-due'))    el('pa-total-due').textContent    = fmt(Math.max(0, totalDue));
+  if (el('pa-total-due'))    el('pa-total-due').textContent    = fmt(Math.max(0, totalDebit - totalCredit));
 
-  // Person-wise summary — group by name+cat
+  // --- Person-wise summary (with month/year filter) ---
+  let summaryTxs = personalTxs;
+  if (summaryMonth) summaryTxs = summaryTxs.filter(t => t.date.startsWith(summaryMonth));
+  else if (summaryYear) summaryTxs = summaryTxs.filter(t => t.date.startsWith(summaryYear));
+
   const personMap = {};
-  personalTxs.forEach(t => {
+  summaryTxs.forEach(t => {
     const key = t.name + '||' + t.cat;
     if (!personMap[key]) personMap[key] = { name: t.name, cat: t.cat, debit: 0, credit: 0 };
     if (t.txtype === 'debit')  personMap[key].debit  += t.amount;
     if (t.txtype === 'credit') personMap[key].credit += t.amount;
   });
-  const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
-  const persons  = Object.values(personMap).sort((a, b) => (b.debit - b.credit) - (a.debit - a.credit));
-  const sumBody  = document.getElementById('pa-person-summary');
+
+  const persons = Object.values(personMap).sort((a, b) => (b.debit - b.credit) - (a.debit - a.credit));
+  const sumBody = document.getElementById('pa-person-summary');
+  const filterLabel = summaryMonth ? `(${summaryMonth})` : summaryYear ? `(${summaryYear})` : '(সর্বকাল)';
   if (sumBody) {
     if (!persons.length) {
       sumBody.innerHTML = '<tr><td colspan="7" class="no-data">কোনো ডেটা নেই</td></tr>';
     } else {
       sumBody.innerHTML = persons.map((p, i) => {
         const due = p.debit - p.credit;
-        return `<tr>
+        return `<tr style="cursor:pointer;" onclick="showPersonDetail('${p.name}','${p.cat}')" title="ক্লিক করুন বিস্তারিত দেখতে">
           <td>${i + 1}</td>
-          <td><strong>${p.name}</strong></td>
+          <td><strong style="color:var(--blue);">${p.name}</strong> <span style="font-size:10px;color:var(--text-muted);">${filterLabel}</span></td>
           <td><span class="badge badge-blue">${catLabel[p.cat] || p.cat}</span></td>
           <td style="color:var(--red);font-weight:600;">৳${fmt(p.debit)}</td>
           <td style="color:var(--green);font-weight:600;">৳${fmt(p.credit)}</td>
@@ -3140,6 +3193,62 @@ function renderPersonalAccount() {
       }).join('');
     }
   }
+}
+
+function showPersonDetail(name, cat) {
+  const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
+  const fmt = n => n.toLocaleString('en-BD');
+  const txs = personalTxs.filter(t => t.name === name && t.cat === cat).sort((a,b) => b.date.localeCompare(a.date));
+
+  // Month-wise grouping
+  const monthMap = {};
+  txs.forEach(t => {
+    const ym = t.date.slice(0,7);
+    if (!monthMap[ym]) monthMap[ym] = { debit:0, credit:0, txs:[] };
+    monthMap[ym][t.txtype === 'debit' ? 'debit' : 'credit'] += t.amount;
+    monthMap[ym].txs.push(t);
+  });
+
+  const detailList = document.getElementById('pa-detail-list');
+  let rows = '';
+  Object.keys(monthMap).sort().reverse().forEach(ym => {
+    const m = monthMap[ym];
+    const due = m.debit - m.credit;
+    // Month header row
+    rows += `<tr style="background:#eaf3fb;">
+      <td colspan="2"><strong>${ym}</strong></td>
+      <td colspan="2" style="color:var(--red);">দিয়েছি: ৳${fmt(m.debit)}</td>
+      <td colspan="2" style="color:var(--green);">ফেরত: ৳${fmt(m.credit)} &nbsp;|&nbsp; <strong style="color:${due>0?'var(--red)':'var(--green)'};">বকেয়া: ৳${fmt(Math.abs(due))}</strong></td>
+    </tr>`;
+    // Individual txs
+    m.txs.forEach((t,i) => {
+      rows += `<tr>
+        <td style="color:var(--text-muted);font-size:11px;">${i+1}</td>
+        <td>${t.date}</td>
+        <td>${ym}</td>
+        <td>${t.txtype==='debit'?'<span class="badge badge-red">💸 দিয়েছি</span>':'<span class="badge badge-green">💚 ফেরত</span>'}</td>
+        <td style="font-weight:700;color:${t.txtype==='debit'?'var(--red)':'var(--green)'};">${t.txtype==='debit'?'-':'+'}৳${fmt(t.amount)}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${t.note||'—'}</td>
+      </tr>`;
+    });
+  });
+
+  detailList.innerHTML = rows || '<tr><td colspan="6" class="no-data">কোনো ডেটা নেই</td></tr>';
+
+  const totalD = txs.filter(t=>t.txtype==='debit').reduce((s,t)=>s+t.amount,0);
+  const totalC = txs.filter(t=>t.txtype==='credit').reduce((s,t)=>s+t.amount,0);
+  const totalDue = totalD - totalC;
+  document.getElementById('pa-detail-summary').innerHTML =
+    `<strong>${name}</strong> (${catLabel[cat]||cat}) — সর্বমোট দিয়েছি: <strong style="color:var(--red);">৳${fmt(totalD)}</strong> &nbsp;|&nbsp;
+     ফেরত পেয়েছি: <strong style="color:var(--green);">৳${fmt(totalC)}</strong> &nbsp;|&nbsp;
+     বকেয়া: <strong style="color:${totalDue>0?'var(--red)':'var(--green)'};">৳${fmt(Math.abs(totalDue))}</strong>`;
+
+  document.getElementById('pa-detail-header').innerHTML =
+    `📊 ${name} — মাসভিত্তিক বিস্তারিত <span class="ph-right"><button onclick="document.getElementById('pa-person-detail').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ বন্ধ</button></span>`;
+
+  const detail = document.getElementById('pa-person-detail');
+  detail.style.display = 'block';
+  detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 setSalaryType('daily');
