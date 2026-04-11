@@ -2125,39 +2125,61 @@ function calcMonthlySalary(){
 function addMonthlySalary(){
   const month=document.getElementById('ms-month').value;
   const date=document.getElementById('ms-date').value;
-  const worker=document.getElementById('ms-worker').value;
+  const _wVal=document.getElementById('ms-worker').value;
+  const worker=_wVal.includes(' (')?_wVal.split(' (')[0]:_wVal;
   const orderno=document.getElementById('ms-orderno').value;
   const ctIdx=document.getElementById('ms-style').value;
+  const isOffday=document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked;
+  const isAbsent=document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked;
   const salary=+document.getElementById('ms-salary').value||0;
-  if(!month||!worker||!orderno||ctIdx===''||!salary) return alert('Month, Worker, Order, Style ও Salary দিন');
-  const ct=contracts[+ctIdx];
+  const ot=+document.getElementById('ms-ot').value||0;
   const lunch=+document.getElementById('ms-lunch').value||0;
   const travel=+document.getElementById('ms-travel').value||0;
   const deduct=+document.getElementById('ms-deduct').value||0;
-  const _offdayEl=document.getElementById('ms-offday');
-  const isOffday=_offdayEl?_offdayEl.checked:false;
-  const offdayOT=isOffday?(+(document.getElementById('ms-offday-ot')||{}).value||0):0;
-  const offdayLunch=isOffday?(+(document.getElementById('ms-offday-lunch')||{}).value||0):0;
-  const offdayTravel=isOffday?(+(document.getElementById('ms-offday-travel')||{}).value||0):0;
 
-  const payable=(salary+offdayOT)-deduct;
-  const billCut=lunch+travel+offdayLunch+offdayTravel+offdayOT;
+  // Validation
+  if(isAbsent){
+    if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
+  } else {
+    if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
+    if(!isOffday && !salary && !ot) return alert('Salary অথবা OT দিন, অথবা অফডে/এবসেন্ট টিক দিন');
+  }
+
+  const ct=contracts[+ctIdx];
+  if(!ct) return alert('Style/Contract সঠিক নয়');
+  const effectiveMonth=month||date.substring(0,7);
+
+  // Duplicate check — একই worker+month+date+ctIdx+type এ আগে entry আছে?
+  const dupCheck=monthlySalaries.find(e=>
+    e.worker===worker && e.month===effectiveMonth && e.date===date &&
+    e.ctIdx===+ctIdx && !e.offday && !e.absent &&
+    !isOffday && !isAbsent
+  );
+  if(dupCheck) return alert('এই তারিখে এই Style-এ ইতিমধ্যে entry আছে!\nআগের entry মুছে নতুন দিন।');
+
+  const payable=(salary+ot)-deduct;
+  const billCut=lunch+travel;
 
   monthlySalaries.push({
-    month,date,worker,orderno,ctIdx:+ctIdx,
-    style:ct.style,supplier:ct.supplier,factory:ct.factory||'',
-    salary,lunch,travel,deduct,payable,billCut,
-    isOffday,offdayOT,offdayLunch,offdayTravel,
+    month:effectiveMonth, date, worker, orderno,
+    ctIdx:+ctIdx,
+    style:ct.style, supplier:ct.supplier, factory:ct.factory||'',
+    salary, ot, lunch, travel, deduct, payable, billCut,
+    offday:isOffday?true:undefined,
+    absent:isAbsent?true:undefined,
     note:document.getElementById('ms-note').value.trim()
   });
 
-  // নতুন entry save-এর পর ওই মাসের ওই worker-এর সব entry recalculate
-  rebalanceMonthlySalaries(worker, month);
+  rebalanceMonthlySalaries(worker, effectiveMonth);
 
-  ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note',
-   'ms-offday-ot','ms-offday-lunch','ms-offday-travel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  // Form reset
+  ['ms-salary','ms-ot','ms-lunch','ms-travel','ms-deduct','ms-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='0';
+  });
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
-  if(typeof toggleOffdayFields==='function') toggleOffdayFields();
+  if(document.getElementById('ms-absent')) document.getElementById('ms-absent').checked=false;
+  const infoEl=document.getElementById('ms-salary-info');
+  if(infoEl){ infoEl.textContent=''; infoEl.style.color='var(--blue)'; }
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
@@ -2180,17 +2202,41 @@ function rebalanceMonthlySalaries(worker, month){
   if(!w||w.type!=='monthly'||!w.rate) return;
   const fullSalary=w.rate;
 
-  // ওই মাসের ওই worker-এর সব entry
-  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month&&!e.isOffday);
-  const totalEntries=entries.length;
-  if(!totalEntries) return;
+  const allEntries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
+  if(!allEntries.length) return;
 
-  const perEntry=Math.round(fullSalary/totalEntries);
+  // Normal entries (offday ও absent বাদে)
+  const normalEntries=allEntries.filter(e=>!e.offday&&!e.absent);
+  const totalNormal=normalEntries.length;
 
-  entries.forEach(e=>{
-    e.salary=perEntry;
-    e.payable=perEntry - (e.deduct||0);
-    e.billCut=(e.lunch||0)+(e.travel||0)+(e.offdayLunch||0)+(e.offdayTravel||0)+(e.offdayOT||0);
+  if(totalNormal>0){
+    const perEntry=Math.round(fullSalary/totalNormal);
+    normalEntries.forEach(e=>{
+      e.salary=perEntry;
+      const ot=Number(e.ot)||0;
+      const deduct=Number(e.deduct)||0;
+      e.payable=(perEntry+ot)-deduct;
+      e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
+    });
+  }
+
+  // Offday entries: salary=0, শুধু OT payable
+  allEntries.filter(e=>e.offday).forEach(e=>{
+    e.salary=0;
+    const ot=Number(e.ot)||0;
+    const deduct=Number(e.deduct)||0;
+    e.payable=ot-deduct;
+    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
+  });
+
+  // Absent entries: salary = -(মূল বেতন÷26)
+  allEntries.filter(e=>e.absent).forEach(e=>{
+    const cut=-(Math.round(fullSalary/26));
+    e.salary=cut;
+    const ot=Number(e.ot)||0;
+    const deduct=Number(e.deduct)||0;
+    e.payable=cut+ot-deduct;
+    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 }
 
