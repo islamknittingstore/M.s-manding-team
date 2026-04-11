@@ -626,7 +626,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="form-panel">
       <div class="form-row">
         <div class="fg"><label>Date</label><input id="t-date" type="date"></div>
-        <div class="fg"><label>Worker Name</label><select id="t-worker" onchange="onWorkerSelect()"><option value="">-- Select --</option></select><span id="t-worker-party" style="display:none;font-size:11px;padding:2px 7px;border-radius:10px;background:#fff3e0;color:#e65100;font-weight:600;margin-top:4px;display:inline-block;"></span></div>
+        <div class="fg"><label>Worker Name</label><select id="t-worker" onchange="onWorkerSelect()"><option value="">-- Select --</option></select><span id="t-worker-party" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e65100;font-weight:600;"></span></div>
         <div class="fg"><label>Contract / Style</label><select id="t-contract" onchange="onContractSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Job Type</label><select id="t-jobtype"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Factory (Auto)</label><input id="t-factory" readonly placeholder="Auto"></div>
@@ -687,7 +687,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-row">
         <div class="fg"><label>Month</label><input id="ms-month" type="month" oninput="calcAutoMonthlySalary()"></div>
         <div class="fg"><label>Date <small style="color:var(--blue);">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
-        <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary();showWorkerPartyBadge('ms-worker','ms-worker-party');"><option value="">-- Select --</option></select><span id="ms-worker-party" style="display:none;font-size:11px;padding:2px 7px;border-radius:10px;background:#fff3e0;color:#e65100;font-weight:600;margin-top:4px;display:inline-block;"></span></div>
+        <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary();showWorkerPartyBadge('ms-worker','ms-worker-party');"><option value="">-- Select --</option></select><span id="ms-worker-party" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e65100;font-weight:600;"></span></div>
         <div class="fg"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
       </div>
@@ -1691,9 +1691,10 @@ function initApp() {
       localStorage.setItem('billSubmits',     JSON.stringify(billSubmits));
       localStorage.setItem('monthlySalaries', JSON.stringify(monthlySalaries));
     }
+    const firstLoad = !_fbLoaded;
     _fbLoaded = true;
     setSyncStatus('ok');
-    rebalanceAllMonthlySalaries(); // payable fix
+    if(firstLoad) rebalanceAllMonthlySalaries(); // শুধু প্রথম load-এ একবার
     scheduleRender(); // debounced — একবারই render হবে
   }, err=>{
     setSyncStatus('error');
@@ -1896,8 +1897,8 @@ function showWorkerPartyBadge(selectId, badgeId){
   const el=document.getElementById(badgeId);
   if(!el)return;
   if(w&&w.party&&w.party!=='নিজস্ব'){
-    el.textContent='🤝 '+w.party;
-    el.style.display='inline-block';
+    el.textContent=' 🤝 '+w.party;
+    el.style.display='inline';
   } else {
     el.textContent='';
     el.style.display='none';
@@ -2124,53 +2125,39 @@ function calcMonthlySalary(){
 function addMonthlySalary(){
   const month=document.getElementById('ms-month').value;
   const date=document.getElementById('ms-date').value;
-  const _msWorkerVal=document.getElementById('ms-worker').value;
-  const worker=(_msWorkerVal.includes(' (')?_msWorkerVal.split(' (')[0]:_msWorkerVal);
+  const worker=document.getElementById('ms-worker').value;
   const orderno=document.getElementById('ms-orderno').value;
   const ctIdx=document.getElementById('ms-style').value;
   const salary=+document.getElementById('ms-salary').value||0;
-  const isOffday=document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked;
-  const isAbsent=document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked;
-
-  // এবসেন্টের ক্ষেত্রে শুধু Date ও Worker লাগবে
-  if(isAbsent){
-    if(!date||!worker) return alert('Date ও Worker Name দিন');
-  } else {
-    if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
-    const otVal=+document.getElementById('ms-ot').value||0;
-    if(!isOffday && !salary && !otVal) return alert('Salary অথবা OT দিন, অথবা অফডে টিক দিন');
-  }
-
-  const ct=(ctIdx!==''&&ctIdx!==null)?contracts[+ctIdx]:null;
-  const ot=+document.getElementById('ms-ot').value||0;
+  if(!month||!worker||!orderno||ctIdx===''||!salary) return alert('Month, Worker, Order, Style ও Salary দিন');
+  const ct=contracts[+ctIdx];
   const lunch=+document.getElementById('ms-lunch').value||0;
   const travel=+document.getElementById('ms-travel').value||0;
   const deduct=+document.getElementById('ms-deduct').value||0;
+  const _offdayEl=document.getElementById('ms-offday');
+  const isOffday=_offdayEl?_offdayEl.checked:false;
+  const offdayOT=isOffday?(+(document.getElementById('ms-offday-ot')||{}).value||0):0;
+  const offdayLunch=isOffday?(+(document.getElementById('ms-offday-lunch')||{}).value||0):0;
+  const offdayTravel=isOffday?(+(document.getElementById('ms-offday-travel')||{}).value||0):0;
 
-  const payable=(salary+ot)-deduct;  // salary + OT - deduct
-  const billCut=lunch+travel;
-  const effectiveMonth=month||date.substring(0,7);
+  const payable=(salary+offdayOT)-deduct;
+  const billCut=lunch+travel+offdayLunch+offdayTravel+offdayOT;
 
   monthlySalaries.push({
-    month:effectiveMonth,date,worker,
-    orderno:orderno||'',
-    ctIdx:ct?+ctIdx:null,
-    style:ct?ct.style:'',
-    supplier:ct?ct.supplier:'',
-    factory:ct?ct.factory||'':'',
-    salary,ot,lunch,travel,deduct,payable,billCut,
-    offday:isOffday?true:undefined,
-    absent:isAbsent?true:undefined,
+    month,date,worker,orderno,ctIdx:+ctIdx,
+    style:ct.style,supplier:ct.supplier,factory:ct.factory||'',
+    salary,lunch,travel,deduct,payable,billCut,
+    isOffday,offdayOT,offdayLunch,offdayTravel,
     note:document.getElementById('ms-note').value.trim()
   });
 
-  try{ rebalanceMonthlySalaries(worker, effectiveMonth); } catch(e){ console.error('rebalance error:',e); }
+  // নতুন entry save-এর পর ওই মাসের ওই worker-এর সব entry recalculate
+  rebalanceMonthlySalaries(worker, month);
 
-  ['ms-salary','ms-ot','ms-lunch','ms-travel','ms-deduct','ms-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  ['ms-salary','ms-lunch','ms-travel','ms-deduct','ms-note',
+   'ms-offday-ot','ms-offday-lunch','ms-offday-travel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
-  if(document.getElementById('ms-absent')) document.getElementById('ms-absent').checked=false;
-  const infoEl=document.getElementById('ms-salary-info');
-  if(infoEl){ infoEl.textContent=''; infoEl.style.color='var(--blue)'; }
+  if(typeof toggleOffdayFields==='function') toggleOffdayFields();
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
@@ -2183,57 +2170,30 @@ function rebalanceAllMonthlySalaries(){
   const pairs=[...new Set(monthlySalaries.map(e=>e.worker+'|||'+e.month))];
   pairs.forEach(pair=>{
     const [worker,month]=pair.split('|||');
-    try{ rebalanceMonthlySalaries(worker,month); }catch(e){ console.error('rebalanceAll err:',e); }
+    rebalanceMonthlySalaries(worker,month);
   });
 }
 
 // ওই মাসের ওই worker-এর সব MS entry সমানভাগে rebalance করো
 function rebalanceMonthlySalaries(worker, month){
-  // worker name থেকে party part বাদ দাও (যদি থাকে)
-  const workerName=worker&&worker.includes(' (')?worker.split(' (')[0]:worker;
-  const w=workers.find(x=>x.name===workerName);
+  const w=workers.find(x=>x.name===worker);
   if(!w||w.type!=='monthly'||!w.rate) return;
   const fullSalary=w.rate;
 
   // ওই মাসের ওই worker-এর সব entry
-  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
-  if(!entries.length) return;
+  const entries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month&&!e.isOffday);
+  const totalEntries=entries.length;
+  if(!totalEntries) return;
 
-  // অফডে ও এবসেন্ট entry বাদে normal entry হিসাব করো
-  const normalEntries=entries.filter(e=>!e.offday&&!e.absent);
-  const totalNormal=normalEntries.length;
+  const perEntry=Math.round(fullSalary/totalEntries);
 
-  // normal entry-তে salary ভাগ করো
-  if(totalNormal>0){
-    const perEntry=Math.round(fullSalary/totalNormal);
-    normalEntries.forEach(e=>{
-      e.salary=perEntry;
-      const ot=Number(e.ot)||Number(e.offdayOT)||0;
-      const deduct=Number(e.deduct)||0;
-      e.payable=(perEntry+ot)-deduct;
-      e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
-    });
-  }
-
-  // অফডে entry: salary=0, payable=শুধু OT
-  entries.filter(e=>e.offday).forEach(e=>{
-    e.salary=0;
-    const ot=Number(e.ot)||0;
-    const deduct=Number(e.deduct)||0;
-    e.payable=ot-deduct;
-    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
-  });
-
-  // এবসেন্ট entry: salary = -(মূল বেতন÷26), পরিবর্তন করা যাবে না
-  entries.filter(e=>e.absent).forEach(e=>{
-    const cut=-(Math.round(fullSalary/26));
-    e.salary=cut;
-    const ot=Number(e.ot)||0;
-    const deduct=Number(e.deduct)||0;
-    e.payable=cut+ot-deduct;
-    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
+  entries.forEach(e=>{
+    e.salary=perEntry;
+    e.payable=perEntry - (e.deduct||0);
+    e.billCut=(e.lunch||0)+(e.travel||0)+(e.offdayLunch||0)+(e.offdayTravel||0)+(e.offdayOT||0);
   });
 }
+
 function deleteMonthlySalary(i){
   confirmDelete(()=>{
     const e=monthlySalaries[i];
@@ -2368,24 +2328,36 @@ function challanTotalPcs(idx){return challans.filter(c=>c.ctIdx===idx).reduce((s
 function challanTotalValue(idx){return challans.filter(c=>c.ctIdx===idx).reduce((s,c)=>s+c.value,0);}
 function monthlySalaryBillCut(ctIdx){return monthlySalaries.filter(e=>e.ctIdx===ctIdx).reduce((s,e)=>s+e.billCut,0);}
 function netChallanValue(idx){return challanTotalValue(idx)-monthlySalaryBillCut(idx);}
-function billTotalRecv(idx){
-  const ct=contracts[idx];
-  if(!ct)return 0;
-  const orderBills=bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
-  if(!orderBills.length)return 0;
-  // একই Order Number-এ কতটি contract আছে তা বের করো
-  const siblings=contracts.map((c,i)=>({c,i})).filter(({c})=>c.orderno===ct.orderno);
-  if(siblings.length<=1){
-    // শুধু একটাই contract — পুরো বিল এর
-    return orderBills.reduce((s,b)=>s+b.amount,0);
-  }
-  // একাধিক contract — challan value অনুপাতে ভাগ করো
-  const totalOrderChallan=siblings.reduce((s,{i})=>s+challanTotalValue(i),0);
-  const thisChallan=challanTotalValue(idx);
-  if(!totalOrderChallan)return 0; // challan নেই, ০ দেখাও
-  const ratio=thisChallan/totalOrderChallan;
-  return orderBills.reduce((s,b)=>s+b.amount,0)*ratio;
+// billTotalRecv cache — renderAll এর সময় একবার calculate করা হয়
+let _billRecvCache = null;
+function _buildBillRecvCache(){
+  _billRecvCache = {};
+  // order number অনুযায়ী total bill group করো
+  const orderBillTotal = {};
+  bills.forEach(b=>{ if(b.orderno) orderBillTotal[b.orderno]=(orderBillTotal[b.orderno]||0)+b.amount; });
+  // order number অনুযায়ী total challan group করো
+  const orderChallanTotal = {};
+  contracts.forEach((ct,i)=>{ if(ct.orderno){ orderChallanTotal[ct.orderno]=(orderChallanTotal[ct.orderno]||0)+challanTotalValue(i); } });
+  // প্রতিটা contract-এর জন্য proportional bill calculate করো
+  contracts.forEach((ct,i)=>{
+    if(!ct.orderno){ _billRecvCache[i]=bills.filter(b=>b.ctIdx===i&&!b.orderno).reduce((s,b)=>s+b.amount,0); return; }
+    const totalBill=orderBillTotal[ct.orderno]||0;
+    const totalCh=orderChallanTotal[ct.orderno]||0;
+    const thisCh=challanTotalValue(i);
+    if(totalCh>0&&totalBill>0){
+      // siblings আছে কিনা দেখো
+      const sibCount=contracts.filter(c=>c.orderno===ct.orderno).length;
+      _billRecvCache[i]=sibCount>1?totalBill*(thisCh/totalCh):totalBill;
+    } else {
+      _billRecvCache[i]=totalBill;
+    }
+  });
 }
+function billTotalRecv(idx){
+  if(!_billRecvCache) _buildBillRecvCache();
+  return _billRecvCache[idx]||0;
+}
+function _clearBillRecvCache(){ _billRecvCache=null; }
 function workerConvPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.conv,0);}
 function workerBillPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.bill,0);}
 function workerTotalPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.total,0);}
@@ -2575,6 +2547,7 @@ function onBillRecvSubmitSelect(){
 function genMonthlyReport(){genMonthlyReport2();}
 
 function renderAll(){
+  _clearBillRecvCache(); // প্রতি render-এ fresh calculate
   try{populateSelects();}catch(e){console.error('populateSelects',e);}
   try{populateJobTypeSelects();}catch(e){console.error('populateJobTypeSelects',e);}
   try{renderCompanies();}catch(e){console.error('renderCompanies',e);}
@@ -2733,7 +2706,7 @@ function renderDashboard(){
   rt.innerHTML=rta.length===0?'<tr><td colspan="4" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td>${e.worker}</td><td>${e.style}</td><td>${stypeBadge(e.salaryType)}</td><td style="color:var(--green);font-weight:700;">${taka(e.wearn)}</td></tr>`).join('');
   const rb=document.getElementById('d-recent-bills');
   const rba=bills.slice(-5).reverse();
-  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style}</strong></td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
+  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style||b.orderno||'-'}</strong></td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
 }
 
 // REPORTS
@@ -2779,9 +2752,9 @@ function genContractReport(){
     const monthlyBillCut=ctMonthly.reduce((s,e)=>s+e.billCut,0);
     const totalCost=wc+monthlyCost+monthlyBillCut;
     const ctBills=bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
-    const siblings=contracts.map((c,i)=>({c,i})).filter(({c})=>c.orderno===ct.orderno);
-    const isShared=siblings.length>1;
-    const totalOrderChallan=isShared?siblings.reduce((s,{i})=>s+challanTotalValue(i),0):0;
+    const sibCount=contracts.filter(c=>c.orderno===ct.orderno).length;
+    const isShared=sibCount>1;
+    const totalOrderChallan=isShared?contracts.reduce((s,c,i)=>c.orderno===ct.orderno?s+challanTotalValue(i):s,0):0;
     const billRatio=isShared&&totalOrderChallan>0?cv/totalOrderChallan:1;
     h+=rSub(`${ct.style} | ${ct.supplier} → ${ct.factory}${ct.buyer?' (Buyer: '+ct.buyer+')':''}`);
     h+=rRow('Date',fmtDate(ct.date));
@@ -3263,10 +3236,7 @@ function genSupplierReport2(){
       const me=m?takings.filter(e=>e.ctIdx===idx&&e.date.startsWith(m)):takings.filter(e=>e.ctIdx===idx);
       const cv=mc.reduce((s,c)=>s+c.value,0),wc=me.reduce((s,e)=>s+e.wearn,0);
       // Proportional bill for shared orders
-      const sib=contracts.map((c,i)=>({c,i})).filter(({c})=>c.orderno===ct.orderno);
-      const totOrdCh=sib.length>1?sib.reduce((s,{i})=>s+challanTotalValue(i),0):0;
-      const bRatio=sib.length>1&&totOrdCh>0?challanTotalValue(idx)/totOrdCh:1;
-      const br=mb.reduce((s,b)=>s+b.amount,0)*bRatio;
+      const br=billTotalRecv(idx);
       if(!cv&&!br&&!wc)return;
       sc+=cv;sb+=br;sw+=wc;
       h+=rRow(`  ${ct.style} (${ct.jobtype})`,`Challan:${taka(cv)} | Bill:${taka(br)} | Worker:${taka(wc)}`);
@@ -3316,11 +3286,7 @@ function genStylePLReport(){
     const challanVal=ctChallans.reduce((s,c)=>s+c.value,0);
     // Bill
     const ctBills=bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&(!m||b.date.startsWith(m)));
-    // Proportional bill for shared orders
-    const sibPL=contracts.map((c,i)=>({c,i})).filter(({c})=>c.orderno===ct.orderno);
-    const totOrdChPL=sibPL.length>1?sibPL.reduce((s,{i})=>s+challanTotalValue(i),0):0;
-    const bRatioPL=sibPL.length>1&&totOrdChPL>0?challanVal/totOrdChPL:1;
-    const billRecv=ctBills.reduce((s,b)=>s+b.amount,0)*bRatioPL;
+    const billRecv=billTotalRecv(idx);
     // Worker cost (Daily/Piece takings)
     const ctTakings=takings.filter(e=>e.ctIdx===idx&&(!m||e.date.startsWith(m)));
     const workerCost=ctTakings.reduce((s,e)=>s+e.wearn,0);
