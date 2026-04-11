@@ -1638,6 +1638,9 @@ function initApp() {
   // Local file indicator update করো (login হওয়ার পর)
   _refreshLocalFileIndicator();
 
+  // Personal Account Firebase sync শুরু করো
+  initPersonalAccountSync();
+
   // Firebase background-এ load হবে — UI block করবে না
   DATA_REF.on('value', snap=>{
     const d=snap.val();
@@ -3337,19 +3340,20 @@ const PA_REF = () => fbdb.ref('personalAccount');
 // Load from localStorage fallback
 personalTxs = JSON.parse(localStorage.getItem('personalTxs') || '[]');
 
-// Real-time Firebase sync for personal account
-PA_REF().on('value', snap => {
-  const d = snap.val();
-  if (d && Array.isArray(d)) {
-    personalTxs = d;
-    localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
-  } else if (d && typeof d === 'object' && !Array.isArray(d)) {
-    // convert object to array if needed
-    personalTxs = Object.values(d);
-    localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
-  }
-  renderPersonalAccount();
-}, err => { console.error('PA Firebase error:', err); });
+// initApp()-এ call হবে — fbdb ready হওয়ার পর
+function initPersonalAccountSync(){
+  PA_REF().on('value', snap => {
+    const d = snap.val();
+    if (d && Array.isArray(d)) {
+      personalTxs = d;
+      localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
+    } else if (d && typeof d === 'object' && !Array.isArray(d)) {
+      personalTxs = Object.values(d);
+      localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
+    }
+    renderPersonalAccount();
+  }, err => { console.error('PA Firebase error:', err); });
+}
 
 function savePersonal() {
   localStorage.setItem('personalTxs', JSON.stringify(personalTxs));
