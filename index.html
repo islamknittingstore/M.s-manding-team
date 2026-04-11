@@ -1629,6 +1629,7 @@ let companies=[], contracts=[], workers=[], takings=[], payments=[];
 let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
+let _isSaving=false;
 
 // Load from localStorage as fallback first
 function loadLocal(){
@@ -1669,7 +1670,9 @@ function initApp() {
 
   // Firebase background-এ load হবে — UI block করবে না
   DATA_REF.on('value', snap=>{
+    // নিজের save()-এর echo হলে data overwrite করবো না — কিন্তু status update করবো
     const d=snap.val();
+    if(_isSaving){setSyncStatus('ok');_isSaving=false;return;}
     if(d){
       companies      = d.companies       || [];
       contracts      = d.contracts       || [];
@@ -1750,13 +1753,21 @@ function save(){
   localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
   localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
   renderAll();
-  // Immediate Firebase save — প্রতি entry-তেই সাথে সাথে save হবে
+  // Firebase না থাকলে skip
+  if(!DATA_REF){setSyncStatus('error');console.error('DATA_REF not ready');return;}
+  _isSaving=true;
   setSyncStatus('saving');
-  DATA_REF.set({
-    companies,contracts,workers,takings,payments,
-    challans,bills,billSubmits,monthlySalaries
-  }).then(()=>setSyncStatus('ok'))
-    .catch(e=>{setSyncStatus('error');console.error('Firebase save error:',e);});
+  try{
+    DATA_REF.set({
+      companies,contracts,workers,takings,payments,
+      challans,bills,billSubmits,monthlySalaries
+    }).then(()=>{/* listener on('value') এ setSyncStatus('ok') হবে */})
+      .catch(e=>{setSyncStatus('error');_isSaving=false;console.error('Firebase save error:',e);});
+  }catch(e){
+    setSyncStatus('error');
+    _isSaving=false;
+    console.error('Firebase set error:',e);
+  }
 }
 
 // Page-to-group mapping
@@ -2125,66 +2136,54 @@ function calcMonthlySalary(){
 function addMonthlySalary(){
   const month=document.getElementById('ms-month').value;
   const date=document.getElementById('ms-date').value;
-  const _wVal=document.getElementById('ms-worker').value;
-  const worker=_wVal.includes(' (')?_wVal.split(' (')[0]:_wVal;
+  const _wv=document.getElementById('ms-worker').value;
+  const worker=_wv&&_wv.includes(' (')?_wv.split(' (')[0]:_wv;
   const orderno=document.getElementById('ms-orderno').value;
   const ctIdx=document.getElementById('ms-style').value;
-  const isOffday=document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked;
-  const isAbsent=document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked;
   const salary=+document.getElementById('ms-salary').value||0;
-  const ot=+document.getElementById('ms-ot').value||0;
-  const lunch=+document.getElementById('ms-lunch').value||0;
-  const travel=+document.getElementById('ms-travel').value||0;
-  const deduct=+document.getElementById('ms-deduct').value||0;
+  const ot=+(document.getElementById('ms-ot')||{value:0}).value||0;
+  const isAbsent=!!(document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked);
+  const isOffday=!!(document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked);
 
-  // Validation
-  if(isAbsent){
-    if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
-  } else {
-    if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
-    if(!isOffday && !salary && !ot) return alert('Salary অথবা OT দিন, অথবা অফডে/এবসেন্ট টিক দিন');
-  }
+  if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
+  if(!isAbsent&&!isOffday&&!salary&&!ot) return alert('Salary দিন');
 
   const ct=contracts[+ctIdx];
-  if(!ct) return alert('Style/Contract সঠিক নয়');
+  if(!ct) return alert('Style সঠিক নয়');
+
+  const lunch=+(document.getElementById('ms-lunch')||{value:0}).value||0;
+  const travel=+(document.getElementById('ms-travel')||{value:0}).value||0;
+  const deduct=+(document.getElementById('ms-deduct')||{value:0}).value||0;
+  const note=(document.getElementById('ms-note')||{value:''}).value.trim();
+
   const effectiveMonth=month||date.substring(0,7);
-
-  // Duplicate check — একই worker+month+date+ctIdx+type এ আগে entry আছে?
-  const dupCheck=monthlySalaries.find(e=>
-    e.worker===worker && e.month===effectiveMonth && e.date===date &&
-    e.ctIdx===+ctIdx && !e.offday && !e.absent &&
-    !isOffday && !isAbsent
-  );
-  if(dupCheck) return alert('এই তারিখে এই Style-এ ইতিমধ্যে entry আছে!\nআগের entry মুছে নতুন দিন।');
-
   const payable=(salary+ot)-deduct;
   const billCut=lunch+travel;
 
   monthlySalaries.push({
-    month:effectiveMonth, date, worker, orderno,
-    ctIdx:+ctIdx,
-    style:ct.style, supplier:ct.supplier, factory:ct.factory||'',
-    salary, ot, lunch, travel, deduct, payable, billCut,
-    offday:isOffday?true:undefined,
-    absent:isAbsent?true:undefined,
-    note:document.getElementById('ms-note').value.trim()
+    month:effectiveMonth,date,worker,orderno,ctIdx:+ctIdx,
+    style:ct.style,supplier:ct.supplier,factory:ct.factory||'',
+    salary,ot,lunch,travel,deduct,payable,billCut,
+    offday:isOffday?true:false,
+    absent:isAbsent?true:false,
+    note
   });
 
   rebalanceMonthlySalaries(worker, effectiveMonth);
 
-  // Form reset
   ['ms-salary','ms-ot','ms-lunch','ms-travel','ms-deduct','ms-note'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.value='0';
+    const el=document.getElementById(id);if(el)el.value='0';
   });
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
   if(document.getElementById('ms-absent')) document.getElementById('ms-absent').checked=false;
-  const infoEl=document.getElementById('ms-salary-info');
-  if(infoEl){ infoEl.textContent=''; infoEl.style.color='var(--blue)'; }
+  const inf=document.getElementById('ms-salary-info');
+  if(inf){inf.textContent='';inf.style.color='var(--blue)';}
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
-  setTimeout(calcAutoMonthlySalary, 200);
+  setTimeout(calcAutoMonthlySalary,200);
 }
+
 
 // সব worker-এর সব মাসের entry একবারে rebalance করো (existing data fix)
 function rebalanceAllMonthlySalaries(){
