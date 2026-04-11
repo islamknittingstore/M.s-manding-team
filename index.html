@@ -626,7 +626,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="form-panel">
       <div class="form-row">
         <div class="fg"><label>Date</label><input id="t-date" type="date"></div>
-        <div class="fg"><label>Worker Name</label><select id="t-worker" onchange="onWorkerSelect()"><option value="">-- Select --</option></select></div>
+        <div class="fg"><label>Worker Name</label><select id="t-worker" onchange="onWorkerSelect()"><option value="">-- Select --</option></select><span id="t-worker-party" style="display:none;font-size:11px;padding:2px 7px;border-radius:10px;background:#fff3e0;color:#e65100;font-weight:600;margin-top:4px;display:inline-block;"></span></div>
         <div class="fg"><label>Contract / Style</label><select id="t-contract" onchange="onContractSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Job Type</label><select id="t-jobtype"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Factory (Auto)</label><input id="t-factory" readonly placeholder="Auto"></div>
@@ -687,7 +687,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-row">
         <div class="fg"><label>Month</label><input id="ms-month" type="month" oninput="calcAutoMonthlySalary()"></div>
         <div class="fg"><label>Date <small style="color:var(--blue);">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
-        <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary()"><option value="">-- Select --</option></select></div>
+        <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary();showWorkerPartyBadge('ms-worker','ms-worker-party');"><option value="">-- Select --</option></select><span id="ms-worker-party" style="display:none;font-size:11px;padding:2px 7px;border-radius:10px;background:#fff3e0;color:#e65100;font-weight:600;margin-top:4px;display:inline-block;"></span></div>
         <div class="fg"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
       </div>
@@ -1890,9 +1890,23 @@ function addWorker(){
   save();
 }
 
+function showWorkerPartyBadge(selectId, badgeId){
+  const selVal=document.getElementById(selectId).value;
+  const w=workers.find(x=>x.name===selVal)||workers.find(x=>(x.party&&x.party!=='নিজস্ব'?x.name+' ('+x.party+')':x.name)===selVal);
+  const el=document.getElementById(badgeId);
+  if(!el)return;
+  if(w&&w.party&&w.party!=='নিজস্ব'){
+    el.textContent='🤝 '+w.party;
+    el.style.display='inline-block';
+  } else {
+    el.textContent='';
+    el.style.display='none';
+  }
+}
 function onWorkerSelect(){
   const selVal=document.getElementById('t-worker').value;
   const w=workers.find(x=>(x.party&&x.party!=='নিজস্ব'?x.name+' ('+x.party+')':x.name)===selVal)||workers.find(x=>x.name===selVal);
+  showWorkerPartyBadge('t-worker','t-worker-party');
   if(w){
     if(w.type==='daily'||w.type==='mix'){
       if(w.rate){document.getElementById('t-daily').value=w.rate;document.getElementById('t-daily-mix').value=w.rate;}
@@ -2150,7 +2164,7 @@ function addMonthlySalary(){
     note:document.getElementById('ms-note').value.trim()
   });
 
-  rebalanceMonthlySalaries(worker, effectiveMonth);
+  try{ rebalanceMonthlySalaries(worker, effectiveMonth); } catch(e){ console.error('rebalance error:',e); }
 
   ['ms-salary','ms-ot','ms-lunch','ms-travel','ms-deduct','ms-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
@@ -2169,13 +2183,15 @@ function rebalanceAllMonthlySalaries(){
   const pairs=[...new Set(monthlySalaries.map(e=>e.worker+'|||'+e.month))];
   pairs.forEach(pair=>{
     const [worker,month]=pair.split('|||');
-    rebalanceMonthlySalaries(worker,month);
+    try{ rebalanceMonthlySalaries(worker,month); }catch(e){ console.error('rebalanceAll err:',e); }
   });
 }
 
 // ওই মাসের ওই worker-এর সব MS entry সমানভাগে rebalance করো
 function rebalanceMonthlySalaries(worker, month){
-  const w=workers.find(x=>x.name===worker);
+  // worker name থেকে party part বাদ দাও (যদি থাকে)
+  const workerName=worker&&worker.includes(' (')?worker.split(' (')[0]:worker;
+  const w=workers.find(x=>x.name===workerName);
   if(!w||w.type!=='monthly'||!w.rate) return;
   const fullSalary=w.rate;
 
@@ -2221,10 +2237,11 @@ function rebalanceMonthlySalaries(worker, month){
 function deleteMonthlySalary(i){
   confirmDelete(()=>{
     const e=monthlySalaries[i];
-    const worker=e?e.worker:'';
+    const _rawWorker=e?e.worker:'';
+    const worker=_rawWorker&&_rawWorker.includes(' (')?_rawWorker.split(' (')[0]:_rawWorker;
     const month=e?e.month:'';
     monthlySalaries.splice(i,1);
-    if(worker&&month) rebalanceMonthlySalaries(worker,month);
+    if(worker&&month) try{ rebalanceMonthlySalaries(worker,month); }catch(e2){ console.error('rebalance err:',e2); }
     save();
   },'এই রেকর্ড মুছবেন?');
 }
