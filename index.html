@@ -1899,12 +1899,13 @@ window.confirmDelete = function(fn, msg) {
   document.getElementById('delete-modal-overlay').classList.add('active');
 };
 window.dmConfirm = function() {
+  var f = _dmFn;
+  _dmFn = null;
   window.dmClose();
-  if (_dmFn) { var f = _dmFn; _dmFn = null; f(); }
+  if (f) { f(); }
 };
 window.dmClose = function() {
   document.getElementById('delete-modal-overlay').classList.remove('active');
-  _dmFn = null;
 };
 
 // Firebase এ পাঠানোর আগে array sanitize করো — undefined/NaN/null বাদ দাও
