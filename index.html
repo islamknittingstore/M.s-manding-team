@@ -218,10 +218,53 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .print-header{display:none;text-align:center;margin-bottom:16px;font-family:'Poppins',sans-serif;}
 .print-header h2{font-size:18px;font-weight:700;color:#1a3a5c;}
 .print-header p{font-size:11px;color:#666;margin-top:3px;}
+
+/* ===== DELETE CONFIRM MODAL ===== */
+#delete-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:99999;align-items:center;justify-content:center;
+}
+#delete-modal-overlay.active{display:flex;}
+#delete-modal{
+  background:#fff;border-radius:14px;padding:28px 28px 22px;
+  max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.25);
+  text-align:center;animation:dmPop .18s ease;
+}
+@keyframes dmPop{from{transform:scale(.88);opacity:0;}to{transform:scale(1);opacity:1;}}
+#delete-modal .dm-icon{font-size:40px;margin-bottom:10px;}
+#delete-modal .dm-msg{font-size:14px;color:#333;font-weight:600;margin-bottom:6px;font-family:'Poppins',sans-serif;}
+#delete-modal .dm-sub{font-size:12px;color:#888;margin-bottom:22px;}
+#delete-modal .dm-btns{display:flex;gap:10px;justify-content:center;}
+#delete-modal .dm-cancel{
+  flex:1;padding:10px;border:1.5px solid #ddd;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;background:#f5f5f5;color:#555;
+  transition:background .15s;
+}
+#delete-modal .dm-cancel:hover{background:#e8e8e8;}
+#delete-modal .dm-confirm{
+  flex:1;padding:10px;border:none;border-radius:9px;
+  font-size:13px;font-weight:700;cursor:pointer;
+  background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;
+  box-shadow:0 3px 12px rgba(192,57,43,.35);transition:opacity .15s;
+}
+#delete-modal .dm-confirm:hover{opacity:.88;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+
+<!-- ===== DELETE CONFIRM MODAL ===== -->
+<div id="delete-modal-overlay" onclick="if(event.target===this)dmClose()">
+  <div id="delete-modal">
+    <div class="dm-icon">🗑️</div>
+    <div class="dm-msg" id="dm-msg-text">মুছে ফেলবেন?</div>
+    <div class="dm-sub">এই কাজ আর ফিরিয়ে আনা যাবে না।</div>
+    <div class="dm-btns">
+      <button class="dm-cancel" onclick="dmClose()">বাতিল</button>
+      <button class="dm-confirm" onclick="dmConfirm()">হ্যাঁ, মুছুন</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen">
@@ -1849,7 +1892,20 @@ function _refreshLocalFileIndicator(){
   }
 }
 
-function confirmDelete(fn,msg){if(confirm(msg||'Are you sure?'))fn();}
+let _dmFn = null;
+function confirmDelete(fn, msg) {
+  _dmFn = fn;
+  document.getElementById('dm-msg-text').textContent = msg || 'মুছে ফেলবেন?';
+  document.getElementById('delete-modal-overlay').classList.add('active');
+}
+function dmConfirm() {
+  dmClose();
+  if (_dmFn) { _dmFn(); _dmFn = null; }
+}
+function dmClose() {
+  document.getElementById('delete-modal-overlay').classList.remove('active');
+  _dmFn = null;
+}
 
 // Firebase এ পাঠানোর আগে array sanitize করো — undefined/NaN/null বাদ দাও
 function sanitizeForFirebase(arr){
@@ -3675,9 +3731,10 @@ function addPersonalTx() {
 }
 
 function deletePersonalTx(id) {
-  if (!confirm('এই লেনদেন মুছবেন?')) return;
-  personalTxs = personalTxs.filter(t => t.id !== id);
-  savePersonal();
+  confirmDelete(() => {
+    personalTxs = personalTxs.filter(t => t.id !== id);
+    savePersonal();
+  }, 'এই লেনদেন মুছবেন?');
 }
 
 function renderPersonalAccount() {
