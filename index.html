@@ -1892,20 +1892,20 @@ function _refreshLocalFileIndicator(){
   }
 }
 
-let _dmFn = null;
-function confirmDelete(fn, msg) {
+var _dmFn = null;
+window.confirmDelete = function(fn, msg) {
   _dmFn = fn;
   document.getElementById('dm-msg-text').textContent = msg || 'মুছে ফেলবেন?';
   document.getElementById('delete-modal-overlay').classList.add('active');
-}
-function dmConfirm() {
-  dmClose();
-  if (_dmFn) { _dmFn(); _dmFn = null; }
-}
-function dmClose() {
+};
+window.dmConfirm = function() {
+  window.dmClose();
+  if (_dmFn) { var f = _dmFn; _dmFn = null; f(); }
+};
+window.dmClose = function() {
   document.getElementById('delete-modal-overlay').classList.remove('active');
   _dmFn = null;
-}
+};
 
 // Firebase এ পাঠানোর আগে array sanitize করো — undefined/NaN/null বাদ দাও
 function sanitizeForFirebase(arr){
