@@ -21,57 +21,57 @@
 <style>
 :root{--primary:#1a3a5c;--red:#c0392b;--green:#27ae60;--orange:#e67e22;--blue:#2980b9;--sidebar-bg:#1a2a3a;--sidebar-hover:#243447;--body-bg:#f0f4f8;--text-main:#1a2a3a;--text-muted:#6b7f94;--border:#dde3ea;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Roboto',sans-serif;background:var(--body-bg);color:var(--text-main);}
-.topbar{background:#fff;border-bottom:2px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:70px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+body{font-family:'Roboto',sans-serif;background:#f0f4f8;color:#1a2a3a;}
+.topbar{background:#fff;border-bottom:2px solid #dde3ea;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:70px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
 .logo-area{display:flex;align-items:center;}
-.logo-accent-bar{width:5px;height:48px;background:var(--red);border-radius:3px;margin-right:10px;}
+.logo-accent-bar{width:5px;height:48px;background:#c0392b;border-radius:3px;margin-right:10px;}
 .logo-icon{width:54px;height:54px;flex-shrink:0;margin-right:12px;}
 .logo-text h1{font-family:'Poppins',sans-serif;font-size:21px;font-weight:700;line-height:1.15;}
-.logo-text h1 .red{color:var(--red);}.logo-text h1 .blue{color:var(--primary);}
-.logo-text p{font-size:10.5px;color:var(--text-muted);margin-top:1px;}
-.topbar-right{color:var(--text-muted);font-size:12.5px;}
+.logo-text h1 .red{color:#c0392b;}.logo-text h1 .blue{color:#1a3a5c;}
+.logo-text p{font-size:10.5px;color:#6b7f94;margin-top:1px;}
+.topbar-right{color:#6b7f94;font-size:12.5px;}
 .layout{display:flex;margin-top:70px;min-height:calc(100vh - 70px);}
-.sidebar{width:230px;background:var(--sidebar-bg);position:fixed;top:70px;left:0;bottom:0;padding:12px 10px;overflow-y:auto;z-index:99;}
+.sidebar{width:230px;background:#1a2a3a;position:fixed;top:70px;left:0;bottom:0;padding:12px 10px;overflow-y:auto;z-index:99;}
 .sidebar .menu-label{font-size:10px;color:#5a7a95;text-transform:uppercase;letter-spacing:1px;padding:14px 10px 5px;font-weight:600;}
 .sidebar a{display:flex;align-items:center;gap:9px;color:#a8c0d6;padding:9px 12px;text-decoration:none;border-radius:6px;font-size:13px;cursor:pointer;transition:background 0.15s;margin-bottom:2px;}
-.sidebar a:hover,.sidebar a.active{background:var(--sidebar-hover);color:#fff;}
+.sidebar a:hover,.sidebar a.active{background:#243447;color:#fff;}
 .sidebar a .icon{font-size:15px;width:18px;text-align:center;}
 .main{margin-left:230px;flex:1;padding:22px;}
 .page{display:none;}.page.active{display:block;}
-.page-header{margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px;}
-.page-header h2{font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;color:var(--primary);}
-.page-header p{font-size:12px;color:var(--text-muted);}
+.page-header{margin-bottom:18px;border-bottom:1px solid #dde3ea;padding-bottom:10px;}
+.page-header h2{font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;color:#1a3a5c;}
+.page-header p{font-size:12px;color:#6b7f94;}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
-.stat-card{background:#fff;border-radius:10px;padding:16px 18px;border-top:4px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.05);}
-.stat-card.c-blue{border-top-color:var(--blue);}.stat-card.c-red{border-top-color:var(--red);}
-.stat-card.c-green{border-top-color:var(--green);}.stat-card.c-orange{border-top-color:var(--orange);}
-.stat-card .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:600;margin-bottom:8px;}
+.stat-card{background:#fff;border-radius:10px;padding:16px 18px;border-top:4px solid #dde3ea;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.stat-card.c-blue{border-top-color:#2980b9;}.stat-card.c-red{border-top-color:#c0392b;}
+.stat-card.c-green{border-top-color:#27ae60;}.stat-card.c-orange{border-top-color:#e67e22;}
+.stat-card .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#6b7f94;font-weight:600;margin-bottom:8px;}
 .stat-card .val{font-size:26px;font-weight:700;font-family:'Poppins',sans-serif;}
-.stat-card.c-blue .val{color:var(--blue);}.stat-card.c-red .val{color:var(--red);}
-.stat-card.c-green .val{color:var(--green);}.stat-card.c-orange .val{color:var(--orange);}
-.stat-card .sub{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.stat-card.c-blue .val{color:#2980b9;}.stat-card.c-red .val{color:#c0392b;}
+.stat-card.c-green .val{color:#27ae60;}.stat-card.c-orange .val{color:#e67e22;}
+.stat-card .sub{font-size:11px;color:#6b7f94;margin-top:3px;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .panel{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;margin-bottom:16px;}
 .panel-header{background:#1a2a3a;color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
 .ph-right{font-size:12px;font-weight:400;color:#a8c0d6;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 table th{background:#2c3e50;color:#cdd8e3;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table td{padding:8px 12px;border-bottom:1px solid #dde3ea;vertical-align:middle;}
 table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;}
-.no-data{padding:28px;text-align:center;color:var(--text-muted);font-size:13px;}
+.no-data{padding:28px;text-align:center;color:#6b7f94;font-size:13px;}
 .form-panel{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:16px;}
-.form-panel h5{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;margin-bottom:14px;color:var(--primary);border-bottom:1px solid var(--border);padding-bottom:8px;}
+.form-panel h5{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;margin-bottom:14px;color:#1a3a5c;border-bottom:1px solid #dde3ea;padding-bottom:8px;}
 .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
 .fg{flex:1;min-width:140px;margin-bottom:10px;}
-.fg label{font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}
-.fg input,.fg select{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'Roboto',sans-serif;color:var(--text-main);background:#fff;outline:none;transition:border 0.2s;}
-.fg input:focus,.fg select:focus{border-color:var(--blue);}
+.fg label{font-size:11px;font-weight:500;color:#6b7f94;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}
+.fg input,.fg select{width:100%;padding:8px 11px;border:1px solid #dde3ea;border-radius:6px;font-size:13px;font-family:'Roboto',sans-serif;color:#1a2a3a;background:#fff;outline:none;transition:border 0.2s;}
+.fg input:focus,.fg select:focus{border-color:#2980b9;}
 .fg input[readonly]{background:#f7fafd;cursor:default;}
 .fg-btn{display:flex;align-items:flex-end;margin-bottom:10px;}
 .btn{padding:8px 18px;border-radius:6px;border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:'Roboto',sans-serif;transition:opacity 0.18s;white-space:nowrap;}
 .btn:hover{opacity:0.85;}
-.btn-success{background:var(--green);color:#fff;}.btn-danger{background:var(--red);color:#fff;padding:5px 9px;font-size:12px;border-radius:4px;}
-.btn-info{background:var(--blue);color:#fff;}.btn-orange{background:var(--orange);color:#fff;}
+.btn-success{background:#27ae60;color:#fff;}.btn-danger{background:#c0392b;color:#fff;padding:5px 9px;font-size:12px;border-radius:4px;}
+.btn-info{background:#2980b9;color:#fff;}.btn-orange{background:#e67e22;color:#fff;}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
 .badge-green{background:#eafaf1;color:#27ae60;}.badge-red{background:#fdecea;color:#c0392b;}
 .badge-blue{background:#eaf3fb;color:#2980b9;}.badge-orange{background:#fef5e7;color:#e67e22;}
@@ -102,15 +102,15 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .login-logo-bar{display:none;}
 .login-logo-text{display:none;}
 #app-wrapper{display:none;}
-#sync-btn{display:flex;align-items:center;gap:7px;background:transparent;border:1.5px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-main);transition:all 0.18s;white-space:nowrap;}
+#sync-btn{display:flex;align-items:center;gap:7px;background:transparent;border:1.5px solid #dde3ea;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:12px;font-weight:600;color:#1a2a3a;transition:all 0.18s;white-space:nowrap;}
 #save-notify{display:none;font-size:11px;font-weight:600;color:#27ae60;background:#eafaf1;border:1.5px solid #a9dfbf;border-radius:14px;padding:3px 10px;margin-left:4px;white-space:nowrap;}
 @keyframes fadeInOut{0%{opacity:0;transform:translateY(-4px);}15%{opacity:1;transform:translateY(0);}75%{opacity:1;}100%{opacity:0;transform:translateY(-4px);}}
 #sync-btn:hover{background:#f0f4f8;border-color:#b0bec8;}
 #sync-btn .sync-dot{width:9px;height:9px;border-radius:50%;background:#aaa;display:inline-block;flex-shrink:0;transition:background 0.3s;}
-#sync-btn .sync-dot.ok{background:var(--green);box-shadow:0 0 0 3px rgba(39,174,96,0.2);}
-#sync-btn .sync-dot.saving{background:var(--orange);animation:pulse-dot 0.7s infinite;}
-#sync-btn .sync-dot.error{background:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,0.2);}
-#sync-btn .sync-dot.loading{background:var(--blue);animation:pulse-dot 0.7s infinite;}
+#sync-btn .sync-dot.ok{background:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.2);}
+#sync-btn .sync-dot.saving{background:#e67e22;animation:pulse-dot 0.7s infinite;}
+#sync-btn .sync-dot.error{background:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,0.2);}
+#sync-btn .sync-dot.loading{background:#2980b9;animation:pulse-dot 0.7s infinite;}
 @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:0.25;}}
 #sync-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.55);}
 #sync-overlay.open{display:block;}
@@ -124,17 +124,17 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .sp-card{margin:10px;border-radius:10px;overflow:hidden;border:1px solid #2d3f55;}
 .sp-card-header{display:flex;align-items:center;gap:8px;padding:10px 13px;background:#243045;font-size:13px;font-weight:700;color:#c8daea;}
 .sp-card-header .sp-ind{width:10px;height:10px;border-radius:50%;background:#555;flex-shrink:0;}
-.sp-card-header .sp-ind.ok{background:var(--green);box-shadow:0 0 0 3px rgba(39,174,96,0.25);}
-.sp-card-header .sp-ind.saving{background:var(--orange);animation:pulse-dot 0.7s infinite;}
-.sp-card-header .sp-ind.error{background:var(--red);}
-.sp-card-header .sp-ind.loading{background:var(--blue);animation:pulse-dot 0.7s infinite;}
+.sp-card-header .sp-ind.ok{background:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.25);}
+.sp-card-header .sp-ind.saving{background:#e67e22;animation:pulse-dot 0.7s infinite;}
+.sp-card-header .sp-ind.error{background:#c0392b;}
+.sp-card-header .sp-ind.loading{background:#2980b9;animation:pulse-dot 0.7s infinite;}
 .sp-card-body{background:#1e2e42;padding:10px 13px;}
 .sp-info-line{font-size:12px;color:#7a9bb8;margin-bottom:5px;line-height:1.5;}
 .sp-info-line span{color:#c8daea;font-weight:600;}
 .sp-status-text{font-size:12.5px;font-weight:700;margin-bottom:8px;}
-.sp-status-text.ok{color:var(--green);}
-.sp-status-text.error{color:var(--red);}
-.sp-status-text.saving{color:var(--orange);}
+.sp-status-text.ok{color:#27ae60;}
+.sp-status-text.error{color:#c0392b;}
+.sp-status-text.saving{color:#e67e22;}
 .sp-status-text.loading{color:#5dade2;}
 /* Buttons */
 .sp-btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
@@ -152,53 +152,53 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .sp-footer{padding:8px 14px;background:#111e2e;display:flex;gap:14px;font-size:11px;color:#4a6a85;border-top:1px solid #2d3f55;}
 .sp-footer span{display:flex;align-items:center;gap:4px;}
 .sp-footer .fi{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;}
-.sp-footer .fi.ok{background:var(--green);}
-.sp-footer .fi.error{background:var(--red);}
-.sp-footer .fi.loading{background:var(--blue);animation:pulse-dot 0.7s infinite;}
+.sp-footer .fi.ok{background:#27ae60;}
+.sp-footer .fi.error{background:#c0392b;}
+.sp-footer .fi.loading{background:#2980b9;animation:pulse-dot 0.7s infinite;}
 .sp-last-note{font-size:11px;color:#4a6a85;text-align:center;padding:6px 14px 10px;}
 .entry-type-btns{display:flex;gap:12px;margin-bottom:20px;}
 .ljpanel{animation:fadeIn 0.18s ease;}
-.entry-type-btn{flex:1;padding:16px;border-radius:10px;border:2px solid var(--border);cursor:pointer;text-align:center;background:#fff;transition:all 0.18s;font-family:'Poppins',sans-serif;}
-.entry-type-btn.active-taking{border-color:var(--blue);background:#eaf3fb;}
-.entry-type-btn.active-challan{border-color:var(--blue);background:#eaf3fb;}
-.entry-type-btn.active-bill{border-color:var(--green);background:#eafaf1;}
+.entry-type-btn{flex:1;padding:16px;border-radius:10px;border:2px solid #dde3ea;cursor:pointer;text-align:center;background:#fff;transition:all 0.18s;font-family:'Poppins',sans-serif;}
+.entry-type-btn.active-taking{border-color:#2980b9;background:#eaf3fb;}
+.entry-type-btn.active-challan{border-color:#2980b9;background:#eaf3fb;}
+.entry-type-btn.active-bill{border-color:#27ae60;background:#eafaf1;}
 .entry-type-btn .etb-icon{font-size:28px;margin-bottom:6px;}
 .entry-type-btn .etb-title{font-size:16px;font-weight:700;margin-bottom:3px;}
-.entry-type-btn .etb-desc{font-size:11px;color:var(--text-muted);}
-.entry-type-btn.active-taking .etb-title,.entry-type-btn.active-challan .etb-title{color:var(--blue);}
-.entry-type-btn.active-bill .etb-title{color:var(--green);}
+.entry-type-btn .etb-desc{font-size:11px;color:#6b7f94;}
+.entry-type-btn.active-taking .etb-title,.entry-type-btn.active-challan .etb-title{color:#2980b9;}
+.entry-type-btn.active-bill .etb-title{color:#27ae60;}
 .entry-form{display:none;}.entry-form.active{display:block;}
 .entry-form-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;font-weight:600;}
 .entry-form-header.taking-hdr{background:#eaf3fb;color:#1a6fa8;border:1px solid #b3d7f0;}
 .entry-form-header.challan-hdr{background:#eaf3fb;color:#1a6fa8;border:1px solid #b3d7f0;}
 .entry-form-header.bill-hdr{background:#eafaf1;color:#1e8449;border:1px solid #a9dfbf;}
 .salary-type-row{display:flex;gap:8px;margin-bottom:14px;}
-.stype-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;text-align:center;font-family:'Roboto',sans-serif;font-size:13px;font-weight:500;color:var(--text-muted);transition:all 0.15s;}
-.stype-btn.active-daily{border-color:var(--blue);background:#eaf3fb;color:var(--blue);font-weight:700;}
-.stype-btn.active-piece{border-color:var(--green);background:#eafaf1;color:var(--green);font-weight:700;}
-.stype-btn.active-mix{border-color:var(--orange);background:#fef5e7;color:var(--orange);font-weight:700;}
+.stype-btn{flex:1;padding:10px;border:2px solid #dde3ea;border-radius:8px;background:#fff;cursor:pointer;text-align:center;font-family:'Roboto',sans-serif;font-size:13px;font-weight:500;color:#6b7f94;transition:all 0.15s;}
+.stype-btn.active-daily{border-color:#2980b9;background:#eaf3fb;color:#2980b9;font-weight:700;}
+.stype-btn.active-piece{border-color:#27ae60;background:#eafaf1;color:#27ae60;font-weight:700;}
+.stype-btn.active-mix{border-color:#e67e22;background:#fef5e7;color:#e67e22;font-weight:700;}
 .field-section{display:none;}.field-section.show{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
 .result-box{border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
 .result-box.green-box{background:#eafaf1;border:1px solid #a9dfbf;}
 .result-box.orange-box{background:#fef5e7;border:1px solid #f5cca0;}
-.result-item .r-label{font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600;letter-spacing:0.3px;}
+.result-item .r-label{font-size:10px;text-transform:uppercase;color:#6b7f94;font-weight:600;letter-spacing:0.3px;}
 .result-item .r-value{font-size:20px;font-weight:700;font-family:'Poppins',sans-serif;margin-top:2px;}
-.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);}
-.tab-btn{padding:8px 18px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'Roboto',sans-serif;}
-.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #dde3ea;}
+.tab-btn{padding:8px 18px;border:none;background:none;font-size:13px;font-weight:500;color:#6b7f94;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'Roboto',sans-serif;}
+.tab-btn.active{color:#1a3a5c;border-bottom-color:#1a3a5c;}
 .tab-content{display:none;}.tab-content.active{display:block;}
-.due-alert{background:#fdecea;border:1px solid #f5b7b1;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;}
-.info-alert{background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:14px;}
-.filter-bar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:#f7fafd;}
-.filter-bar select,.filter-bar input{padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;color:var(--text-main);}
+.due-alert{background:#fdecea;border:1px solid #f5b7b1;border-radius:8px;padding:10px 14px;font-size:13px;color:#c0392b;margin-bottom:14px;}
+.info-alert{background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:10px 14px;font-size:13px;color:#2980b9;margin-bottom:14px;}
+.filter-bar{padding:10px 16px;border-bottom:1px solid #dde3ea;display:flex;gap:8px;flex-wrap:wrap;background:#f7fafd;}
+.filter-bar select,.filter-bar input{padding:5px 9px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;background:#fff;color:#1a2a3a;}
 .fs-sel{padding:4px 8px;border-radius:4px;background:#243447;color:#a8c0d6;border:1px solid #3a5068;font-size:12px;}
 .co-tab-content{display:none;}.co-tab-content.active{display:block;}
 .ch-tab-content{display:none;}.ch-tab-content.active{display:block;}
 .inner-tab-content{display:none;}.inner-tab-content.active{display:block;}
 .acc-group{margin-bottom:3px;}
 .acc-header{display:flex;align-items:center;justify-content:space-between;color:#a8c0d6;padding:9px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:background 0.15s;font-weight:600;}
-.acc-header:hover{background:var(--sidebar-hover);color:#fff;}
-.acc-header.open{background:var(--sidebar-hover);color:#fff;}
+.acc-header:hover{background:#243447;color:#fff;}
+.acc-header.open{background:#243447;color:#fff;}
 .acc-arrow{font-size:10px;transition:transform 0.2s;display:inline-block;}
 .acc-arrow.open{transform:rotate(90deg);}
 .acc-body{display:none;padding-left:10px;margin-top:2px;}
@@ -212,13 +212,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .rpt-btn-print{background:#1a6fa8;color:#fff;}
 .rpt-btn-excel{background:#1d7a3e;color:#fff;}
 @media print{
-  @page{size:A4 portrait;margin:5mm;}
+  @page{size:A4 portrait;margin:8mm;}
   body *{visibility:hidden;}
-  #print-area,#print-area *{visibility:visible;}
-  #print-area{position:absolute;left:0;top:0;width:100%;background:#fff;padding:4mm 6mm;box-sizing:border-box;}
-  .rpt-action-bar{display:none!important;}
-  .print-header{display:block!important;}
-  button{display:none!important;}
 }
 .print-header{display:none;text-align:center;margin-bottom:16px;font-family:'Poppins',sans-serif;}
 .print-header h2{font-size:18px;font-weight:700;color:#1a3a5c;}
@@ -266,10 +261,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <div style="display:flex;align-items:center;gap:6px;background:#f0f4f8;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--primary);">
+    <div style="display:flex;align-items:center;gap:6px;background:#f0f4f8;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#1a3a5c;">
       <span>👤</span><span id="topbar-user" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     </div>
-    <button onclick="doLogout()" title="Logout" style="display:flex;align-items:center;gap:5px;background:var(--red);color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">🚪 Logout</button>
+    <button onclick="doLogout()" title="Logout" style="display:flex;align-items:center;gap:5px;background:#c0392b;color:#fff;border:none;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">🚪 Logout</button>
     <!-- Local JSON Connected Indicator — hidden by default, shown when connected -->
     <button id="localfile-topbar-btn" onclick="toggleSyncPopup()" title="Local JSON File কানেক্টেড আছে — Sync Popup খুলুন"
       style="display:none;align-items:center;gap:5px;background:#0d3320;color:#58d68d;border:1.5px solid #27ae60;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:all 0.2s;box-shadow:0 0 0 3px rgba(39,174,96,0.18);"
@@ -539,7 +534,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="fg"><label>Order Number</label><input id="ct-orderno" placeholder="e.g. ORD-2025-001"></div>
       <div class="fg"><label>Supplier</label><select id="ct-supplier"><option value="">-- Select --</option></select></div>
       <div class="fg"><label>Factory</label><select id="ct-factory"><option value="">-- Select --</option></select></div>
-      <div class="fg"><label>Buyer / Via <small style="color:var(--text-muted);">(লিখুন)</small></label><input id="ct-buyer" placeholder="Buyer name (optional)"></div>
+      <div class="fg"><label>Buyer / Via <small style="color:#6b7f94;">(লিখুন)</small></label><input id="ct-buyer" placeholder="Buyer name (optional)"></div>
     </div>
     <div class="form-row">
       <div class="fg"><label>Style Number</label><input id="ct-style" placeholder="e.g. A1234"></div>
@@ -596,7 +591,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="form-row">
       <div class="fg"><label>Worker Name</label><input id="w-name" placeholder="Full name"></div>
       <div class="fg"><label>Phone</label><input id="w-phone" placeholder="01XXXXXXXXX"></div>
-      <div class="fg"><label>Party / Group <small style="color:var(--text-muted);">নিজস্ব / বাইরের</small></label><input id="w-party" placeholder="যেমন: নিজস্ব, করিম ট্রেডার্স"></div>
+      <div class="fg"><label>Party / Group <small style="color:#6b7f94;">নিজস্ব / বাইরের</small></label><input id="w-party" placeholder="যেমন: নিজস্ব, করিম ট্রেডার্স"></div>
       <div class="fg"><label>Salary Type</label>
         <select id="w-type" onchange="onWorkerTypeChange()">
           <option value="daily">Daily Basis</option>
@@ -663,36 +658,36 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </div>
       </div>
       <div id="fields-daily" class="field-section">
-        <div class="fg"><label>Daily Salary (৳) <small style="color:var(--blue);">Auto</small></label><input id="t-daily" type="number" placeholder="0" oninput="calcWorkerEarn()"></div>
+        <div class="fg"><label>Daily Salary (৳) <small style="color:#2980b9;">Auto</small></label><input id="t-daily" type="number" placeholder="0" oninput="calcWorkerEarn()"></div>
         <div class="fg"><label>Overtime (৳)</label><input id="t-ot-daily" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
-        <div class="fg"><label>Conveyance (৳) <small style="color:var(--orange);">আগাম দেওয়া</small></label><input id="t-conv-daily" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
+        <div class="fg"><label>Conveyance (৳) <small style="color:#e67e22;">আগাম দেওয়া</small></label><input id="t-conv-daily" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
       </div>
       <div id="fields-piece" class="field-section">
         <div class="fg"><label>Pieces Done</label><input id="t-pcs-piece" type="number" placeholder="0" oninput="calcWorkerEarn()"></div>
         <div class="fg"><label>Worker Rate/Pc (৳)</label><input id="t-wrate-piece" type="number" placeholder="e.g. 12" oninput="calcWorkerEarn()"></div>
-        <div class="fg"><label>Conveyance (৳) <small style="color:var(--orange);">আগাম দেওয়া</small></label><input id="t-conv-piece" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
+        <div class="fg"><label>Conveyance (৳) <small style="color:#e67e22;">আগাম দেওয়া</small></label><input id="t-conv-piece" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
       </div>
       <div id="fields-mix" class="field-section">
         <div class="fg"><label>Daily Salary (৳)</label><input id="t-daily-mix" type="number" placeholder="0" oninput="calcWorkerEarn()"></div>
         <div class="fg"><label>Overtime (৳)</label><input id="t-ot-mix" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
         <div class="fg"><label>Pieces Done</label><input id="t-pcs-mix" type="number" placeholder="0" oninput="calcWorkerEarn()"></div>
         <div class="fg"><label>Worker Rate/Pc (৳)</label><input id="t-wrate-mix" type="number" placeholder="e.g. 12" oninput="calcWorkerEarn()"></div>
-        <div class="fg"><label>Conveyance (৳) <small style="color:var(--orange);">আগাম দেওয়া</small></label><input id="t-conv-mix" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
+        <div class="fg"><label>Conveyance (৳) <small style="color:#e67e22;">আগাম দেওয়া</small></label><input id="t-conv-mix" type="number" placeholder="0" value="0" oninput="calcWorkerEarn()"></div>
       </div>
       <div class="result-box green-box" style="margin-top:10px;">
         <div class="result-item">
           <div class="r-label">মোট উপার্জন (Total Earned)</div>
-          <div class="r-value" style="color:var(--primary);" id="r-wearn">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">Daily + OT (Profit থেকে বাদ যাবে)</div>
+          <div class="r-value" style="color:#1a3a5c;" id="r-wearn">৳0</div>
+          <div style="font-size:10px;color:#6b7f94;">Daily + OT (Profit থেকে বাদ যাবে)</div>
         </div>
         <div class="result-item">
           <div class="r-label">বাকি পাবে (Payable)</div>
-          <div class="r-value" style="color:var(--green);" id="r-hand-pay">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">Total − Conv. (Conv. paid হিসেবে ধরা)</div>
+          <div class="r-value" style="color:#27ae60;" id="r-hand-pay">৳0</div>
+          <div style="font-size:10px;color:#6b7f94;">Total − Conv. (Conv. paid হিসেবে ধরা)</div>
         </div>
         <div class="fg" style="min-width:180px;margin-bottom:0;">
-          <label style="font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;">Remark <small style="color:#999;">(Optional)</small></label>
-          <input id="t-remark" placeholder="e.g. F.Yarne, কাজের বিবরণ..." style="width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <label style="font-size:11px;font-weight:500;color:#6b7f94;display:block;margin-bottom:4px;text-transform:uppercase;">Remark <small style="color:#999;">(Optional)</small></label>
+          <input id="t-remark" placeholder="e.g. F.Yarne, কাজের বিবরণ..." style="width:100%;padding:8px 11px;border:1px solid #dde3ea;border-radius:6px;font-size:13px;">
         </div>
         <div style="margin-left:auto;"><button class="btn btn-info" onclick="addTaking()">＋ Save Entry</button></div>
       </div>
@@ -708,7 +703,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="form-panel">
       <div class="form-row">
         <div class="fg"><label>Month</label><input id="ms-month" type="month" oninput="calcAutoMonthlySalary()"></div>
-        <div class="fg"><label>Date <small style="color:var(--blue);">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
+        <div class="fg"><label>Date <small style="color:#2980b9;">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
         <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary();showWorkerPartyBadge('ms-worker','ms-worker-party');"><option value="">-- Select --</option></select><span id="ms-worker-party" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e65100;font-weight:600;"></span></div>
         <div class="fg"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
         <div class="fg"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
@@ -716,7 +711,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-row">
         <div class="fg"><label>Company (Auto)</label><input id="ms-company" readonly placeholder="Auto" style="background:#f7fafd;"></div>
         <div class="fg"><label>Supplier (Auto)</label><input id="ms-supplier" readonly placeholder="Auto" style="background:#f7fafd;"></div>
-        <div class="fg"><label>Monthly Salary (৳) <small style="color:var(--blue);">অটো হিসাব</small></label><input id="ms-salary" type="number" placeholder="e.g. 12000" oninput="calcMonthlySalary()"><div id="ms-salary-info" style="font-size:11px;color:var(--blue);margin-top:3px;"></div></div>
+        <div class="fg"><label>Monthly Salary (৳) <small style="color:#2980b9;">অটো হিসাব</small></label><input id="ms-salary" type="number" placeholder="e.g. 12000" oninput="calcMonthlySalary()"><div id="ms-salary-info" style="font-size:11px;color:#2980b9;margin-top:3px;"></div></div>
         <div class="fg" style="display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:170px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#c77700;font-size:13px;">
             <input type="checkbox" id="ms-offday" onchange="onMSOffdayChange()" style="width:17px;height:17px;cursor:pointer;accent-color:#c77700;">
@@ -730,22 +725,22 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
 
       <div class="form-row">
-        <div class="fg"><label>ওভার টাইম (৳) <small style="color:var(--green);">Salary-তে যোগ হবে</small></label><input id="ms-ot" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
-        <div class="fg"><label>লাঞ্চ খরচ (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-lunch" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
-        <div class="fg"><label>যাতায়াত ভাড়া (৳) <small style="color:var(--orange);">Bill থেকে কাটবে</small></label><input id="ms-travel" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
-        <div class="fg"><label>অন্যান্য কাটা (৳) <small style="color:var(--red);">বেতন থেকে</small></label><input id="ms-deduct" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+        <div class="fg"><label>ওভার টাইম (৳) <small style="color:#27ae60;">Salary-তে যোগ হবে</small></label><input id="ms-ot" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+        <div class="fg"><label>লাঞ্চ খরচ (৳) <small style="color:#e67e22;">Bill থেকে কাটবে</small></label><input id="ms-lunch" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+        <div class="fg"><label>যাতায়াত ভাড়া (৳) <small style="color:#e67e22;">Bill থেকে কাটবে</small></label><input id="ms-travel" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
+        <div class="fg"><label>অন্যান্য কাটা (৳) <small style="color:#c0392b;">বেতন থেকে</small></label><input id="ms-deduct" type="number" placeholder="0" value="0" oninput="calcMonthlySalary()"></div>
         <div class="fg"><label>Note</label><input id="ms-note" placeholder="Optional"></div>
       </div>
       <div class="result-box" style="background:#f0e6ff;border:1px solid #d5a8f0;margin-top:4px;">
         <div class="result-item">
           <div class="r-label">Worker-কে দিতে হবে</div>
           <div class="r-value" style="color:#6a0dad;" id="ms-r-payable">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">Salary + OT − অন্যান্য কাটা</div>
+          <div style="font-size:10px;color:#6b7f94;">Salary + OT − অন্যান্য কাটা</div>
         </div>
         <div class="result-item">
           <div class="r-label">Bill থেকে কাটবে</div>
-          <div class="r-value" style="color:var(--orange);" id="ms-r-billcut">৳0</div>
-          <div style="font-size:10px;color:var(--text-muted);">লাঞ্চ + যাতায়াত</div>
+          <div class="r-value" style="color:#e67e22;" id="ms-r-billcut">৳0</div>
+          <div style="font-size:10px;color:#6b7f94;">লাঞ্চ + যাতায়াত</div>
         </div>
         <div style="margin-left:auto;"><button class="btn" style="background:#6a0dad;color:#fff;" onclick="addMonthlySalary()">＋ Save Monthly</button></div>
       </div>
@@ -803,7 +798,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg"><label>Supplier (Auto)</label><input id="ch-supplier" readonly placeholder="Auto"></div>
         <div class="fg"><label>Factory (Auto)</label><input id="ch-factory" readonly placeholder="Auto"></div>
         <div class="fg"><label>Pieces Submitted</label><input id="ch-pcs" type="number" placeholder="কত পিস জমা দিলেন" oninput="calcChallanValue()"></div>
-        <div class="fg"><label>Challan Value (Auto ৳)</label><input id="ch-value" readonly style="background:#eaf3fb;font-weight:700;color:var(--blue);"></div>
+        <div class="fg"><label>Challan Value (Auto ৳)</label><input id="ch-value" readonly style="background:#eaf3fb;font-weight:700;color:#2980b9;"></div>
         <div class="fg"><label>Challan No. / Note</label><input id="ch-note" placeholder="e.g. CH-001"></div>
         <div class="fg-btn"><button class="btn btn-info" onclick="addChallan()">＋ Save Challan</button></div>
       </div>
@@ -840,16 +835,16 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg"><label>Note / Invoice No.</label><input id="bs-note" placeholder="e.g. INV-001"></div>
       </div>
       <div id="bs-challan-table-wrap" style="display:none;margin-bottom:12px;">
-        <div style="background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:10px;">
+        <div style="background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:10px 14px;font-size:13px;color:#2980b9;margin-bottom:10px;">
           ✅ নিচের Challan গুলো থেকে যেগুলো জমা দিচ্ছেন সেগুলো সিলেক্ট করুন
         </div>
         <table>
           <thead><tr><th><input type="checkbox" id="bs-check-all" onchange="toggleAllBsChallans(this)"></th><th>Style</th><th>Factory</th><th>Challan No.</th><th>Pcs</th><th>Challan Value</th><th>Date</th></tr></thead>
           <tbody id="bs-challan-rows"></tbody>
         </table>
-        <div style="background:#f7fafd;border-top:2px solid var(--border);padding:10px 16px;">
-          <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Selected Challan Value: </span>
-          <strong id="bs-selected-total" style="font-size:16px;font-weight:700;color:var(--blue);">৳0</strong>
+        <div style="background:#f7fafd;border-top:2px solid #dde3ea;padding:10px 16px;">
+          <span style="font-size:11px;color:#6b7f94;text-transform:uppercase;font-weight:600;">Selected Challan Value: </span>
+          <strong id="bs-selected-total" style="font-size:16px;font-weight:700;color:#2980b9;">৳0</strong>
         </div>
       </div>
       <!-- Bill Amount & Save — always visible after order select -->
@@ -888,8 +883,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-row">
         <div class="fg"><label>Date Received</label><input id="b-date" type="date"></div>
         <div class="fg"><label>Order Number</label><select id="b-orderno" onchange="onBillRecvOrderSelect()"><option value="">-- Order সিলেক্ট করুন --</option></select></div>
-        <div class="fg"><label>Bill Submit রেকর্ড <small style="color:var(--orange);">Auto</small></label><select id="b-submit-sel" onchange="onBillRecvSubmitSelect()"><option value="">-- Bill Submit সিলেক্ট --</option></select></div>
-        <div class="fg"><label>Submitted Amount (Auto ৳)</label><input id="b-submitted-amount" readonly style="background:#fef5e7;font-weight:700;color:var(--orange);" placeholder="Bill Submit সিলেক্ট করুন"></div>
+        <div class="fg"><label>Bill Submit রেকর্ড <small style="color:#e67e22;">Auto</small></label><select id="b-submit-sel" onchange="onBillRecvSubmitSelect()"><option value="">-- Bill Submit সিলেক্ট --</option></select></div>
+        <div class="fg"><label>Submitted Amount (Auto ৳)</label><input id="b-submitted-amount" readonly style="background:#fef5e7;font-weight:700;color:#e67e22;" placeholder="Bill Submit সিলেক্ট করুন"></div>
       </div>
       <div class="form-row">
         <div class="fg"><label>Amount Received (৳)</label><input id="b-amount" type="number" placeholder="কত টাকা পেলেন"></div>
@@ -1016,7 +1011,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="fg"><label>Worker</label><select id="p-worker"><option value="">-- Select --</option></select></div>
       <div class="fg"><label>Conveyance Paid (৳)</label><input id="p-conv" type="number" placeholder="0" value="0" oninput="calcPayTotal()"></div>
       <div class="fg"><label>Bill Payment (৳)</label><input id="p-bill" type="number" placeholder="0" value="0" oninput="calcPayTotal()"></div>
-      <div class="fg"><label>Total (Auto ৳)</label><input id="p-total" readonly style="background:#eafaf1;font-weight:700;color:var(--green);"></div>
+      <div class="fg"><label>Total (Auto ৳)</label><input id="p-total" readonly style="background:#eafaf1;font-weight:700;color:#27ae60;"></div>
       <div class="fg"><label>Date</label><input id="p-date" type="date"></div>
       <div class="fg"><label>Note</label><input id="p-note" placeholder="Optional"></div>
       <div class="fg-btn"><button class="btn btn-success" onclick="addPayment()">＋ Pay</button></div>
@@ -1188,18 +1183,18 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="panel-header" id="pa-detail-header">📊 লেনদেনের বিস্তারিত
         <span class="ph-right"><button onclick="document.getElementById('pa-person-detail').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ বন্ধ</button></span>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:#f7fafd;">
-        <span style="font-size:12px;font-weight:600;color:var(--text-muted);">📅 তারিখ ফিল্টার:</span>
-        <input type="date" id="pa-detail-from" onchange="refreshPersonDetail()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-        <span style="font-size:12px;color:var(--text-muted);">থেকে</span>
-        <input type="date" id="pa-detail-to" onchange="refreshPersonDetail()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid #dde3ea;background:#f7fafd;">
+        <span style="font-size:12px;font-weight:600;color:#6b7f94;">📅 তারিখ ফিল্টার:</span>
+        <input type="date" id="pa-detail-from" onchange="refreshPersonDetail()" style="padding:4px 8px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;">
+        <span style="font-size:12px;color:#6b7f94;">থেকে</span>
+        <input type="date" id="pa-detail-to" onchange="refreshPersonDetail()" style="padding:4px 8px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;">
         <button onclick="document.getElementById('pa-detail-from').value='';document.getElementById('pa-detail-to').value='';refreshPersonDetail();" style="background:#888;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">✕ Clear</button>
       </div>
       <table>
         <thead><tr><th>#</th><th>তারিখ</th><th>মাস</th><th>লেনদেন</th><th>পরিমাণ</th><th>কারণ/নোট</th></tr></thead>
         <tbody id="pa-detail-list"></tbody>
       </table>
-      <div id="pa-detail-summary" style="padding:10px 14px;background:#f7fafd;border-top:1px solid var(--border);font-size:13px;"></div>
+      <div id="pa-detail-summary" style="padding:10px 14px;background:#f7fafd;border-top:1px solid #dde3ea;font-size:13px;"></div>
     </div>
   </div>
 
@@ -1246,14 +1241,14 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   <div class="panel">
     <div class="panel-header">📋 লেনদেনের ইতিহাস
       <span class="ph-right">
-        <input id="pa-filter-name" placeholder="নাম খুঁজুন..." onchange="renderPersonalAccount()" oninput="renderPersonalAccount()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:110px;">
+        <input id="pa-filter-name" placeholder="নাম খুঁজুন..." onchange="renderPersonalAccount()" oninput="renderPersonalAccount()" style="padding:5px 8px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;width:110px;">
         <select id="pa-filter-cat" onchange="renderPersonalAccount()">
           <option value="">সব ধরন</option>
           <option value="worker">শ্রমিক</option>
           <option value="partner">পার্টনার</option>
           <option value="other">অন্যান্য</option>
         </select>
-        <input type="month" id="pa-filter-month" onchange="renderPersonalAccount()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <input type="month" id="pa-filter-month" onchange="renderPersonalAccount()" style="padding:5px 8px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;">
         <select id="pa-filter-txtype" onchange="renderPersonalAccount()">
           <option value="">সব লেনদেন</option>
           <option value="debit">দিয়েছি</option>
@@ -1388,27 +1383,27 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 
   <div class="form-panel">
     <h5>☁️ Firebase Sync Status</h5>
-    <div style="background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--blue);">
+    <div style="background:#eaf3fb;border:1px solid #b3d7f0;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#2980b9;">
       <strong>Sync:</strong> <span id="sync-status-settings">—</span><br>
       <small>ডেটা ৩টা device-এ (২ মোবাইল + ১ পিসি) real-time sync হবে।</small>
     </div>
     <button class="btn btn-info" onclick="forceSync()" style="margin-bottom:10px;">🔄 Force Sync করুন</button>
     <button id="fb-pause-btn" class="btn" onclick="toggleFirebasePause()" style="background:#c0392b;color:#fff;margin-bottom:10px;">🔴 Firebase বন্ধ করুন</button>
-    <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Firebase বন্ধ থাকলে শুধু Local এ সেভ হবে। JSON চেক করতে বা test করতে ব্যবহার করুন।</p>
+    <p style="font-size:12px;color:#6b7f94;margin-top:4px;">Firebase বন্ধ থাকলে শুধু Local এ সেভ হবে। JSON চেক করতে বা test করতে ব্যবহার করুন।</p>
   </div>
   <div class="form-panel">
     <h5>📁 JSON Backup &amp; Restore</h5>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">সব ডেটা JSON ফাইলে export করুন বা আগের backup থেকে import করুন।</p>
+    <p style="font-size:13px;color:#6b7f94;margin-bottom:14px;">সব ডেটা JSON ফাইলে export করুন বা আগের backup থেকে import করুন।</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-success" onclick="exportJSON()">⬇️ Export JSON Backup</button>
       <button class="btn btn-orange" onclick="document.getElementById('json-import-input2').click()">⬆️ Import JSON Backup</button>
       <input type="file" id="json-import-input2" accept=".json" style="display:none" onchange="importJSON(this)">
     </div>
-    <p id="settings-export-info" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
+    <p id="settings-export-info" style="font-size:12px;color:#6b7f94;margin-top:8px;"></p>
   </div>
   <div class="form-panel">
     <h5>Data Management</h5>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Warning: Firebase ও Local দুটো থেকেই সব data মুছে যাবে।</p>
+    <p style="font-size:13px;color:#6b7f94;margin-bottom:14px;">Warning: Firebase ও Local দুটো থেকেই সব data মুছে যাবে।</p>
     <button class="btn btn-danger" onclick="confirmDelete(()=>{DATA_REF.remove();localStorage.clear();location.reload();},'Firebase ও Local সব data মুছবেন? ফিরে পাওয়া যাবে না!')">🗑️ Clear All Data</button>
   </div>
 </div>
@@ -1525,23 +1520,23 @@ function setSyncStatus(s){
   if(!el)return;
   dot.className='sync-dot';
   if(s==='ok'){
-    el.textContent='✅ Synced';el.style.color='var(--green)';
+    el.textContent='✅ Synced';el.style.color='#27ae60';
     dot.classList.add('ok');
     _fbConnected=true;
     _lastSyncTime=new Date();
   } else if(s==='saving'){
-    el.textContent='☁️ সেভ হচ্ছে...';el.style.color='var(--orange)';
+    el.textContent='☁️ সেভ হচ্ছে...';el.style.color='#e67e22';
     dot.classList.add('saving');
   } else if(s==='error'){
-    el.textContent='❌ Sync Error';el.style.color='var(--red)';
+    el.textContent='❌ Sync Error';el.style.color='#c0392b';
     dot.classList.add('error');
     _fbConnected=false;
   } else if(s==='offline'){
-    el.textContent='📴 Offline';el.style.color='var(--text-muted)';
+    el.textContent='📴 Offline';el.style.color='#6b7f94';
     dot.classList.add('error');
     _fbConnected=false;
   } else if(s==='loading'){
-    el.textContent='⏳ Loading...';el.style.color='var(--blue)';
+    el.textContent='⏳ Loading...';el.style.color='#2980b9';
     dot.classList.add('loading');
     _fbConnected=false;
   } else if(s==='paused'){
@@ -2234,7 +2229,7 @@ function onMSOffdayChange(){
     if(infoEl) infoEl.textContent='অফডে — Salary খালি থাকবে। OT ম্যানুয়ালি দিন।';
     if(infoEl) infoEl.style.color='#c77700';
   } else {
-    if(infoEl){ infoEl.textContent=''; infoEl.style.color='var(--blue)'; }
+    if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
     calcAutoMonthlySalary();
   }
   calcMonthlySalary();
@@ -2255,7 +2250,7 @@ function onMSAbsentChange(){
       if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()}`; infoEl.style.color='#c0392b'; }
     }
   } else {
-    if(infoEl){ infoEl.textContent=''; infoEl.style.color='var(--blue)'; }
+    if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
     calcAutoMonthlySalary();
   }
   calcMonthlySalary();
@@ -2318,7 +2313,7 @@ function addMonthlySalary(){
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
   if(document.getElementById('ms-absent')) document.getElementById('ms-absent').checked=false;
   const inf=document.getElementById('ms-salary-info');
-  if(inf){inf.textContent='';inf.style.color='var(--blue)';}
+  if(inf){inf.textContent='';inf.style.color='#2980b9';}
   document.getElementById('ms-r-payable').textContent='৳0';
   document.getElementById('ms-r-billcut').textContent='৳0';
   save();
@@ -2404,16 +2399,16 @@ function renderMonthlySalaryList(){
   tb.innerHTML=list.length===0?'<tr><td colspan="14" class="no-data">No records</td></tr>':
     list.map((e,i)=>`<tr${e.offday?' style="background:#fffbe6;"':e.absent?' style="background:#fff0f0;"':''}>
       <td>${list.length-i}</td><td>${e.month}</td>
-      <td style="color:var(--blue);font-weight:600;">${fmtDate(e.date)||'-'}</td>
+      <td style="color:#2980b9;font-weight:600;">${fmtDate(e.date)||'-'}</td>
       <td>${e.worker}${e.offday?' <span style="background:#f0ad00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;">অফডে</span>':''}${e.absent?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;">অনুপস্থিত</span>':''}</td>
       <td><strong>${e.orderno}</strong></td><td>${e.style}</td>
       <td style="color:${e.absent?'#c0392b':e.offday?'#aaa':'#6a0dad'};font-weight:700;">${e.offday?'-':taka(e.salary)}</td>
-      <td style="color:var(--green);font-weight:700;">${(e.ot||e.offdayOT)?taka(e.ot||e.offdayOT||0):'-'}</td>
-      <td style="color:var(--orange);">${e.lunch?taka(e.lunch):'-'}</td>
-      <td style="color:var(--orange);">${e.travel?taka(e.travel):'-'}</td>
-      <td style="color:var(--red);font-weight:700;">${e.billCut?taka(e.billCut):'-'}</td>
-      <td style="color:var(--red);">${e.deduct?taka(e.deduct):'-'}</td>
-      <td style="color:${e.absent?'#c0392b':e.offday?'var(--green)':'var(--green)'};font-weight:700;">${taka(e.payable)}</td>
+      <td style="color:#27ae60;font-weight:700;">${(e.ot||e.offdayOT)?taka(e.ot||e.offdayOT||0):'-'}</td>
+      <td style="color:#e67e22;">${e.lunch?taka(e.lunch):'-'}</td>
+      <td style="color:#e67e22;">${e.travel?taka(e.travel):'-'}</td>
+      <td style="color:#c0392b;font-weight:700;">${e.billCut?taka(e.billCut):'-'}</td>
+      <td style="color:#c0392b;">${e.deduct?taka(e.deduct):'-'}</td>
+      <td style="color:${e.absent?'#c0392b':e.offday?'#27ae60':'#27ae60'};font-weight:700;">${taka(e.payable)}</td>
       <td>${e.note||'-'}</td>
       <td><button class="btn btn-danger" onclick="deleteMonthlySalary(${monthlySalaries.indexOf(e)})">❌</button></td>
     </tr>`).join('');
@@ -2463,7 +2458,7 @@ function addBill(){
   document.getElementById('b-submitted-amount').value='';
   save();
   const btn=document.querySelector('[onclick="addBill()"]');
-  if(btn){const orig=btn.textContent;btn.textContent='✓ Saved!';btn.style.background='var(--green)';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},2000);}
+  if(btn){const orig=btn.textContent;btn.textContent='✓ Saved!';btn.style.background='#27ae60';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},2000);}
 }
 function calcPayTotal(){
   const c=+document.getElementById('p-conv').value||0,b=+document.getElementById('p-bill').value||0;
@@ -2630,7 +2625,7 @@ function onBillSubmitOrderSelect(){
     tb.innerHTML=rows.map((c,i)=>`<tr>
       <td><input type="checkbox" class="bs-ch-chk" data-val="${c.value}" onchange="calcBsSelected()"></td>
       <td>${c.style}</td><td>${c.factory}</td><td>${c.note||'-'}</td>
-      <td>${c.pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${fmtDate(c.date)}</td>
+      <td>${c.pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(c.value)}</td><td>${fmtDate(c.date)}</td>
     </tr>`).join('');
     wrap.style.display='block';
     calcBsSelected();
@@ -2679,8 +2674,8 @@ function renderBillSubmitList(){
     list.map((b,i)=>`<tr>
       <td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno}</strong></td>
       <td>${b.supplier||'-'}</td><td style="font-size:12px;">${b.styles||'-'}</td>
-      <td style="color:var(--blue);font-weight:700;">${taka(b.challanVal||0)}</td>
-      <td style="color:var(--orange);font-weight:700;">${taka(b.amount)}</td>
+      <td style="color:#2980b9;font-weight:700;">${taka(b.challanVal||0)}</td>
+      <td style="color:#e67e22;font-weight:700;">${taka(b.amount)}</td>
       <td>${b.note||'-'}</td>
       <td><button class="btn btn-danger" onclick="deleteBillSubmit(${billSubmits.indexOf(b)})">❌</button></td>
     </tr>`).join('');
@@ -2699,10 +2694,10 @@ function renderBillSubmitList(){
       const pending=cv-br;
       const status=pending<=0?'<span class="badge badge-green">✅ Cleared</span>':br>0?'<span class="badge badge-orange">🔄 Partial</span>':'<span class="badge badge-red">⏳ Pending</span>';
       return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td>
-        <td style="color:var(--blue);font-weight:700;">${taka(cv)}</td>
-        <td style="color:var(--orange);font-weight:700;">${taka(bs)}</td>
-        <td style="color:var(--green);font-weight:700;">${taka(br)}</td>
-        <td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td>
+        <td style="color:#2980b9;font-weight:700;">${taka(cv)}</td>
+        <td style="color:#e67e22;font-weight:700;">${taka(bs)}</td>
+        <td style="color:#27ae60;font-weight:700;">${taka(br)}</td>
+        <td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td>
         <td>${status}</td></tr>`;
     }).join('');
 }
@@ -2772,7 +2767,7 @@ function renderContracts(){
       const idx=contracts.indexOf(c);
       const cv=challanTotalValue(idx),br=billTotalRecv(idx),pending=cv-br,pcs=challanTotalPcs(idx);
       const unitLabel=c.unit==='goj'?'গজ':'পিছ';
-      return `<tr><td>${i+1}</td><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:var(--blue);font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:#2980b9;font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td><td><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
     }).join('');
 }
 
@@ -2785,7 +2780,7 @@ function renderWorkers(){
       const rateLabel=w.type==='mix'?`${taka(w.rate)}/day + ${taka(w.rate2||0)}/pc`:w.type==='piece'?`${taka(w.rate)}/pc`:w.type==='monthly'?`${taka(w.rate)}/mo`:taka(w.rate);
       const party=w.party||'নিজস্ব';
       const partyBadge=party==='নিজস্ব'?`<span class="badge badge-green">🏠 নিজস্ব</span>`:`<span class="badge badge-orange">🤝 ${party}</span>`;
-      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${partyBadge}</td><td>${w.phone||'-'}</td><td>${typeBadge(w.type)}</td><td>${rateLabel}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pay)}</td><td><button class="btn btn-danger" onclick="deleteItem(workers,${i})">❌</button></td></tr>`;
+      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${partyBadge}</td><td>${w.phone||'-'}</td><td>${typeBadge(w.type)}</td><td>${rateLabel}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pay)}</td><td><button class="btn btn-danger" onclick="deleteItem(workers,${i})">❌</button></td></tr>`;
     }).join('');
 }
 
@@ -2801,7 +2796,7 @@ function renderTakingList(){
   }).slice().reverse();
   const tb=document.getElementById('taking-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="14" class="no-data">No entries</td></tr>':
-    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(e.date)}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:var(--green);font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td style="font-size:12px;color:#666;">${e.remark||'-'}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
+    list.map((e,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(e.date)}</td><td>${e.worker}</td><td><strong>${e.style}</strong></td><td>${e.factory}</td><td>${stypeBadge(e.salaryType)}</td><td>${e.pcs||'-'}</td><td>${e.wrate?taka(e.wrate):'-'}</td><td>${e.daily?taka(e.daily):'-'}</td><td>${e.ot?taka(e.ot):'-'}</td><td>${taka(e.conv)}</td><td style="color:#27ae60;font-weight:700;">${taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))}</td><td style="font-size:12px;color:#666;">${e.remark||'-'}</td><td><button class="btn btn-danger" onclick="deleteTaking(${takings.indexOf(e)})">❌</button></td></tr>`).join('');
 }
 
 function renderChallanList(){
@@ -2814,13 +2809,13 @@ function renderChallanList(){
   }).slice().reverse();
   const tb=document.getElementById('challan-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="11" class="no-data">No challans</td></tr>':
-    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(c.date)}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:var(--blue);font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
+    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(c.date)}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:#2980b9;font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
 
   const tb2=document.getElementById('challan-summary');
   const rows=contracts.map((ct,idx)=>{
     const pcs=challanTotalPcs(idx),cv=challanTotalValue(idx),br=billTotalRecv(idx);
     if(pcs===0&&br===0) return '';
-    return `<tr><td><strong>${ct.style}</strong></td><td>${ct.supplier}</td><td>${ct.factory}</td><td>${ct.jobtype}</td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${(cv-br)>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(cv-br)}</td></tr>`;
+    return `<tr><td><strong>${ct.style}</strong></td><td>${ct.supplier}</td><td>${ct.factory}</td><td>${ct.jobtype}</td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${(cv-br)>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(cv-br)}</td></tr>`;
   }).filter(Boolean).join('');
   tb2.innerHTML=rows||'<tr><td colspan="8" class="no-data">No data</td></tr>';
 }
@@ -2842,7 +2837,7 @@ function renderBillSummary(){
     if(cv===0&&br===0) return '';
     const pending=cv-br;
     const status=pending<=0?'<span class="badge badge-green">✅ Cleared</span>':br>0?'<span class="badge badge-orange">🔄 Partial</span>':'<span class="badge badge-red">⏳ Pending</span>';
-    return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--orange);font-weight:700;">${taka(bs)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td><td>${status}</td></tr>`;
+    return `<tr><td><strong>${ord}</strong></td><td>${supplier}</td><td style="font-size:12px;">${styles}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#e67e22;font-weight:700;">${taka(bs)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td><td>${status}</td></tr>`;
   }).filter(Boolean).join('');
   tb.innerHTML=rows||'<tr><td colspan="8" class="no-data">No data</td></tr>';
 }
@@ -2857,7 +2852,7 @@ function renderBillList(){
   }).slice().reverse();
   const tb=document.getElementById('bill-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="7" class="no-data">No bills</td></tr>':
-    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
+    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:#27ae60;font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
 }
 
 function renderPayments(){
@@ -2865,7 +2860,7 @@ function renderPayments(){
   tb.innerHTML=workers.length===0?'<tr><td colspan="8" class="no-data">No workers</td></tr>':
     workers.map((w,i)=>{
       const cp=workerConvPaid(w.name),bp=workerBillPaid(w.name),tp=workerTotalPaid(w.name),pay=workerPayable(w.name);
-      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${typeBadge(w.type)}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pay)}</td><td><span class="badge ${pay<=0?'badge-green':'badge-red'}">${pay<=0?'Cleared':'Due'}</span></td></tr>`;
+      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${typeBadge(w.type)}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pay)}</td><td><span class="badge ${pay<=0?'badge-green':'badge-red'}">${pay<=0?'Cleared':'Due'}</span></td></tr>`;
     }).join('');
   const wF=document.getElementById('pf-worker').value,mF=document.getElementById('pf-month').value;
   const list=payments.filter(p=>{if(wF&&p.worker!==wF)return false;if(mF&&!p.date.startsWith(mF))return false;return true;}).slice().reverse();
@@ -2891,22 +2886,22 @@ function renderDashboard(){
   tb.innerHTML=contracts.length===0?'<tr><td colspan="12" class="no-data">No contracts</td></tr>':
     contracts.map((c,i)=>{
       const pcs=challanTotalPcs(i),cv=challanTotalValue(i),br=billTotalRecv(i),pending=cv-br;
-      return `<tr><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}</td><td>${pcs}</td><td style="color:var(--blue);font-weight:700;">${taka(cv)}</td><td style="color:var(--green);font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'var(--red)':'var(--green)'};font-weight:700;">${taka(pending)}</td></tr>`;
+      return `<tr><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}</td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td></tr>`;
     }).join('');
 
   const rt=document.getElementById('d-recent-taking');
   const rta=takings.slice(-5).reverse();
-  rt.innerHTML=rta.length===0?'<tr><td colspan="4" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td>${e.worker}</td><td>${e.style}</td><td>${stypeBadge(e.salaryType)}</td><td style="color:var(--green);font-weight:700;">${taka(e.wearn)}</td></tr>`).join('');
+  rt.innerHTML=rta.length===0?'<tr><td colspan="4" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td>${e.worker}</td><td>${e.style}</td><td>${stypeBadge(e.salaryType)}</td><td style="color:#27ae60;font-weight:700;">${taka(e.wearn)}</td></tr>`).join('');
   const rb=document.getElementById('d-recent-bills');
   const rba=bills.slice(-5).reverse();
-  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style||b.orderno||'-'}</strong></td><td style="color:var(--green);font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
+  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style||b.orderno||'-'}</strong></td><td style="color:#27ae60;font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
 }
 
 // REPORTS
-function rBox(h){return `<div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">${h}</div>`;}
+function rBox(h){return `<div style="margin-top:14px;border:1px solid #dde3ea;border-radius:8px;overflow:hidden;">${h}</div>`;}
 function rHead(t){return `<div style="background:#1a2a3a;color:#fff;padding:10px 14px;font-weight:600;font-size:13px;">${t}</div>`;}
-function rRow(l,v,c=''){return `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;"><span>${l}</span><strong style="color:${c||'inherit'};">${v}</strong></div>`;}
-function rSub(t){return `<div style="padding:9px 14px;background:#f7fafd;font-size:12px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);text-transform:uppercase;">${t}</div>`;}
+function rRow(l,v,c=''){return `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #dde3ea;font-size:13px;"><span>${l}</span><strong style="color:${c||'inherit'};">${v}</strong></div>`;}
+function rSub(t){return `<div style="padding:9px 14px;background:#f7fafd;font-size:12px;font-weight:600;color:#6b7f94;border-bottom:1px solid #dde3ea;text-transform:uppercase;">${t}</div>`;}
 
 function genDailyReport(){
   const date=document.getElementById('r-daily-date').value;
@@ -2916,17 +2911,17 @@ function genDailyReport(){
   const pConv=dp.reduce((s,p)=>s+p.conv,0),pBill=dp.reduce((s,p)=>s+p.bill,0),pTotal=dp.reduce((s,p)=>s+p.total,0);
   const billRecv=db.reduce((s,b)=>s+b.amount,0),challanVal=dc.reduce((s,c)=>s+c.value,0);
   let h=rHead(`Daily Report — ${fmtDate(date)}`);
-  h+=rRow('Challan Submitted',taka(challanVal),'var(--blue)');
-  h+=rRow('Bill Received',taka(billRecv),'var(--green)');
-  h+=rRow('Worker Payable',taka(wPay),'var(--red)');
-  h+=rRow('Conveyance in Entries',taka(entryConv),'var(--orange)');
+  h+=rRow('Challan Submitted',taka(challanVal),'#2980b9');
+  h+=rRow('Bill Received',taka(billRecv),'#27ae60');
+  h+=rRow('Worker Payable',taka(wPay),'#c0392b');
+  h+=rRow('Conveyance in Entries',taka(entryConv),'#e67e22');
   h+=rSub('Payments Made Today');
-  h+=rRow('Conveyance Paid (ভাড়া)',taka(pConv),'var(--orange)');
-  h+=rRow('Bill Paid (বেতন)',taka(pBill),'var(--red)');
-  h+=rRow('Total Paid',taka(pTotal),'var(--red)');
+  h+=rRow('Conveyance Paid (ভাড়া)',taka(pConv),'#e67e22');
+  h+=rRow('Bill Paid (বেতন)',taka(pBill),'#c0392b');
+  h+=rRow('Total Paid',taka(pTotal),'#c0392b');
   if(de.length){h+=rSub('Work Entries');de.forEach(e=>{h+=rRow(`${e.worker} → ${e.style}/${e.factory} [${stypeLabel(e.salaryType)}]`,`Conv:${taka(e.conv)} | Payable:${taka(e.wearn)}`);});}
-  if(dc.length){h+=rSub('Challans');dc.forEach(c=>{h+=rRow(`${c.style} — ${c.pcs}pcs`,taka(c.value),'var(--blue)');});}
-  if(db.length){h+=rSub('Bills Received');db.forEach(b=>{h+=rRow(`${b.style}${b.note?' ('+b.note+')':''}`,taka(b.amount),'var(--green)');});}
+  if(dc.length){h+=rSub('Challans');dc.forEach(c=>{h+=rRow(`${c.style} — ${c.pcs}pcs`,taka(c.value),'#2980b9');});}
+  if(db.length){h+=rSub('Bills Received');db.forEach(b=>{h+=rRow(`${b.style}${b.note?' ('+b.note+')':''}`,taka(b.amount),'#27ae60');});}
   document.getElementById('r-daily-result').innerHTML=rBox(h);
   document.getElementById('bar-r-daily-result').style.display=(h?'flex':'none');
 }
@@ -2955,17 +2950,17 @@ function genContractReport(){
     h+=rRow('Job Type',ct.jobtype);
     h+=rRow('Rate per Piece',taka(ct.rate));
     h+=rRow('Total Challan Pcs',pcs+' pcs');
-    h+=rRow('Total Challan Value',taka(cv),'var(--blue)');
-    h+=rRow('Bill Received',taka(br),'var(--green)');
-    if(isShared) h+=rRow('  └ Challan অনুপাতে ভাগ ('+Math.round(billRatio*100)+'%)','','var(--text-muted)');
-    h+=rRow('Bill Pending',taka(cv-br),(cv-br)>0?'var(--red)':'var(--green)');
-    if(wc>0) h+=rRow('Daily/Piece Worker Cost',taka(wc),'var(--red)');
-    if(entryConv>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(entryConv),'var(--orange)');
-    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'var(--red)');
-    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'var(--orange)');
-    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'var(--red)');
-    h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'var(--green)':'var(--red)');
-    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{const dispAmt=isShared&&totalOrderChallan>0?Math.round(b.amount*billRatio):b.amount;h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(dispAmt),'var(--green)');});}
+    h+=rRow('Total Challan Value',taka(cv),'#2980b9');
+    h+=rRow('Bill Received',taka(br),'#27ae60');
+    if(isShared) h+=rRow('  └ Challan অনুপাতে ভাগ ('+Math.round(billRatio*100)+'%)','','#6b7f94');
+    h+=rRow('Bill Pending',taka(cv-br),(cv-br)>0?'#c0392b':'#27ae60');
+    if(wc>0) h+=rRow('Daily/Piece Worker Cost',taka(wc),'#c0392b');
+    if(entryConv>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(entryConv),'#e67e22');
+    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'#c0392b');
+    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'#e67e22');
+    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'#c0392b');
+    h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'#27ae60':'#c0392b');
+    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{const dispAmt=isShared&&totalOrderChallan>0?Math.round(b.amount*billRatio):b.amount;h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(dispAmt),'#27ae60');});}
   });
   if(!idxList.length)h+=`<div class="no-data">No data</div>`;
   document.getElementById('r-contract-result').innerHTML=rBox(h);
@@ -2996,17 +2991,17 @@ function genContractReportRR(){
     h+=rRow('Job Type',ct.jobtype);
     h+=rRow('Rate per Piece',taka(ct.rate));
     h+=rRow('Total Challan Pcs',pcs+' pcs');
-    h+=rRow('Total Challan Value',taka(cv),'var(--blue)');
-    h+=rRow('Bill Received',taka(br),'var(--green)');
-    if(isShared) h+=rRow('  └ Challan অনুপাতে ভাগ ('+Math.round(billRatio*100)+'%)','','var(--text-muted)');
-    h+=rRow('Bill Pending',taka(cv-br),(cv-br)>0?'var(--red)':'var(--green)');
-    if(wc>0) h+=rRow('Daily/Piece Worker Cost',taka(wc),'var(--red)');
-    if(entryConv>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(entryConv),'var(--orange)');
-    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'var(--red)');
-    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'var(--orange)');
-    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'var(--red)');
-    h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'var(--green)':'var(--red)');
-    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{const dispAmt=isShared&&totalOrderChallan>0?Math.round(b.amount*billRatio):b.amount;h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(dispAmt),'var(--green)');});}
+    h+=rRow('Total Challan Value',taka(cv),'#2980b9');
+    h+=rRow('Bill Received',taka(br),'#27ae60');
+    if(isShared) h+=rRow('  └ Challan অনুপাতে ভাগ ('+Math.round(billRatio*100)+'%)','','#6b7f94');
+    h+=rRow('Bill Pending',taka(cv-br),(cv-br)>0?'#c0392b':'#27ae60');
+    if(wc>0) h+=rRow('Daily/Piece Worker Cost',taka(wc),'#c0392b');
+    if(entryConv>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(entryConv),'#e67e22');
+    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'#c0392b');
+    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'#e67e22');
+    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'#c0392b');
+    h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'#27ae60':'#c0392b');
+    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{const dispAmt=isShared&&totalOrderChallan>0?Math.round(b.amount*billRatio):b.amount;h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(dispAmt),'#27ae60');});}
   });
   if(!idxList.length)h+=`<div class="no-data">No data</div>`;
   document.getElementById('rr-contract-result').innerHTML=rBox(h);
@@ -3090,7 +3085,7 @@ function genWorkerReport(){
     html+=`<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:28px;overflow:hidden;border:1px solid #dde3ea;">
       <div style="background:#1a2a3a;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
         <div style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;">👷 ${name}</div>
-        <button onclick="exportWorkerTableExcel('${name}','${m}')" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">📊 Excel Export</button>
+        <button onclick="exportWorkerTableExcel('${name}','${m}')" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">📊 Excel Export</button>
       </div>
       <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #dde3ea;font-size:13px;background:#f7fafd;">
         <span><strong>Name:</strong> ${name}</span>
@@ -3106,24 +3101,29 @@ function genWorkerReport(){
         const dayTakings=dateStr?wt.filter(e=>e.date===dateStr):wt;
         if(dayTakings.length===0){
           sn++;
-          dailyRows+=`<tr style="border-bottom:1px solid #eee;">
-            <td style="padding:3px 6px;text-align:center;color:#bbb;font-size:11px;">${sn}</td>
-            <td style="padding:3px 6px;color:#bbb;font-size:11px;">${dateStr?fmtDate(dateStr):''}</td>
-            <td colspan="6" style="padding:3px 6px;"></td>
+          dailyRows+=`<tr>
+            <td style="padding:3px 6px;text-align:center;color:#bbb;font-size:11px;border:1px solid #ccc;">${sn}</td>
+            <td style="padding:3px 6px;color:#bbb;font-size:11px;border:1px solid #ccc;">${dateStr?fmtDate(dateStr):''}</td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
+            <td style="padding:3px 6px;border:1px solid #ccc;"></td>
           </tr>`;
         } else {
           dayTakings.forEach(e=>{
             sn++;
             const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
-            dailyRows+=`<tr style="border-bottom:1px solid #eee;background:#f0f9ff;">
-              <td style="padding:3px 6px;text-align:center;font-weight:600;font-size:11px;">${sn}</td>
-              <td style="padding:3px 6px;font-weight:600;font-size:11px;">${fmtDate(e.date)}</td>
-              <td style="padding:3px 6px;font-size:11px;">${e.factory||'-'}</td>
-              <td style="padding:3px 6px;text-align:right;color:var(--orange);font-weight:700;font-size:11px;">${e.conv?taka(e.conv):''}</td>
-              <td style="padding:3px 6px;text-align:right;color:var(--blue);font-weight:700;font-size:11px;">${e.daily?taka(e.daily):taka(e.wearn)}</td>
-              <td style="padding:3px 6px;text-align:right;color:var(--green);font-weight:700;font-size:11px;">${e.ot?taka(e.ot):''}</td>
-              <td style="padding:3px 6px;text-align:right;color:var(--red);font-weight:700;font-size:11px;">${(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))?taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)):''}</td>
-              <td style="padding:3px 6px;font-size:11px;color:#555;">${remark}</td>
+            dailyRows+=`<tr style="background:#f0f9ff;">
+              <td style="padding:3px 6px;text-align:center;font-weight:600;font-size:11px;border:1px solid #ccc;">${sn}</td>
+              <td style="padding:3px 6px;font-weight:600;font-size:11px;border:1px solid #ccc;">${fmtDate(e.date)}</td>
+              <td style="padding:3px 6px;font-size:11px;border:1px solid #ccc;">${e.factory||'-'}</td>
+              <td style="padding:3px 6px;text-align:right;color:#e67e22;font-weight:700;font-size:11px;border:1px solid #ccc;">${e.conv?taka(e.conv):''}</td>
+              <td style="padding:3px 6px;text-align:right;color:#2980b9;font-weight:700;font-size:11px;border:1px solid #ccc;">${e.daily?taka(e.daily):taka(e.wearn)}</td>
+              <td style="padding:3px 6px;text-align:right;color:#27ae60;font-weight:700;font-size:11px;border:1px solid #ccc;">${e.ot?taka(e.ot):''}</td>
+              <td style="padding:3px 6px;text-align:right;color:#c0392b;font-weight:700;font-size:11px;border:1px solid #ccc;">${(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))?taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)):''}</td>
+              <td style="padding:3px 6px;font-size:11px;color:#555;border:1px solid #ccc;">${remark}</td>
             </tr>`;
           });
         }
@@ -3136,33 +3136,33 @@ function genWorkerReport(){
         <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead>
             <tr style="background:#1e3a5f;color:#cdd8e3;">
-              <th style="padding:5px 6px;text-align:center;width:36px;">S.N</th>
-              <th style="padding:5px 6px;text-align:left;">Date</th>
-              <th style="padding:5px 6px;text-align:left;">Factory</th>
-              <th style="padding:5px 6px;text-align:right;">Conveyance</th>
-              <th style="padding:5px 6px;text-align:right;">Daily Salary</th>
-              <th style="padding:5px 6px;text-align:right;">Over Time</th>
-              <th style="padding:5px 6px;text-align:right;">Payable</th>
-              <th style="padding:5px 6px;text-align:left;">Remark</th>
+              <th style="padding:5px 6px;text-align:center;width:36px;border:1px solid #4a6080;">S.N</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #4a6080;">Date</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #4a6080;">Factory</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #4a6080;">Conveyance</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #4a6080;">Daily Salary</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #4a6080;">Over Time</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #4a6080;">Payable</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #4a6080;">Remark</th>
             </tr>
           </thead>
           <tbody>
             ${dailyRows}
             <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
-              <td colspan="3" style="padding:5px 6px;text-align:right;font-size:11px;">Total =</td>
-              <td style="padding:5px 6px;text-align:right;color:#f0a500;">${taka(wtConv)}</td>
-              <td style="padding:5px 6px;text-align:right;color:#5dade2;">${taka(wtWearn-wtOT)}</td>
-              <td style="padding:5px 6px;text-align:right;color:#58d68d;">${wtOT?taka(wtOT):'-'}</td>
-              <td style="padding:5px 6px;text-align:right;color:#86efac;">${taka(wtPayable)}</td>
-              <td style="padding:5px 6px;"></td>
+              <td colspan="3" style="padding:5px 6px;text-align:right;font-size:11px;border:1px solid #4a6080;">Total =</td>
+              <td style="padding:5px 6px;text-align:right;color:#f0a500;border:1px solid #4a6080;">${taka(wtConv)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#5dade2;border:1px solid #4a6080;">${taka(wtWearn-wtOT)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#58d68d;border:1px solid #4a6080;">${wtOT?taka(wtOT):'-'}</td>
+              <td style="padding:5px 6px;text-align:right;color:#86efac;border:1px solid #4a6080;">${taka(wtPayable)}</td>
+              <td style="padding:5px 6px;border:1px solid #4a6080;"></td>
             </tr>
           </tbody>
         </table>
       </div>
       <div style="padding:6px 16px;background:#eff6ff;border-top:1px solid #bfdbfe;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;">
-        <span>মোট Earn: <strong style="color:var(--blue);">${taka(wtWearn)}</strong></span>
-        <span>Conveyance: <strong style="color:var(--orange);">-${taka(wtConv)}</strong></span>
-        <span>Net Payable: <strong style="color:var(--green);">${taka(wtPayable)}</strong></span>
+        <span>মোট Earn: <strong style="color:#2980b9;">${taka(wtWearn)}</strong></span>
+        <span>Conveyance: <strong style="color:#e67e22;">-${taka(wtConv)}</strong></span>
+        <span>Net Payable: <strong style="color:#27ae60;">${taka(wtPayable)}</strong></span>
       </div>`;
     }
 
@@ -3177,66 +3177,66 @@ function genWorkerReport(){
         📆 Monthly Salary Worker — Salary Table
       </div>
       <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead>
-            <tr style="background:#2c1a4a;color:#d8b4fe;">
-              <th style="padding:8px 10px;text-align:center;">#</th>
-              <th style="padding:8px 10px;text-align:left;">তারিখ</th>
-              <th style="padding:8px 10px;text-align:left;">Style / Factory</th>
-              <th style="padding:8px 10px;text-align:right;">Salary</th>
-              <th style="padding:8px 10px;text-align:right;">OT</th>
-              <th style="padding:8px 10px;text-align:right;">🍽️ Lunch</th>
-              <th style="padding:8px 10px;text-align:right;">যাতায়াত</th>
-              <th style="padding:8px 10px;text-align:right;">কাটা</th>
-              <th style="padding:8px 10px;text-align:right;">Payable</th>
-              <th style="padding:8px 10px;text-align:left;">Note</th>
+            <tr style="background:#7c3aed;color:#fff;">
+              <th style="padding:5px 6px;text-align:center;border:1px solid #9b59d6;">#</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #9b59d6;">তারিখ</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #9b59d6;">Style / Factory</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">Salary</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">OT</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">Lunch</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">যাতায়াত</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">কাটা</th>
+              <th style="padding:5px 6px;text-align:right;border:1px solid #9b59d6;">Payable</th>
+              <th style="padding:5px 6px;text-align:left;border:1px solid #9b59d6;">Note</th>
             </tr>
           </thead>
           <tbody>
             ${ms.map((e,i)=>{
               const ct=contracts[e.ctIdx];
               const styleLabel=(ct?ct.style:e.style||'-');
-              return `<tr style="background:${i%2===0?'#1e1030':'#17082a'};border-bottom:1px solid #3d1f6a;">
-                <td style="padding:7px 10px;color:#a8c0d6;text-align:center;">${i+1}</td>
-                <td style="padding:7px 10px;color:#c4b5fd;font-weight:600;">${fmtDate(e.date)||'-'}</td>
-                <td style="padding:7px 10px;color:#e2d9f3;">${styleLabel}<br><span style="font-size:11px;color:#94a3b8;">${e.factory||''}</span></td>
-                <td style="padding:7px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(+e.salary||0)}</td>
-                <td style="padding:7px 10px;text-align:right;color:#4ade80;">${(+(e.ot||e.offdayOT)||0)?taka(+(e.ot||e.offdayOT)):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:#fb923c;">${(+e.lunch||0)?taka(+e.lunch):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:#fb923c;">${(+e.travel||0)?taka(+e.travel):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:#f87171;">${(+e.deduct||0)?taka(+e.deduct):'-'}</td>
-                <td style="padding:7px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(+e.payable||0)}</td>
-                <td style="padding:7px 10px;color:#94a3b8;font-size:11px;">${e.note||'-'}</td>
+              return `<tr style="background:${i%2===0?'#f5f0ff':'#fff'};">
+                <td style="padding:3px 6px;color:#555;text-align:center;font-size:11px;border:1px solid #ccc;">${i+1}</td>
+                <td style="padding:3px 6px;color:#7c3aed;font-weight:600;font-size:11px;border:1px solid #ccc;">${fmtDate(e.date)||'-'}</td>
+                <td style="padding:3px 6px;color:#333;font-size:11px;border:1px solid #ccc;">${styleLabel}<br><span style="font-size:10px;color:#888;">${e.factory||''}</span></td>
+                <td style="padding:3px 6px;text-align:right;color:#7c3aed;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(+e.salary||0)}</td>
+                <td style="padding:3px 6px;text-align:right;color:#27ae60;font-size:11px;border:1px solid #ccc;">${(+(e.ot||e.offdayOT)||0)?taka(+(e.ot||e.offdayOT)):'-'}</td>
+                <td style="padding:3px 6px;text-align:right;color:#e67e22;font-size:11px;border:1px solid #ccc;">${(+e.lunch||0)?taka(+e.lunch):'-'}</td>
+                <td style="padding:3px 6px;text-align:right;color:#e67e22;font-size:11px;border:1px solid #ccc;">${(+e.travel||0)?taka(+e.travel):'-'}</td>
+                <td style="padding:3px 6px;text-align:right;color:#c0392b;font-size:11px;border:1px solid #ccc;">${(+e.deduct||0)?taka(+e.deduct):'-'}</td>
+                <td style="padding:3px 6px;text-align:right;color:#27ae60;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(+e.payable||0)}</td>
+                <td style="padding:3px 6px;color:#888;font-size:10px;border:1px solid #ccc;">${e.note||'-'}</td>
               </tr>`;
             }).join('')}
-            <tr style="background:#2c1a4a;border-top:2px solid #7c3aed;">
-              <td colspan="3" style="padding:8px 10px;color:#d8b4fe;font-weight:700;">মোট</td>
-              <td style="padding:8px 10px;text-align:right;color:#d8b4fe;font-weight:700;">${taka(totalSalary)}</td>
-              <td style="padding:8px 10px;text-align:right;color:#4ade80;font-weight:700;">${taka(msOT)}</td>
-              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(totalLunch)}</td>
-              <td style="padding:8px 10px;text-align:right;color:#fb923c;font-weight:700;">${taka(totalTravel)}</td>
-              <td style="padding:8px 10px;text-align:right;color:#f87171;font-weight:700;">${taka(totalDeduct)}</td>
-              <td style="padding:8px 10px;text-align:right;color:#86efac;font-weight:700;">${taka(msPayable)}</td>
-              <td style="padding:8px 10px;"></td>
+            <tr style="background:#ede9fe;border-top:2px solid #7c3aed;">
+              <td colspan="3" style="padding:5px 6px;color:#7c3aed;font-weight:700;font-size:11px;border:1px solid #ccc;">মোট</td>
+              <td style="padding:5px 6px;text-align:right;color:#7c3aed;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(totalSalary)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#27ae60;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(msOT)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#e67e22;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(totalLunch)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#e67e22;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(totalTravel)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#c0392b;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(totalDeduct)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#27ae60;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(msPayable)}</td>
+              <td style="padding:5px 6px;border:1px solid #ccc;"></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div style="padding:10px 16px;background:#faf5ff;border-top:1px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
+      <div style="padding:8px 16px;background:#faf5ff;border-top:1px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;">
         <span>Salary: <strong style="color:#7c3aed;">${taka(totalSalary)}</strong></span>
-        ${msOT?`<span>OT: <strong style="color:var(--green);">+${taka(msOT)}</strong></span>`:''}
-        <span>Bill Cut: <strong style="color:var(--orange);">-${taka(msBillCut)}</strong></span>
+        ${msOT?`<span>OT: <strong style="color:#27ae60;">+${taka(msOT)}</strong></span>`:''}
+        <span>Bill Cut: <strong style="color:#e67e22;">-${taka(msBillCut)}</strong></span>
         <span>Net Payable: <strong style="color:#7c3aed;">${taka(msPayable)}</strong></span>
       </div>`;
     }
 
     // ===== GRAND SUMMARY =====
     html+=`
-      <div style="padding:14px 18px;background:#f7fafd;border-top:2px solid #dde3ea;">
+      <div style="padding:10px 18px;background:#f7fafd;border-top:2px solid #dde3ea;">
         <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;font-size:13px;align-items:center;">
           ${wt.length?`<div style="text-align:center;padding:8px 14px;background:#eff6ff;border-radius:8px;">
             <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Daily Payable</div>
-            <div style="font-size:16px;font-weight:700;color:var(--blue);">${taka(wtPayable)}</div>
+            <div style="font-size:16px;font-weight:700;color:#2980b9;">${taka(wtPayable)}</div>
           </div>`:''}
           ${ms.length?`<div style="text-align:center;padding:8px 14px;background:#faf5ff;border-radius:8px;">
             <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">Monthly Payable</div>
@@ -3244,11 +3244,11 @@ function genWorkerReport(){
           </div>`:''}
           <div style="text-align:center;padding:10px 18px;background:#eafaf1;border:2px solid #a9dfbf;border-radius:8px;">
             <div style="color:#1e8449;font-size:10px;text-transform:uppercase;font-weight:700;">মোট Payable</div>
-            <div style="font-size:22px;font-weight:700;color:var(--green);">${taka(totalPayable)}</div>
+            <div style="font-size:22px;font-weight:700;color:#27ae60;">${taka(totalPayable)}</div>
           </div>
           ${tp>0?`<div style="text-align:center;padding:8px 14px;background:#fdecea;border-radius:8px;">
             <div style="color:#666;font-size:10px;text-transform:uppercase;font-weight:600;">বাকি</div>
-            <div style="font-size:17px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'};">${taka(remaining)}</div>
+            <div style="font-size:17px;font-weight:700;color:${remaining>0?'#c0392b':'#27ae60'};">${taka(remaining)}</div>
           </div>`:''}
         </div>
       </div>
@@ -3296,21 +3296,21 @@ function genWorkerReport2(){
     h+=rSub(`👷 ${name}`);
     h+=rRow('Daily/Piece Entries',wt.length+'টি');
     h+=rRow('Monthly Salary Entries',ms.length+'টি','#6a0dad');
-    h+=rRow('মোট উপার্জন — Daily/Piece',taka(wtWearn),'var(--primary)');
+    h+=rRow('মোট উপার্জন — Daily/Piece',taka(wtWearn),'#1a3a5c');
     if(ms.length){
       h+=rRow('মোট মাসিক বেতন (Salary)',taka(msWearn),'#6a0dad');
-      if(msOT>0) h+=rRow('ওভার টাইম (মাসিক)',taka(msOT),'var(--green)');
-      if(msBillCut>0) h+=rRow('Bill কাটা (লাঞ্চ+যাতায়াত)',taka(msBillCut),'var(--orange)');
+      if(msOT>0) h+=rRow('ওভার টাইম (মাসিক)',taka(msOT),'#27ae60');
+      if(msBillCut>0) h+=rRow('Bill কাটা (লাঞ্চ+যাতায়াত)',taka(msBillCut),'#e67e22');
     }
-    h+=rRow('Conv. আগাম দেওয়া (Daily Entry-তে)',taka(entryConv),'var(--orange)');
-    h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;background:#f0e6ff;">
+    h+=rRow('Conv. আগাম দেওয়া (Daily Entry-তে)',taka(entryConv),'#e67e22');
+    h+=`<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #dde3ea;font-size:13px;background:#f0e6ff;">
       <span>💜 মোট Payable (Daily + Monthly)</span>
       <strong style="color:#6a0dad;">${taka(totalPayable)}</strong>
     </div>`;
-    h+=rRow('Conv. Paid (আলাদা)',taka(cp),'var(--orange)');
-    h+=rRow('Bill Paid (বেতন দেওয়া)',taka(bp),'var(--red)');
-    h+=rRow('Total Paid',taka(tp),'var(--green)');
-    h+=rRow('Remaining Payable',taka(rem),rem>0?'var(--red)':'var(--green)');
+    h+=rRow('Conv. Paid (আলাদা)',taka(cp),'#e67e22');
+    h+=rRow('Bill Paid (বেতন দেওয়া)',taka(bp),'#c0392b');
+    h+=rRow('Total Paid',taka(tp),'#27ae60');
+    h+=rRow('Remaining Payable',taka(rem),rem>0?'#c0392b':'#27ae60');
 
     // Monthly Salary breakdown
     if(ms.length){
@@ -3396,21 +3396,21 @@ function genBillReport(){
     grandChallan+=cv;grandSubmit+=bs;grandRecv+=br;
     h+=rSub(`📦 Order: ${ord} — ${supplier}`);
     h+=rRow('Styles',styles);
-    h+=rRow('Challan Value',taka(cv),'var(--blue)');
-    h+=rRow('Bill Submitted',taka(bs),'var(--orange)');
-    h+=rRow('Bill Received',taka(br),'var(--green)');
-    h+=rRow('Pending (Challan - Received)',taka(cv-br),(cv-br)>0?'var(--red)':'var(--green)');
+    h+=rRow('Challan Value',taka(cv),'#2980b9');
+    h+=rRow('Bill Submitted',taka(bs),'#e67e22');
+    h+=rRow('Bill Received',taka(br),'#27ae60');
+    h+=rRow('Pending (Challan - Received)',taka(cv-br),(cv-br)>0?'#c0392b':'#27ae60');
     if(inst.length){
       h+=rSub('Payments Received');
-      inst.forEach((b,i)=>{h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(b.amount),'var(--green)');});
+      inst.forEach((b,i)=>{h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(b.amount),'#27ae60');});
     }
   });
   if(orders.length>1){
     h+=rSub('GRAND TOTAL');
-    h+=rRow('Total Challan Value',taka(grandChallan),'var(--blue)');
-    h+=rRow('Total Bill Submitted',taka(grandSubmit),'var(--orange)');
-    h+=rRow('Total Bill Received',taka(grandRecv),'var(--green)');
-    h+=rRow('Total Pending',taka(grandChallan-grandRecv),(grandChallan-grandRecv)>0?'var(--red)':'var(--green)');
+    h+=rRow('Total Challan Value',taka(grandChallan),'#2980b9');
+    h+=rRow('Total Bill Submitted',taka(grandSubmit),'#e67e22');
+    h+=rRow('Total Bill Received',taka(grandRecv),'#27ae60');
+    h+=rRow('Total Pending',taka(grandChallan-grandRecv),(grandChallan-grandRecv)>0?'#c0392b':'#27ae60');
   }
   if(!orders.length)h+='<div class="no-data">কোনো Order নেই</div>';
   document.getElementById('r-bill-result').innerHTML=rBox(h);
@@ -3432,16 +3432,16 @@ function genMonthlyReport2(){
   const billRecv=mb.reduce((s,b)=>s+b.amount,0);
   const billSubmitAmt=mbs.reduce((s,b)=>s+b.amount,0);
   let h=rHead(`Monthly Summary — ${fmtMonth(m)}`);
-  h+=rRow('Challan Submitted',taka(challanVal),'var(--blue)');
-  h+=rRow('Bill Submitted to Supplier',taka(billSubmitAmt),'var(--orange)');
-  h+=rRow('Bill Received',taka(billRecv),'var(--green)');
-  h+=rRow('Worker Cost',taka(wc),'var(--red)');
-  h+=rRow('Conveyance in Entries',taka(conv),'var(--orange)');
-  h+=rRow('Net Profit (Bill Recv - Worker Cost)',taka(billRecv-wc),(billRecv-wc)>=0?'var(--green)':'var(--red)');
+  h+=rRow('Challan Submitted',taka(challanVal),'#2980b9');
+  h+=rRow('Bill Submitted to Supplier',taka(billSubmitAmt),'#e67e22');
+  h+=rRow('Bill Received',taka(billRecv),'#27ae60');
+  h+=rRow('Worker Cost',taka(wc),'#c0392b');
+  h+=rRow('Conveyance in Entries',taka(conv),'#e67e22');
+  h+=rRow('Net Profit (Bill Recv - Worker Cost)',taka(billRecv-wc),(billRecv-wc)>=0?'#27ae60':'#c0392b');
   h+=rSub('Payments to Workers');
-  h+=rRow('Conv. Paid',taka(pConv),'var(--orange)');
-  h+=rRow('Bill Paid (বেতন)',taka(pBill),'var(--red)');
-  h+=rRow('Total Paid',taka(pTotal),'var(--red)');
+  h+=rRow('Conv. Paid',taka(pConv),'#e67e22');
+  h+=rRow('Bill Paid (বেতন)',taka(pBill),'#c0392b');
+  h+=rRow('Total Paid',taka(pTotal),'#c0392b');
   // By contract
   const ctSet=[...new Set(me.map(e=>e.ctIdx))];
   if(ctSet.length){
@@ -3481,20 +3481,20 @@ function genSupplierReport2(){
       sc+=cv;sb+=br;sw+=wc;
       h+=rRow(`  ${ct.style} (${ct.jobtype})`,`Challan:${taka(cv)} | Bill:${taka(br)} | Worker:${taka(wc)}`);
     });
-    h+=rRow(`${sup} — Challan`,taka(sc),'var(--blue)');
-    h+=rRow(`${sup} — Bill Recv`,taka(sb),'var(--green)');
-    h+=rRow(`${sup} — Pending`,taka(sc-sb),(sc-sb)>0?'var(--red)':'var(--green)');
-    h+=rRow(`${sup} — Worker Cost`,taka(sw),'var(--red)');
-    h+=rRow(`${sup} — Net Profit`,taka(sb-sw),(sb-sw)>=0?'var(--green)':'var(--red)');
+    h+=rRow(`${sup} — Challan`,taka(sc),'#2980b9');
+    h+=rRow(`${sup} — Bill Recv`,taka(sb),'#27ae60');
+    h+=rRow(`${sup} — Pending`,taka(sc-sb),(sc-sb)>0?'#c0392b':'#27ae60');
+    h+=rRow(`${sup} — Worker Cost`,taka(sw),'#c0392b');
+    h+=rRow(`${sup} — Net Profit`,taka(sb-sw),(sb-sw)>=0?'#27ae60':'#c0392b');
     grandC+=sc;grandB+=sb;grandW+=sw;
   });
   if(supplierList.length>1){
     h+=rSub('GRAND TOTAL');
-    h+=rRow('Total Challan',taka(grandC),'var(--blue)');
-    h+=rRow('Total Bill Recv',taka(grandB),'var(--green)');
-    h+=rRow('Total Pending',taka(grandC-grandB),(grandC-grandB)>0?'var(--red)':'var(--green)');
-    h+=rRow('Total Worker Cost',taka(grandW),'var(--red)');
-    h+=rRow('Total Net Profit',taka(grandB-grandW),(grandB-grandW)>=0?'var(--green)':'var(--red)');
+    h+=rRow('Total Challan',taka(grandC),'#2980b9');
+    h+=rRow('Total Bill Recv',taka(grandB),'#27ae60');
+    h+=rRow('Total Pending',taka(grandC-grandB),(grandC-grandB)>0?'#c0392b':'#27ae60');
+    h+=rRow('Total Worker Cost',taka(grandW),'#c0392b');
+    h+=rRow('Total Net Profit',taka(grandB-grandW),(grandB-grandW)>=0?'#27ae60':'#c0392b');
   }
   document.getElementById('r-supplier-result2').innerHTML=rBox(h);
   document.getElementById('bar-r-supplier-result2').style.display=(h?'flex':'none');
@@ -3546,29 +3546,29 @@ function genStylePLReport(){
     h+=rSub(`📦 ${ct.orderno?'['+ct.orderno+'] ':''}${ct.style} — ${ct.supplier} / ${ct.factory}`);
     h+=rRow('Job Type',ct.jobtype);
     h+=rRow('Rate',taka(ct.rate)+'/'+unitLabel);
-    h+=rRow('Challan ('+challanPcs+' '+unitLabel+')',taka(challanVal),'var(--blue)');
-    h+=rRow('Bill Received',taka(billRecv),'var(--green)');
-    h+=rRow('Bill Pending',taka(challanVal-billRecv),(challanVal-billRecv)>0?'var(--red)':'var(--green)');
-    if(workerCost>0) h+=rRow('Daily/Piece Worker Cost',taka(workerCost),'var(--red)');
-    if(convTotal>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(convTotal),'var(--orange)');
-    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'var(--red)');
-    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel (Bill কাটা)',taka(monthlyBillCut),'var(--orange)');
-    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'var(--red)');
-    h+=`<div style="display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;background:${netProfit>=0?'#eafaf1':'#fdecea'};">
+    h+=rRow('Challan ('+challanPcs+' '+unitLabel+')',taka(challanVal),'#2980b9');
+    h+=rRow('Bill Received',taka(billRecv),'#27ae60');
+    h+=rRow('Bill Pending',taka(challanVal-billRecv),(challanVal-billRecv)>0?'#c0392b':'#27ae60');
+    if(workerCost>0) h+=rRow('Daily/Piece Worker Cost',taka(workerCost),'#c0392b');
+    if(convTotal>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(convTotal),'#e67e22');
+    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'#c0392b');
+    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel (Bill কাটা)',taka(monthlyBillCut),'#e67e22');
+    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'#c0392b');
+    h+=`<div style="display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #dde3ea;font-size:14px;font-weight:700;background:${netProfit>=0?'#eafaf1':'#fdecea'};">
       <span>🏆 Net Profit (Bill - Total Cost)</span>
-      <strong style="color:${netProfit>=0?'var(--green)':'var(--red)'};">${taka(netProfit)}</strong>
+      <strong style="color:${netProfit>=0?'#27ae60':'#c0392b'};">${taka(netProfit)}</strong>
     </div>`;
   });
 
   if(filtered.length>1||!ctF){
     h+=rSub('GRAND TOTAL SUMMARY');
-    h+=rRow('Total Challan Value',taka(grandChallan),'var(--blue)');
-    h+=rRow('Total Bill Received',taka(grandBillRecv),'var(--green)');
-    h+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'var(--red)':'var(--green)');
-    h+=rRow('Total Worker Cost',taka(grandWorker),'var(--red)');
+    h+=rRow('Total Challan Value',taka(grandChallan),'#2980b9');
+    h+=rRow('Total Bill Received',taka(grandBillRecv),'#27ae60');
+    h+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'#c0392b':'#27ae60');
+    h+=rRow('Total Worker Cost',taka(grandWorker),'#c0392b');
     h+=`<div style="display:flex;justify-content:space-between;padding:13px 14px;font-size:15px;font-weight:700;background:${grandProfit>=0?'#eafaf1':'#fdecea'};">
       <span>🏆 Overall Net Profit</span>
-      <strong style="color:${grandProfit>=0?'var(--green)':'var(--red)'};">${taka(grandProfit)}</strong>
+      <strong style="color:${grandProfit>=0?'#27ae60':'#c0392b'};">${taka(grandProfit)}</strong>
     </div>`;
   }
   if(!filtered.length) h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
@@ -3602,21 +3602,21 @@ function genSupplierReport(){
       h+=rRow(`${ct.style} (${ct.jobtype})`,`Challan: ${taka(cv)} | Bill: ${taka(br)} | Worker: ${taka(wc)}`);
     });
     const supProfit=supBill-supWcost;
-    h+=rRow(`${sup} — Sub Total Challan`,taka(supChallan),'var(--blue)');
-    h+=rRow(`${sup} — Sub Total Bill Recv`,taka(supBill),'var(--green)');
-    h+=rRow(`${sup} — Bill Pending`,taka(supChallan-supBill),(supChallan-supBill)>0?'var(--red)':'var(--green)');
-    h+=rRow(`${sup} — Worker Cost`,taka(supWcost),'var(--red)');
-    h+=rRow(`${sup} — Net Profit (Bill - Worker)`,taka(supProfit),supProfit>=0?'var(--green)':'var(--red)');
+    h+=rRow(`${sup} — Sub Total Challan`,taka(supChallan),'#2980b9');
+    h+=rRow(`${sup} — Sub Total Bill Recv`,taka(supBill),'#27ae60');
+    h+=rRow(`${sup} — Bill Pending`,taka(supChallan-supBill),(supChallan-supBill)>0?'#c0392b':'#27ae60');
+    h+=rRow(`${sup} — Worker Cost`,taka(supWcost),'#c0392b');
+    h+=rRow(`${sup} — Net Profit (Bill - Worker)`,taka(supProfit),supProfit>=0?'#27ae60':'#c0392b');
     grandChallan+=supChallan;grandBillRecv+=supBill;grandWorkerCost+=supWcost;grandProfit+=supProfit;
   });
 
   if(!supplierF&&supplierList.length>1){
     h+=rSub('OVERALL GRAND TOTAL');
-    h+=rRow('Total Challan Value',taka(grandChallan),'var(--blue)');
-    h+=rRow('Total Bill Received',taka(grandBillRecv),'var(--green)');
-    h+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'var(--red)':'var(--green)');
-    h+=rRow('Total Worker Cost',taka(grandWorkerCost),'var(--red)');
-    h+=rRow('Total Net Profit',taka(grandProfit),grandProfit>=0?'var(--green)':'var(--red)');
+    h+=rRow('Total Challan Value',taka(grandChallan),'#2980b9');
+    h+=rRow('Total Bill Received',taka(grandBillRecv),'#27ae60');
+    h+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'#c0392b':'#27ae60');
+    h+=rRow('Total Worker Cost',taka(grandWorkerCost),'#c0392b');
+    h+=rRow('Total Net Profit',taka(grandProfit),grandProfit>=0?'#27ae60':'#c0392b');
   }
   if(!supplierList.length||grandChallan+grandBillRecv===0)h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
   document.getElementById('r-supplier-result').innerHTML=rBox(h);
@@ -3713,10 +3713,10 @@ function renderPersonalAccount() {
         <td>${t.txtype === 'debit'
           ? '<span class="badge badge-red">💸 দিয়েছি</span>'
           : '<span class="badge badge-green">💚 ফেরত পেয়েছি</span>'}</td>
-        <td style="font-weight:700;color:${t.txtype === 'debit' ? 'var(--red)' : 'var(--green)'};">
+        <td style="font-weight:700;color:${t.txtype === 'debit' ? '#c0392b' : '#27ae60'};">
           ${t.txtype === 'debit' ? '-' : '+'}৳${t.amount.toLocaleString('en-BD')}
         </td>
-        <td style="color:var(--text-muted);font-size:12px;">${t.note || '—'}</td>
+        <td style="color:#6b7f94;font-size:12px;">${t.note || '—'}</td>
         <td><button class="btn btn-danger" onclick="deletePersonalTx(${t.id})">🗑️</button></td>
       </tr>`).join('');
   }
@@ -3754,11 +3754,11 @@ function renderPersonalAccount() {
         const due = p.debit - p.credit;
         return `<tr style="cursor:pointer;" onclick="showPersonDetail('${p.name}','${p.cat}')" title="ক্লিক করুন বিস্তারিত দেখতে">
           <td>${i + 1}</td>
-          <td><strong style="color:var(--blue);">${p.name}</strong> <span style="font-size:10px;color:var(--text-muted);">${filterLabel}</span></td>
+          <td><strong style="color:#2980b9;">${p.name}</strong> <span style="font-size:10px;color:#6b7f94;">${filterLabel}</span></td>
           <td><span class="badge badge-blue">${catLabel[p.cat] || p.cat}</span></td>
-          <td style="color:var(--red);font-weight:600;">৳${fmt(p.debit)}</td>
-          <td style="color:var(--green);font-weight:600;">৳${fmt(p.credit)}</td>
-          <td style="font-weight:700;color:${due > 0 ? 'var(--red)' : 'var(--green)'};">৳${fmt(Math.abs(due))}</td>
+          <td style="color:#c0392b;font-weight:600;">৳${fmt(p.debit)}</td>
+          <td style="color:#27ae60;font-weight:600;">৳${fmt(p.credit)}</td>
+          <td style="font-weight:700;color:${due > 0 ? '#c0392b' : '#27ae60'};">৳${fmt(Math.abs(due))}</td>
           <td>${due > 0
             ? '<span class="badge badge-red">বকেয়া আছে</span>'
             : due === 0
@@ -3816,17 +3816,17 @@ function _renderPersonDetail() {
     const due = m.debit - m.credit;
     rows += `<tr style="background:#eaf3fb;">
       <td colspan="2"><strong>${ym}</strong></td>
-      <td colspan="2" style="color:var(--red);">দিয়েছি: ৳${fmt(m.debit)}</td>
-      <td colspan="2" style="color:var(--green);">ফেরত: ৳${fmt(m.credit)} &nbsp;|&nbsp; <strong style="color:${due>0?'var(--red)':'var(--green)'};">বকেয়া: ৳${fmt(Math.abs(due))}</strong></td>
+      <td colspan="2" style="color:#c0392b;">দিয়েছি: ৳${fmt(m.debit)}</td>
+      <td colspan="2" style="color:#27ae60;">ফেরত: ৳${fmt(m.credit)} &nbsp;|&nbsp; <strong style="color:${due>0?'#c0392b':'#27ae60'};">বকেয়া: ৳${fmt(Math.abs(due))}</strong></td>
     </tr>`;
     m.txs.forEach((t,i) => {
       rows += `<tr>
-        <td style="color:var(--text-muted);font-size:11px;">${i+1}</td>
+        <td style="color:#6b7f94;font-size:11px;">${i+1}</td>
         <td>${t.date}</td>
         <td>${ym}</td>
         <td>${t.txtype==='debit'?'<span class="badge badge-red">💸 দিয়েছি</span>':'<span class="badge badge-green">💚 ফেরত</span>'}</td>
-        <td style="font-weight:700;color:${t.txtype==='debit'?'var(--red)':'var(--green)'};">${t.txtype==='debit'?'-':'+'}৳${fmt(t.amount)}</td>
-        <td style="font-size:12px;color:var(--text-muted);">${t.note||'—'}</td>
+        <td style="font-weight:700;color:${t.txtype==='debit'?'#c0392b':'#27ae60'};">${t.txtype==='debit'?'-':'+'}৳${fmt(t.amount)}</td>
+        <td style="font-size:12px;color:#6b7f94;">${t.note||'—'}</td>
       </tr>`;
     });
   });
@@ -3838,9 +3838,9 @@ function _renderPersonDetail() {
   const totalDue = totalD - totalC;
   const rangeLabel = fromVal||toVal ? ` [${fromVal||'শুরু'} → ${toVal||'শেষ'}]` : ' (সর্বকাল)';
   document.getElementById('pa-detail-summary').innerHTML =
-    `<strong>${name}</strong> (${catLabel[cat]||cat})${rangeLabel} — দিয়েছি: <strong style="color:var(--red);">৳${fmt(totalD)}</strong> &nbsp;|&nbsp;
-     ফেরত: <strong style="color:var(--green);">৳${fmt(totalC)}</strong> &nbsp;|&nbsp;
-     বকেয়া: <strong style="color:${totalDue>0?'var(--red)':'var(--green)'};">৳${fmt(Math.abs(totalDue))}</strong>`;
+    `<strong>${name}</strong> (${catLabel[cat]||cat})${rangeLabel} — দিয়েছি: <strong style="color:#c0392b;">৳${fmt(totalD)}</strong> &nbsp;|&nbsp;
+     ফেরত: <strong style="color:#27ae60;">৳${fmt(totalC)}</strong> &nbsp;|&nbsp;
+     বকেয়া: <strong style="color:${totalDue>0?'#c0392b':'#27ae60'};">৳${fmt(Math.abs(totalDue))}</strong>`;
 
   document.getElementById('pa-detail-header').innerHTML =
     `📊 ${name} — বিস্তারিত<span class="ph-right"><button onclick="document.getElementById('pa-person-detail').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ বন্ধ</button></span>`;
@@ -4396,6 +4396,29 @@ window.save = function(){
 
 // ===== PRINT & EXCEL EXPORT SYSTEM =====
 
+function resolveCssVars(el) {
+  const map = {
+    '#e67e22':    '#e67e22',
+    '#2980b9':      '#2980b9',
+    '#27ae60':     '#27ae60',
+    '#c0392b':       '#c0392b',
+    '#1a3a5c':   '#1a3a5c',
+    '#6b7f94':'#6b7f94',
+    '#1a2a3a': '#1a2a3a',
+    '#dde3ea':    '#dde3ea',
+    '#f0f4f8':   '#f0f4f8',
+    '#1a2a3a':'#1a2a3a',
+    '#243447':'#243447',
+  };
+  el.querySelectorAll('*').forEach(node => {
+    const s = node.getAttribute('style');
+    if (!s) return;
+    let ns = s;
+    Object.entries(map).forEach(([v, c]) => { ns = ns.replaceAll(v, c); });
+    if (ns !== s) node.setAttribute('style', ns);
+  });
+}
+
 function printReport(resultDivId, reportTitle) {
   const resultEl = document.getElementById(resultDivId);
   if (!resultEl || !resultEl.innerHTML.trim()) {
@@ -4403,40 +4426,76 @@ function printReport(resultDivId, reportTitle) {
     return;
   }
 
-  const existing = document.getElementById('print-area');
-  if (existing) existing.remove();
-
   const now = new Date().toLocaleString('en-BD', {
     year:'numeric', month:'long', day:'numeric',
     hour:'2-digit', minute:'2-digit'
   });
 
-  const printArea = document.createElement('div');
-  printArea.id = 'print-area';
-  printArea.style.cssText = 'background:#fff;padding:4mm 6mm;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;';
+  // Content clone করে buttons/action bars সরাও
+  const contentClone = document.createElement('div');
+  contentClone.innerHTML = resultEl.innerHTML;
+  contentClone.querySelectorAll('button, .rpt-action-bar').forEach(el => el.remove());
+  resolveCssVars(contentClone);
 
-  printArea.innerHTML = `
-    <div style="text-align:center;margin-bottom:8px;border-bottom:2px solid #1a3a5c;padding-bottom:6px;">
-      <div style="font-size:15px;font-weight:700;color:#1a3a5c;font-family:Arial;">M.S Mending Team ERP</div>
-      <div style="font-size:12px;font-weight:600;color:#333;margin:2px 0;">${reportTitle}</div>
-      <div style="font-size:9px;color:#666;">Generated: ${now}</div>
-    </div>
-    ${resultEl.innerHTML}
-  `;
-  printArea.querySelectorAll('button,.rpt-action-bar').forEach(el=>el.remove());
+  const printHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${reportTitle} - M.S Mending Team ERP</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #222;
+    background: #fff;
+    padding: 6mm 8mm;
+  }
+  .print-top-header {
+    text-align: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a3a5c;
+  }
+  .print-top-header .company { font-size: 16px; font-weight: 700; color: #1a3a5c; }
+  .print-top-header .title   { font-size: 13px; font-weight: 600; color: #333; margin: 3px 0; }
+  .print-top-header .date    { font-size: 10px; color: #666; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 10.5px; }
+  th { background: #1a3a5c !important; color: #fff !important; font-weight: 600; text-align: center; }
+  tr:nth-child(even) td { background: #f5f7fa; }
+  .rpt-summary, .summary-box { margin-bottom: 10px; }
+  @media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    body { padding: 0; }
+    button, .rpt-action-bar, .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="print-top-header">
+  <div class="company">M.S Mending Team ERP</div>
+  <div class="title">${reportTitle}</div>
+  <div class="date">Generated: ${now}</div>
+</div>
+${contentClone.innerHTML}
+<script>
+  window.onload = function() {
+    window.print();
+  };
+<\/script>
+</body>
+</html>`;
 
-  // JS-based hide/restore
-  const bodyChildren = Array.from(document.body.children);
-  const hiddenStates = bodyChildren.map(el => el.style.display);
-  bodyChildren.forEach(el => el.style.setProperty('display','none','important'));
-
-  document.body.appendChild(printArea);
-  window.print();
-
-  setTimeout(() => {
-    printArea.remove();
-    bodyChildren.forEach((el, i) => { el.style.display = hiddenStates[i] || ''; });
-  }, 1500);
+  const printWin = window.open('', '_blank', 'width=900,height=700');
+  if (!printWin) {
+    alert('Popup blocked! Browser এর popup allow করুন।');
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write(printHTML);
+  printWin.document.close();
 }
 
 function exportReportExcel(resultDivId, reportTitle) {
