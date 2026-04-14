@@ -103,6 +103,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .login-logo-text{display:none;}
 #app-wrapper{display:none;}
 #sync-btn{display:flex;align-items:center;gap:7px;background:transparent;border:1.5px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-main);transition:all 0.18s;white-space:nowrap;}
+#save-notify{display:none;font-size:11px;font-weight:600;color:#27ae60;background:#eafaf1;border:1.5px solid #a9dfbf;border-radius:14px;padding:3px 10px;margin-left:4px;white-space:nowrap;}
+@keyframes fadeInOut{0%{opacity:0;transform:translateY(-4px);}15%{opacity:1;transform:translateY(0);}75%{opacity:1;}100%{opacity:0;transform:translateY(-4px);}}
 #sync-btn:hover{background:#f0f4f8;border-color:#b0bec8;}
 #sync-btn .sync-dot{width:9px;height:9px;border-radius:50%;background:#aaa;display:inline-block;flex-shrink:0;transition:background 0.3s;}
 #sync-btn .sync-dot.ok{background:var(--green);box-shadow:0 0 0 3px rgba(39,174,96,0.2);}
@@ -204,7 +206,25 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 .acc-body a{font-size:12.5px;padding:7px 12px;}
 @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}.two-col{grid-template-columns:1fr;}.entry-type-btns{flex-direction:column;}}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.rpt-action-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:8px 0 4px;}
+.rpt-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:opacity 0.18s;}
+.rpt-btn:hover{opacity:0.82;}
+.rpt-btn-print{background:#1a6fa8;color:#fff;}
+.rpt-btn-excel{background:#1d7a3e;color:#fff;}
+@media print{
+  @page{size:A4 portrait;margin:5mm;}
+  body *{visibility:hidden;}
+  #print-area,#print-area *{visibility:visible;}
+  #print-area{position:absolute;left:0;top:0;width:100%;background:#fff;padding:4mm 6mm;box-sizing:border-box;}
+  .rpt-action-bar{display:none!important;}
+  .print-header{display:block!important;}
+  button{display:none!important;}
+}
+.print-header{display:none;text-align:center;margin-bottom:16px;font-family:'Poppins',sans-serif;}
+.print-header h2{font-size:18px;font-weight:700;color:#1a3a5c;}
+.print-header p{font-size:11px;color:#666;margin-top:3px;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -261,6 +281,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <span class="sync-dot loading" id="sync-dot"></span>
       <span id="sync-status">⏳ Loading...</span>
     </button>
+    
+    <span id="save-notify">☁️ Cloud এ সেভ হয়েছে!</span>
     <button onclick="toggleSyncPopup()" title="Sync Popup" style="display:flex;align-items:center;gap:5px;background:#1a3a5c;color:#a8c0d6;border:1.5px solid #2d5a8e;border-radius:20px;padding:5px 13px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:opacity 0.18s;" onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">🔄 Sync</button>
     <div class="topbar-right" id="clock"></div>
   </div>
@@ -911,9 +933,13 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-panel">
         <div class="form-row">
           <div class="fg"><label>Contract / Style</label><select id="rr-contract"><option value="">All Contracts</option></select></div>
-          <div class="fg-btn"><button class="btn btn-info" onclick="genContractReport()">Generate</button></div>
+          <div class="fg-btn"><button class="btn btn-info" onclick="genContractReportRR()">Generate</button></div>
         </div>
-        <div id="r-contract-result"></div>
+        <div id="rr-contract-result"></div>
+      <div class="rpt-action-bar" id="bar-rr-contract-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('rr-contract-result','Contract Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('rr-contract-result','Contract Report')">📊 Excel Export</button>
+      </div>
       </div>
     </div>
 
@@ -926,6 +952,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <div class="fg-btn"><button class="btn btn-info" onclick="genWorkerReport2()">Generate</button></div>
         </div>
         <div id="r-worker-result2"></div>
+      <div class="rpt-action-bar" id="bar-r-worker-result2" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-worker-result2','Worker Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-worker-result2','Worker Report')">📊 Excel Export</button>
+      </div>
       </div>
     </div>
 
@@ -937,6 +967,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <div class="fg-btn"><button class="btn btn-info" onclick="genBillReport()">Generate</button></div>
         </div>
         <div id="r-bill-result"></div>
+      <div class="rpt-action-bar" id="bar-r-bill-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-bill-result','Bill Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-bill-result','Bill Report')">📊 Excel Export</button>
+      </div>
       </div>
     </div>
 
@@ -948,6 +982,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <div class="fg-btn"><button class="btn btn-info" onclick="genMonthlyReport2()">Generate</button></div>
         </div>
         <div id="r-monthly-result2"></div>
+      <div class="rpt-action-bar" id="bar-r-monthly-result2" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-monthly-result2','Monthly Summary')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-monthly-result2','Monthly Summary')">📊 Excel Export</button>
+      </div>
       </div>
     </div>
 
@@ -960,6 +998,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <div class="fg-btn"><button class="btn btn-info" onclick="genSupplierReport2()">Generate</button></div>
         </div>
         <div id="r-supplier-result2"></div>
+      <div class="rpt-action-bar" id="bar-r-supplier-result2" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result2','Supplier Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-supplier-result2','Supplier Report')">📊 Excel Export</button>
+      </div>
       </div>
     </div>
   </div>
@@ -1018,6 +1060,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genDailyReport()">Generate</button></div>
       </div>
       <div id="r-daily-result"></div>
+      <div class="rpt-action-bar" id="bar-r-daily-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-daily-result','Daily Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-daily-result','Daily Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
   <div id="tab-contract" class="tab-content">
@@ -1027,6 +1073,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genContractReport()">Generate</button></div>
       </div>
       <div id="r-contract-result"></div>
+      <div class="rpt-action-bar" id="bar-r-contract-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-contract-result','Contract Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-contract-result','Contract Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
   <div id="tab-worker" class="tab-content">
@@ -1037,6 +1087,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genWorkerReport()">Generate</button></div>
       </div>
       <div id="r-worker-result"></div>
+      <div class="rpt-action-bar" id="bar-r-worker-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-worker-result','Worker Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-worker-result','Worker Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
   <div id="tab-monthly" class="tab-content">
@@ -1046,6 +1100,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genMonthlyReport()">Generate</button></div>
       </div>
       <div id="r-monthly-result"></div>
+      <div class="rpt-action-bar" id="bar-r-monthly-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-monthly-result','Monthly Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-monthly-result','Monthly Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
 
@@ -1059,6 +1117,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genStylePLReport()">Generate</button></div>
       </div>
       <div id="r-stylepl-result"></div>
+      <div class="rpt-action-bar" id="bar-r-stylepl-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-stylepl-result','Style P&L Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-stylepl-result','Style P&L Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
 
@@ -1071,6 +1133,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg-btn"><button class="btn btn-info" onclick="genSupplierReport()">Generate</button></div>
       </div>
       <div id="r-supplier-result"></div>
+      <div class="rpt-action-bar" id="bar-r-supplier-result" style="display:none;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result','Supplier Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-supplier-result','Supplier Report')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1327,6 +1393,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <small>ডেটা ৩টা device-এ (২ মোবাইল + ১ পিসি) real-time sync হবে।</small>
     </div>
     <button class="btn btn-info" onclick="forceSync()" style="margin-bottom:10px;">🔄 Force Sync করুন</button>
+    <button id="fb-pause-btn" class="btn" onclick="toggleFirebasePause()" style="background:#c0392b;color:#fff;margin-bottom:10px;">🔴 Firebase বন্ধ করুন</button>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Firebase বন্ধ থাকলে শুধু Local এ সেভ হবে। JSON চেক করতে বা test করতে ব্যবহার করুন।</p>
   </div>
   <div class="form-panel">
     <h5>📁 JSON Backup &amp; Restore</h5>
@@ -1476,10 +1544,54 @@ function setSyncStatus(s){
     el.textContent='⏳ Loading...';el.style.color='var(--blue)';
     dot.classList.add('loading');
     _fbConnected=false;
+  } else if(s==='paused'){
+    el.textContent='⏸️ Firebase বন্ধ';el.style.color='#888';
+    dot.classList.add('error');
+    _fbConnected=false;
   }
   updateSyncPopupInfo(s);
 }
 
+
+let _saveNotifyTimer=null;
+function showSaveNotify(){
+  const n=document.getElementById('save-notify');
+  if(!n) return;
+  if(_saveNotifyTimer) clearTimeout(_saveNotifyTimer);
+  n.style.display='inline-block';
+  n.style.animation='none';
+  void n.offsetWidth; // reflow
+  n.style.animation='fadeInOut 2.5s ease forwards';
+  _saveNotifyTimer=setTimeout(()=>{n.style.display='none';},2500);
+}
+
+function toggleFirebasePause(){
+  _fbPaused = !_fbPaused;
+  const btn = document.getElementById('fb-pause-btn');
+  if(_fbPaused){
+    setSyncStatus('paused');
+    if(btn){btn.textContent='🟢 Firebase চালু করুন';btn.style.background='#27ae60';}
+    showFloatNotif('⏸️ Firebase বন্ধ করা হয়েছে।\nএখন শুধু Local এ সেভ হবে।','warning');
+  } else {
+    // Firebase চালু — listener থেকে fresh load হবে
+    setSyncStatus('loading');
+    if(btn){btn.textContent='🔴 Firebase বন্ধ করুন';btn.style.background='#c0392b';}
+    // Firebase থেকে fresh data টানো
+    DATA_REF.once('value', snap=>{
+      const d=snap.val();
+      if(d){
+        ['companies','contracts','workers','takings','payments','challans','bills','billSubmits','monthlySalaries']
+          .forEach(k=>{ if(Array.isArray(d[k])) window[k]=d[k]; });
+        // localStorage backup
+        ['companies','contracts','workers','takings','payments','challans','bills','billSubmits','monthlySalaries']
+          .forEach(k=>localStorage.setItem(k,JSON.stringify(window[k])));
+      }
+      setSyncStatus('ok');
+      renderAll();
+      showFloatNotif('🟢 Firebase চালু হয়েছে।\nFirebase এর সর্বশেষ ডাটা লোড হয়েছে।','success');
+    }).catch(e=>{setSyncStatus('error');showFloatNotif('❌ Firebase load failed: '+e.message,'error');});
+  }
+}
 function updateSyncPopupInfo(s){
   const fbInd=document.getElementById('sp-fb-ind');
   const fbTxt=document.getElementById('sp-fb-status-text');
@@ -1630,6 +1742,7 @@ let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
 let _isSaving=false;
+let _fbPaused=false; // Firebase manually paused flag
 
 // Load from localStorage as fallback first
 function loadLocal(){
@@ -1670,9 +1783,11 @@ function initApp() {
 
   // Firebase background-এ load হবে — UI block করবে না
   DATA_REF.on('value', snap=>{
+    // Firebase paused থাকলে listener ignore
+    if(_fbPaused) return;
     // নিজের save()-এর echo হলে data overwrite করবো না — কিন্তু status update করবো
     const d=snap.val();
-    if(_isSaving){setSyncStatus('ok');_isSaving=false;return;}
+    if(_isSaving){setSyncStatus('ok');_isSaving=false;showSaveNotify();return;}
     if(d){
       companies      = d.companies       || [];
       contracts      = d.contracts       || [];
@@ -1741,6 +1856,28 @@ function _refreshLocalFileIndicator(){
 
 function confirmDelete(fn,msg){if(confirm(msg||'Are you sure?'))fn();}
 
+// Firebase এ পাঠানোর আগে array sanitize করো — undefined/NaN/null বাদ দাও
+function sanitizeForFirebase(arr){
+  if(!Array.isArray(arr)) return [];
+  return arr.map(obj=>{
+    const clean={};
+    Object.keys(obj).forEach(k=>{
+      const v=obj[k];
+      if(v===undefined||v===null) return; // skip
+      if(typeof v==='number'&&isNaN(v)){clean[k]=0;return;}
+      clean[k]=v;
+    });
+    // monthlySalaries specific — offday/absent সবসময় boolean
+    if('offday' in obj) clean.offday=!!obj.offday;
+    if('absent' in obj) clean.absent=!!obj.absent;
+    // number fields সবসময় number
+    ['salary','ot','lunch','travel','deduct','payable','billCut','ctIdx'].forEach(f=>{
+      if(f in clean) clean[f]=Number(clean[f])||0;
+    });
+    return clean;
+  });
+}
+
 function save(){
   // Immediately update localStorage
   localStorage.setItem('companies',JSON.stringify(companies));
@@ -1753,14 +1890,18 @@ function save(){
   localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
   localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
   renderAll();
-  // Firebase না থাকলে skip
+  // Firebase না থাকলে বা paused থাকলে skip
   if(!DATA_REF){setSyncStatus('error');console.error('DATA_REF not ready');return;}
+  if(_fbPaused){setSyncStatus('paused');return;}
   _isSaving=true;
   setSyncStatus('saving');
+  // Firebase এ পাঠানোর আগে sanitize — invalid value থাকলে reject হবে না
   try{
     DATA_REF.set({
       companies,contracts,workers,takings,payments,
-      challans,bills,billSubmits,monthlySalaries
+      challans,bills,
+      billSubmits,
+      monthlySalaries:sanitizeForFirebase(monthlySalaries)
     }).then(()=>{/* listener on('value') এ setSyncStatus('ok') হবে */})
       .catch(e=>{setSyncStatus('error');_isSaving=false;console.error('Firebase save error:',e);});
   }catch(e){
@@ -2589,7 +2730,14 @@ function onBillRecvSubmitSelect(){
 }
 
 // ===== MONTHLY REPORT ALIAS =====
-function genMonthlyReport(){genMonthlyReport2();}
+function genMonthlyReport(){
+  genMonthlyReport2();
+  // Monthly tab (page-report) uses r-monthly-result2 data — mirror bar
+  const el2 = document.getElementById('r-monthly-result2');
+  const el = document.getElementById('r-monthly-result');
+  if(el2 && el){ el.innerHTML = el2.innerHTML; }
+  document.getElementById('bar-r-monthly-result').style.display='flex';
+}
 
 function renderAll(){
   _clearBillRecvCache(); // প্রতি render-এ fresh calculate
@@ -2780,6 +2928,7 @@ function genDailyReport(){
   if(dc.length){h+=rSub('Challans');dc.forEach(c=>{h+=rRow(`${c.style} — ${c.pcs}pcs`,taka(c.value),'var(--blue)');});}
   if(db.length){h+=rSub('Bills Received');db.forEach(b=>{h+=rRow(`${b.style}${b.note?' ('+b.note+')':''}`,taka(b.amount),'var(--green)');});}
   document.getElementById('r-daily-result').innerHTML=rBox(h);
+  document.getElementById('bar-r-daily-result').style.display=(h?'flex':'none');
 }
 
 function genContractReport(){
@@ -2820,6 +2969,48 @@ function genContractReport(){
   });
   if(!idxList.length)h+=`<div class="no-data">No data</div>`;
   document.getElementById('r-contract-result').innerHTML=rBox(h);
+  document.getElementById('bar-r-contract-result').style.display=(h?'flex':'none');
+}
+
+function genContractReportRR(){
+  const ctF=document.getElementById('rr-contract').value;
+  const idxList=ctF!==''?[+ctF]:contracts.map((_,i)=>i);
+  let h=rHead('Contract Report');
+  idxList.forEach(idx=>{
+    const ct=contracts[idx];if(!ct)return;
+    const cv=challanTotalValue(idx),br=billTotalRecv(idx),pcs=challanTotalPcs(idx);
+    const ctTakings=takings.filter(e=>e.ctIdx===idx);
+    const wc=ctTakings.reduce((s,e)=>s+e.wearn,0);
+    const entryConv=ctTakings.reduce((s,e)=>s+e.conv,0);
+    const ctMonthly=monthlySalaries.filter(e=>e.ctIdx===idx);
+    const monthlyCost=ctMonthly.reduce((s,e)=>s+e.payable,0);
+    const monthlyBillCut=ctMonthly.reduce((s,e)=>s+e.billCut,0);
+    const totalCost=wc+monthlyCost+monthlyBillCut;
+    const ctBills=bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
+    const sibCount=contracts.filter(c=>c.orderno===ct.orderno).length;
+    const isShared=sibCount>1;
+    const totalOrderChallan=isShared?contracts.reduce((s,c,i)=>c.orderno===ct.orderno?s+challanTotalValue(i):s,0):0;
+    const billRatio=isShared&&totalOrderChallan>0?cv/totalOrderChallan:1;
+    h+=rSub(`${ct.style} | ${ct.supplier} → ${ct.factory}${ct.buyer?' (Buyer: '+ct.buyer+')':''}`);
+    h+=rRow('Date',fmtDate(ct.date));
+    h+=rRow('Job Type',ct.jobtype);
+    h+=rRow('Rate per Piece',taka(ct.rate));
+    h+=rRow('Total Challan Pcs',pcs+' pcs');
+    h+=rRow('Total Challan Value',taka(cv),'var(--blue)');
+    h+=rRow('Bill Received',taka(br),'var(--green)');
+    if(isShared) h+=rRow('  └ Challan অনুপাতে ভাগ ('+Math.round(billRatio*100)+'%)','','var(--text-muted)');
+    h+=rRow('Bill Pending',taka(cv-br),(cv-br)>0?'var(--red)':'var(--green)');
+    if(wc>0) h+=rRow('Daily/Piece Worker Cost',taka(wc),'var(--red)');
+    if(entryConv>0) h+=rRow('  └ Conv. আগাম দেওয়া (অন্তর্ভুক্ত)',taka(entryConv),'var(--orange)');
+    if(monthlyCost>0) h+=rRow('Monthly Salary Cost',taka(monthlyCost),'var(--red)');
+    if(monthlyBillCut>0) h+=rRow('Monthly Lunch+Travel',taka(monthlyBillCut),'var(--orange)');
+    h+=rRow('মোট খরচ (Total Cost)',taka(totalCost),'var(--red)');
+    h+=rRow('Gross Profit (Bill - Total Cost)',taka(br-totalCost),(br-totalCost)>=0?'var(--green)':'var(--red)');
+    if(ctBills.length){h+=rSub('Bill Installments');ctBills.forEach((b,i)=>{const dispAmt=isShared&&totalOrderChallan>0?Math.round(b.amount*billRatio):b.amount;h+=rRow(`#${i+1} (${fmtDate(b.date)})${b.note?' — '+b.note:''}`,taka(dispAmt),'var(--green)');});}
+  });
+  if(!idxList.length)h+=`<div class="no-data">No data</div>`;
+  document.getElementById('rr-contract-result').innerHTML=rBox(h);
+  document.getElementById('bar-rr-contract-result').style.display=(h?'flex':'none');
 }
 
 function getDaysInMonth(ym){
@@ -2916,59 +3107,59 @@ function genWorkerReport(){
         if(dayTakings.length===0){
           sn++;
           dailyRows+=`<tr style="border-bottom:1px solid #eee;">
-            <td style="padding:6px 8px;text-align:center;color:#bbb;font-size:12px;">${sn}</td>
-            <td style="padding:6px 8px;color:#bbb;font-size:12px;">${dateStr?fmtDate(dateStr):''}</td>
-            <td colspan="6" style="padding:6px 8px;"></td>
+            <td style="padding:3px 6px;text-align:center;color:#bbb;font-size:11px;">${sn}</td>
+            <td style="padding:3px 6px;color:#bbb;font-size:11px;">${dateStr?fmtDate(dateStr):''}</td>
+            <td colspan="6" style="padding:3px 6px;"></td>
           </tr>`;
         } else {
           dayTakings.forEach(e=>{
             sn++;
             const remark=e.remark||(e.salaryType==='piece'?`${e.pcs||0} pcs × ৳${e.wrate||0}`:e.salaryType==='mix'?`${e.pcs||0} pcs + Daily`:'');
             dailyRows+=`<tr style="border-bottom:1px solid #eee;background:#f0f9ff;">
-              <td style="padding:6px 8px;text-align:center;font-weight:600;">${sn}</td>
-              <td style="padding:6px 8px;font-weight:600;">${fmtDate(e.date)}</td>
-              <td style="padding:6px 8px;">${e.factory||'-'}</td>
-              <td style="padding:6px 8px;text-align:right;color:var(--orange);font-weight:700;">${e.conv?taka(e.conv):''}</td>
-              <td style="padding:6px 8px;text-align:right;color:var(--blue);font-weight:700;">${e.daily?taka(e.daily):taka(e.wearn)}</td>
-              <td style="padding:6px 8px;text-align:right;color:var(--green);font-weight:700;">${e.ot?taka(e.ot):''}</td>
-              <td style="padding:6px 8px;text-align:right;color:var(--red);font-weight:700;">${(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))?taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)):''}</td>
-              <td style="padding:6px 8px;font-size:12px;color:#555;">${remark}</td>
+              <td style="padding:3px 6px;text-align:center;font-weight:600;font-size:11px;">${sn}</td>
+              <td style="padding:3px 6px;font-weight:600;font-size:11px;">${fmtDate(e.date)}</td>
+              <td style="padding:3px 6px;font-size:11px;">${e.factory||'-'}</td>
+              <td style="padding:3px 6px;text-align:right;color:var(--orange);font-weight:700;font-size:11px;">${e.conv?taka(e.conv):''}</td>
+              <td style="padding:3px 6px;text-align:right;color:var(--blue);font-weight:700;font-size:11px;">${e.daily?taka(e.daily):taka(e.wearn)}</td>
+              <td style="padding:3px 6px;text-align:right;color:var(--green);font-weight:700;font-size:11px;">${e.ot?taka(e.ot):''}</td>
+              <td style="padding:3px 6px;text-align:right;color:var(--red);font-weight:700;font-size:11px;">${(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv))?taka(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)):''}</td>
+              <td style="padding:3px 6px;font-size:11px;color:#555;">${remark}</td>
             </tr>`;
           });
         }
       }
       html+=`
-      <div style="padding:8px 14px;background:#dbeafe;font-size:12px;font-weight:700;color:#1e40af;border-bottom:1px solid #bfdbfe;text-transform:uppercase;letter-spacing:0.5px;">
+      <div style="padding:5px 14px;background:#dbeafe;font-size:11px;font-weight:700;color:#1e40af;border-bottom:1px solid #bfdbfe;text-transform:uppercase;letter-spacing:0.5px;">
         📅 Daily / Piece Worker — Entry Table
       </div>
       <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead>
             <tr style="background:#1e3a5f;color:#cdd8e3;">
-              <th style="padding:9px 8px;text-align:center;width:40px;">S.N</th>
-              <th style="padding:9px 8px;text-align:left;">Date</th>
-              <th style="padding:9px 8px;text-align:left;">Factory</th>
-              <th style="padding:9px 8px;text-align:right;">Conveyance</th>
-              <th style="padding:9px 8px;text-align:right;">Daily Salary</th>
-              <th style="padding:9px 8px;text-align:right;">Over Time</th>
-              <th style="padding:9px 8px;text-align:right;">Payable</th>
-              <th style="padding:9px 8px;text-align:left;">Remark</th>
+              <th style="padding:5px 6px;text-align:center;width:36px;">S.N</th>
+              <th style="padding:5px 6px;text-align:left;">Date</th>
+              <th style="padding:5px 6px;text-align:left;">Factory</th>
+              <th style="padding:5px 6px;text-align:right;">Conveyance</th>
+              <th style="padding:5px 6px;text-align:right;">Daily Salary</th>
+              <th style="padding:5px 6px;text-align:right;">Over Time</th>
+              <th style="padding:5px 6px;text-align:right;">Payable</th>
+              <th style="padding:5px 6px;text-align:left;">Remark</th>
             </tr>
           </thead>
           <tbody>
             ${dailyRows}
             <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
-              <td colspan="3" style="padding:10px 8px;text-align:right;font-size:12px;">Total =</td>
-              <td style="padding:10px 8px;text-align:right;color:#f0a500;">${taka(wtConv)}</td>
-              <td style="padding:10px 8px;text-align:right;color:#5dade2;">${taka(wtWearn-wtOT)}</td>
-              <td style="padding:10px 8px;text-align:right;color:#58d68d;">${wtOT?taka(wtOT):'-'}</td>
-              <td style="padding:10px 8px;text-align:right;color:#86efac;">${taka(wtPayable)}</td>
-              <td style="padding:10px 8px;"></td>
+              <td colspan="3" style="padding:5px 6px;text-align:right;font-size:11px;">Total =</td>
+              <td style="padding:5px 6px;text-align:right;color:#f0a500;">${taka(wtConv)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#5dade2;">${taka(wtWearn-wtOT)}</td>
+              <td style="padding:5px 6px;text-align:right;color:#58d68d;">${wtOT?taka(wtOT):'-'}</td>
+              <td style="padding:5px 6px;text-align:right;color:#86efac;">${taka(wtPayable)}</td>
+              <td style="padding:5px 6px;"></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div style="padding:10px 16px;background:#eff6ff;border-top:1px solid #bfdbfe;display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
+      <div style="padding:6px 16px;background:#eff6ff;border-top:1px solid #bfdbfe;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;">
         <span>মোট Earn: <strong style="color:var(--blue);">${taka(wtWearn)}</strong></span>
         <span>Conveyance: <strong style="color:var(--orange);">-${taka(wtConv)}</strong></span>
         <span>Net Payable: <strong style="color:var(--green);">${taka(wtPayable)}</strong></span>
@@ -3061,16 +3252,17 @@ function genWorkerReport(){
           </div>`:''}
         </div>
       </div>
-      <div style="padding:18px 24px;border-top:1px solid #dde3ea;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;text-align:center;font-size:12px;color:#555;">
-        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Received By Mendar</div></div>
-        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Managing Director</div></div>
-        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:30px;">Authorized Signature</div></div>
+      <div style="padding:8px 24px;border-top:1px solid #dde3ea;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;text-align:center;font-size:12px;color:#555;">
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:14px;">Received By Mendar</div></div>
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:14px;">Managing Director</div></div>
+        <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:14px;">Authorized Signature</div></div>
       </div>
     </div>`;
   });
 
   if(!html) html='<div class="no-data">Worker বা Month সিলেক্ট করে Generate করুন</div>';
   document.getElementById('r-worker-result').innerHTML=html;
+  document.getElementById('bar-r-worker-result').style.display=(html?'flex':'none');
 }
 
 function genWorkerReport2(){
@@ -3184,6 +3376,7 @@ function genWorkerReport2(){
   });
   if(!h.includes('rSub'))h+=`<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>`;
   document.getElementById('r-worker-result2').innerHTML=rBox(h);
+  document.getElementById('bar-r-worker-result2').style.display=(h?'flex':'none');
 }
 
 function genBillReport(){
@@ -3221,6 +3414,7 @@ function genBillReport(){
   }
   if(!orders.length)h+='<div class="no-data">কোনো Order নেই</div>';
   document.getElementById('r-bill-result').innerHTML=rBox(h);
+  document.getElementById('bar-r-bill-result').style.display=(h?'flex':'none');
 }
 
 function genMonthlyReport2(){
@@ -3261,6 +3455,7 @@ function genMonthlyReport2(){
     });
   }
   document.getElementById('r-monthly-result2').innerHTML=rBox(h);
+  document.getElementById('bar-r-monthly-result2').style.display=(h?'flex':'none');
 }
 
 function genSupplierReport2(){
@@ -3302,6 +3497,7 @@ function genSupplierReport2(){
     h+=rRow('Total Net Profit',taka(grandB-grandW),(grandB-grandW)>=0?'var(--green)':'var(--red)');
   }
   document.getElementById('r-supplier-result2').innerHTML=rBox(h);
+  document.getElementById('bar-r-supplier-result2').style.display=(h?'flex':'none');
 }
 
 
@@ -3377,6 +3573,7 @@ function genStylePLReport(){
   }
   if(!filtered.length) h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
   document.getElementById('r-stylepl-result').innerHTML=rBox(h);
+  document.getElementById('bar-r-stylepl-result').style.display=(h?'flex':'none');
 }
 
 // ===== SUPPLIER-WISE REPORT =====
@@ -3423,6 +3620,7 @@ function genSupplierReport(){
   }
   if(!supplierList.length||grandChallan+grandBillRecv===0)h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
   document.getElementById('r-supplier-result').innerHTML=rBox(h);
+  document.getElementById('bar-r-supplier-result').style.display=(h?'flex':'none');
 }
 
 
@@ -4016,6 +4214,21 @@ function localFileEmergencyRestore(){
           if(!sure2) return;
         }
 
+        // 🔐 SAFETY: Replace এর আগে Firebase এর current ডাটা auto-download
+        const safetyData={
+          exportedAt:new Date().toISOString(),
+          version:'firebase-backup-before-restore',
+          companies,contracts,workers,takings,payments,
+          challans,bills,billSubmits,monthlySalaries
+        };
+        const safetyBlob=new Blob([JSON.stringify(safetyData,null,2)],{type:'application/json'});
+        const safetyUrl=URL.createObjectURL(safetyBlob);
+        const safetyA=document.createElement('a');
+        safetyA.href=safetyUrl;
+        safetyA.download='firebase_backup_before_restore_'+new Date().toISOString().slice(0,10)+'.json';
+        safetyA.click();
+        URL.revokeObjectURL(safetyUrl);
+
         // Load JSON data
         keys.forEach(k=>{ if(Array.isArray(d[k])) window[k]=d[k]; });
 
@@ -4180,6 +4393,157 @@ window.save = function(){
   }
 })();
 // ===== END LOCAL FILE AUTOSAVE SYSTEM =====
+
+// ===== PRINT & EXCEL EXPORT SYSTEM =====
+
+function printReport(resultDivId, reportTitle) {
+  const resultEl = document.getElementById(resultDivId);
+  if (!resultEl || !resultEl.innerHTML.trim()) {
+    alert('প্রথমে রিপোর্ট Generate করুন।');
+    return;
+  }
+
+  const existing = document.getElementById('print-area');
+  if (existing) existing.remove();
+
+  const now = new Date().toLocaleString('en-BD', {
+    year:'numeric', month:'long', day:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  const printArea = document.createElement('div');
+  printArea.id = 'print-area';
+  printArea.style.cssText = 'background:#fff;padding:4mm 6mm;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;';
+
+  printArea.innerHTML = `
+    <div style="text-align:center;margin-bottom:8px;border-bottom:2px solid #1a3a5c;padding-bottom:6px;">
+      <div style="font-size:15px;font-weight:700;color:#1a3a5c;font-family:Arial;">M.S Mending Team ERP</div>
+      <div style="font-size:12px;font-weight:600;color:#333;margin:2px 0;">${reportTitle}</div>
+      <div style="font-size:9px;color:#666;">Generated: ${now}</div>
+    </div>
+    ${resultEl.innerHTML}
+  `;
+  printArea.querySelectorAll('button,.rpt-action-bar').forEach(el=>el.remove());
+
+  // JS-based hide/restore
+  const bodyChildren = Array.from(document.body.children);
+  const hiddenStates = bodyChildren.map(el => el.style.display);
+  bodyChildren.forEach(el => el.style.setProperty('display','none','important'));
+
+  document.body.appendChild(printArea);
+  window.print();
+
+  setTimeout(() => {
+    printArea.remove();
+    bodyChildren.forEach((el, i) => { el.style.display = hiddenStates[i] || ''; });
+  }, 1500);
+}
+
+function exportReportExcel(resultDivId, reportTitle) {
+  const resultEl = document.getElementById(resultDivId);
+  if (!resultEl || !resultEl.innerHTML.trim()) {
+    alert('প্রথমে রিপোর্ট Generate করুন।');
+    return;
+  }
+
+  try {
+    // Parse the report HTML into structured data rows
+    const rows = [];
+    const now = new Date().toLocaleString('en-BD', {
+      year:'numeric', month:'long', day:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
+
+    // Title rows
+    rows.push(['M.S Mending Team ERP']);
+    rows.push([reportTitle]);
+    rows.push(['Generated: ' + now]);
+    rows.push([]);
+
+    // Find all header (rHead), sub-header (rSub), and row (rRow) divs
+    // rHead: dark bg header
+    // rSub:  gray section sub-header
+    // rRow:  key-value pair row (two columns)
+    const container = resultEl;
+
+    // Walk all direct child divs inside the rBox container
+    const box = container.querySelector('div');
+    if (!box) { alert('রিপোর্টে কোনো ডেটা নেই।'); return; }
+
+    const children = box.children;
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i];
+      const style = el.getAttribute('style') || '';
+      const text = el.innerText || el.textContent || '';
+
+      // Detect element type by background color or style pattern
+      if (style.includes('background:#1a2a3a') || style.includes('background: #1a2a3a')) {
+        // rHead — section title
+        rows.push([]);
+        rows.push(['=== ' + text.trim() + ' ===']);
+      } else if (style.includes('background:#f7fafd') || style.includes('background: #f7fafd')) {
+        // rSub — subsection header
+        rows.push(['--- ' + text.trim() + ' ---', '']);
+      } else if (el.style && el.style.display === 'flex' || style.includes('display:flex') || style.includes('justify-content:space-between')) {
+        // rRow — key:value pair
+        const spans = el.querySelectorAll('span, strong');
+        if (spans.length >= 2) {
+          const key = (spans[0].innerText || spans[0].textContent || '').trim();
+          const val = (spans[spans.length-1].innerText || spans[spans.length-1].textContent || '').trim();
+          rows.push([key, val]);
+        } else {
+          const parts = text.split('\n').map(s => s.trim()).filter(Boolean);
+          if (parts.length >= 2) {
+            rows.push([parts[0], parts[1]]);
+          } else {
+            rows.push([text.trim()]);
+          }
+        }
+      } else if (text.trim()) {
+        rows.push([text.trim()]);
+      }
+    }
+
+    // Also extract any tables inside the result
+    const tables = resultEl.querySelectorAll('table');
+    if (tables.length > 0) {
+      rows.push([]);
+      rows.push(['[সারণি ডেটা]']);
+      tables.forEach((tbl, ti) => {
+        if (ti > 0) rows.push([]);
+        const trows = tbl.querySelectorAll('tr');
+        trows.forEach(tr => {
+          const cells = tr.querySelectorAll('th, td');
+          const rowData = [];
+          cells.forEach(cell => {
+            rowData.push((cell.innerText || cell.textContent || '').trim());
+          });
+          rows.push(rowData);
+        });
+      });
+    }
+
+    // Build workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Column widths
+    const colWidths = [{ wch: 45 }, { wch: 25 }, { wch: 20 }, { wch: 20 }];
+    ws['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, reportTitle.slice(0, 31));
+
+    const fileName = 'MMT_' + reportTitle.replace(/[^a-zA-Z0-9]/g, '_') + '_' +
+      new Date().toISOString().slice(0, 10) + '.xlsx';
+    XLSX.writeFile(wb, fileName);
+
+  } catch(e) {
+    console.error('Excel export error:', e);
+    alert('Excel export-এ সমস্যা হয়েছে: ' + e.message);
+  }
+}
+// ===== END PRINT & EXCEL EXPORT SYSTEM =====
+
 </script>
 </body>
 </html>
