@@ -748,12 +748,12 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <div class="fg"><label>Month</label><input id="ms-month" type="month" oninput="calcAutoMonthlySalary()"></div>
         <div class="fg"><label>Date <small style="color:#2980b9;">কোন তারিখে?</small></label><input id="ms-date" type="date"></div>
         <div class="fg"><label>Worker Name</label><select id="ms-worker" onchange="calcAutoMonthlySalary();showWorkerPartyBadge('ms-worker','ms-worker-party');"><option value="">-- Select --</option></select><span id="ms-worker-party" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;background:#fff3e0;color:#e65100;font-weight:600;"></span></div>
-        <div class="fg"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
-        <div class="fg"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
+        <div class="fg" id="ms-fg-orderno"><label>Order Number</label><select id="ms-orderno" onchange="onMSOrderSelect()"><option value="">-- Select --</option></select></div>
+        <div class="fg" id="ms-fg-style"><label>Style</label><select id="ms-style" onchange="onMSStyleSelect()"><option value="">-- Select --</option></select></div>
       </div>
       <div class="form-row">
-        <div class="fg"><label>Company (Auto)</label><input id="ms-company" readonly placeholder="Auto" style="background:#f7fafd;"></div>
-        <div class="fg"><label>Supplier (Auto)</label><input id="ms-supplier" readonly placeholder="Auto" style="background:#f7fafd;"></div>
+        <div class="fg" id="ms-fg-company"><label>Company (Auto)</label><input id="ms-company" readonly placeholder="Auto" style="background:#f7fafd;"></div>
+        <div class="fg" id="ms-fg-supplier"><label>Supplier (Auto)</label><input id="ms-supplier" readonly placeholder="Auto" style="background:#f7fafd;"></div>
         <div class="fg"><label>Monthly Salary (৳) <small style="color:#2980b9;">অটো হিসাব</small></label><input id="ms-salary" type="number" placeholder="e.g. 12000" oninput="calcMonthlySalary()"><div id="ms-salary-info" style="font-size:11px;color:#2980b9;margin-top:3px;"></div></div>
         <div class="fg" style="display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:170px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#c77700;font-size:13px;">
@@ -2273,6 +2273,22 @@ function calcAutoMonthlySalary(){
 }
 function toggleOffdayFields(){ /* deprecated */ }
 
+// এবসেন্ট হলে Order/Style/Company/Supplier ফিল্ড লুকিয়ে ফেলো (কোনো স্টাইলের সাথে যুক্ত হবে না)
+function toggleMSStyleFields(){
+  const isAbsent=document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked;
+  ['ms-fg-orderno','ms-fg-style','ms-fg-company','ms-fg-supplier'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isAbsent?'none':'';
+  });
+  if(isAbsent){
+    // আগে সিলেক্ট করা থাকলেও মুছে দাও, যাতে কোনো স্টাইলের সাথে যুক্ত না হয়
+    const ordEl=document.getElementById('ms-orderno'); if(ordEl) ordEl.value='';
+    const styEl=document.getElementById('ms-style'); if(styEl) styEl.innerHTML='<option value="">-- Select --</option>';
+    const coEl=document.getElementById('ms-company'); if(coEl) coEl.value='';
+    const supEl=document.getElementById('ms-supplier'); if(supEl) supEl.value='';
+  }
+}
+
 function onMSOffdayChange(){
   const isOffday=document.getElementById('ms-offday').checked;
   const salaryEl=document.getElementById('ms-salary');
@@ -2289,21 +2305,8 @@ function onMSOffdayChange(){
     if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
     calcAutoMonthlySalary();
   }
+  toggleMSStyleFields();
   calcMonthlySalary();
-}
-
-// শুক্রবার বাদ দিয়ে মাসের কার্যদিবস গণনা করো
-function countWorkingDaysExcludingFriday(yearMonth){
-  // yearMonth = "2025-06" format
-  if(!yearMonth) return 26;
-  const [y,m]=yearMonth.split('-').map(Number);
-  const daysInMonth=new Date(y,m,0).getDate();
-  let count=0;
-  for(let d=1;d<=daysInMonth;d++){
-    const day=new Date(y,m-1,d).getDay(); // 0=Sun,5=Fri,6=Sat
-    if(day!==5) count++; // শুক্রবার (5) বাদ
-  }
-  return count;
 }
 
 function onMSAbsentChange(){
@@ -2313,21 +2316,18 @@ function onMSAbsentChange(){
     // অফডে uncheck করো
     const offdayEl=document.getElementById('ms-offday');
     if(offdayEl) offdayEl.checked=false;
-    const _msWorkerVal=document.getElementById('ms-worker').value;
-    const worker=(_msWorkerVal.includes(' (')?_msWorkerVal.split(' (')[0]:_msWorkerVal);
-    const month=document.getElementById('ms-month').value;
+    const worker=document.getElementById('ms-worker').value;
     const w=workers.find(x=>x.name===worker);
     if(w && w.type==='monthly' && w.rate){
-      const workingDays=countWorkingDaysExcludingFriday(month);
-      const perDay=Math.round(w.rate/workingDays);
-      const cut=-perDay;
+      const cut=-(Math.round(w.rate/26));
       document.getElementById('ms-salary').value=cut;
-      if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ ${workingDays} কার্যদিবস = ৳${perDay.toLocaleString()} (শুক্রবার বাদে)`; infoEl.style.color='#c0392b'; }
+      if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()} (কোনো স্টাইল লাগবে না)`; infoEl.style.color='#c0392b'; }
     }
   } else {
     if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
     calcAutoMonthlySalary();
   }
+  toggleMSStyleFields();
   calcMonthlySalary();
 }
 
@@ -2349,18 +2349,22 @@ function addMonthlySalary(){
   const date=document.getElementById('ms-date').value;
   const _wv=document.getElementById('ms-worker').value;
   const worker=_wv&&_wv.includes(' (')?_wv.split(' (')[0]:_wv;
-  const orderno=document.getElementById('ms-orderno').value;
-  const ctIdx=document.getElementById('ms-style').value;
-  const salary=+document.getElementById('ms-salary').value||0;
-  const ot=+(document.getElementById('ms-ot')||{value:0}).value||0;
   const isAbsent=!!(document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked);
   const isOffday=!!(document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked);
+  const orderno=isAbsent?'':document.getElementById('ms-orderno').value;
+  const ctIdx=isAbsent?'':document.getElementById('ms-style').value;
+  const salary=+document.getElementById('ms-salary').value||0;
+  const ot=+(document.getElementById('ms-ot')||{value:0}).value||0;
 
-  if(!month||!worker||!orderno||ctIdx==='') return alert('Month, Worker, Order ও Style দিন');
+  if(!month||!worker) return alert('Month ও Worker দিন');
+  if(!isAbsent&&(!orderno||ctIdx==='')) return alert('Month, Worker, Order ও Style দিন');
   if(!isAbsent&&!isOffday&&!salary&&!ot) return alert('Salary দিন');
 
-  const ct=contracts[+ctIdx];
-  if(!ct) return alert('Style সঠিক নয়');
+  let ct=null;
+  if(!isAbsent){
+    ct=contracts[+ctIdx];
+    if(!ct) return alert('Style সঠিক নয়');
+  }
 
   const lunch=+(document.getElementById('ms-lunch')||{value:0}).value||0;
   const travel=+(document.getElementById('ms-travel')||{value:0}).value||0;
@@ -2369,12 +2373,15 @@ function addMonthlySalary(){
 
   const effectiveMonth=month||date.substring(0,7);
   const payable=(salary+ot)-deduct;
-  // Absent হলে bill কাটা নেই — শুধু worker payable থেকে বাদ যাবে
-  const billCut=isAbsent?0:(lunch+travel);
+  const billCut=lunch+travel;
 
   monthlySalaries.push({
-    month:effectiveMonth,date,worker,orderno,ctIdx:+ctIdx,
-    style:ct.style,supplier:ct.supplier,factory:ct.factory||'',
+    month:effectiveMonth,date,worker,
+    orderno:isAbsent?'':orderno,
+    ctIdx:isAbsent?null:+ctIdx,
+    style:isAbsent?'':ct.style,
+    supplier:isAbsent?'':ct.supplier,
+    factory:isAbsent?'':(ct.factory||''),
     salary,ot,lunch,travel,deduct,payable,billCut,
     offday:isOffday?true:false,
     absent:isAbsent?true:false,
@@ -2388,6 +2395,7 @@ function addMonthlySalary(){
   });
   if(document.getElementById('ms-offday')) document.getElementById('ms-offday').checked=false;
   if(document.getElementById('ms-absent')) document.getElementById('ms-absent').checked=false;
+  toggleMSStyleFields();
   const inf=document.getElementById('ms-salary-info');
   if(inf){inf.textContent='';inf.style.color='#2980b9';}
   document.getElementById('ms-r-payable').textContent='৳0';
@@ -2440,17 +2448,14 @@ function rebalanceMonthlySalaries(worker, month){
     e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 
-  // Absent entries: salary = -(মূল বেতন ÷ শুক্রবার বাদে কার্যদিবস) — শুধু worker payable থেকে কাটবে
+  // Absent entries: salary = -(মূল বেতন÷26)
   allEntries.filter(e=>e.absent).forEach(e=>{
-    const workingDays=countWorkingDaysExcludingFriday(e.month);
-    const cut=-(Math.round(fullSalary/workingDays));
+    const cut=-(Math.round(fullSalary/26));
     e.salary=cut;
     const ot=Number(e.ot)||0;
     const deduct=Number(e.deduct)||0;
-    e.payable=cut+ot-deduct; // শুধু worker-এর payable কমবে
-    e.billCut=0; // Style/Supplier/Company থেকে কিছু কাটবে না
-    e.lunch=Number(e.lunch)||0;
-    e.travel=Number(e.travel)||0;
+    e.payable=cut+ot-deduct;
+    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 }
 
@@ -2480,7 +2485,7 @@ function renderMonthlySalaryList(){
       <td>${list.length-i}</td><td>${e.month}</td>
       <td style="color:#2980b9;font-weight:600;">${fmtDate(e.date)||'-'}</td>
       <td>${e.worker}${e.offday?' <span style="background:#f0ad00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;">অফডে</span>':''}${e.absent?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;">অনুপস্থিত</span>':''}</td>
-      <td><strong>${e.orderno}</strong></td><td>${e.style}</td>
+      <td>${e.absent?'-':'<strong>'+e.orderno+'</strong>'}</td><td>${e.absent?'-':e.style}</td>
       <td style="color:${e.absent?'#c0392b':e.offday?'#aaa':'#6a0dad'};font-weight:700;">${e.offday?'-':taka(e.salary)}</td>
       <td style="color:#27ae60;font-weight:700;">${(e.ot||e.offdayOT)?taka(e.ot||e.offdayOT||0):'-'}</td>
       <td style="color:#e67e22;">${e.lunch?taka(e.lunch):'-'}</td>
@@ -3274,11 +3279,11 @@ function genWorkerReport(){
           <tbody>
             ${ms.map((e,i)=>{
               const ct=contracts[e.ctIdx];
-              const styleLabel=(ct?ct.style:e.style||'-');
-              return `<tr style="background:${i%2===0?'#f5f0ff':'#fff'};">
+              const styleLabel=e.absent?'<span style="background:#c0392b;color:#fff;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;">🚫 অনুপস্থিত</span>':(ct?ct.style:e.style||'-');
+              return `<tr style="background:${e.absent?'#fff0f0':(i%2===0?'#f5f0ff':'#fff')};">
                 <td style="padding:3px 6px;color:#555;text-align:center;font-size:11px;border:1px solid #ccc;">${i+1}</td>
                 <td style="padding:3px 6px;color:#7c3aed;font-weight:600;font-size:11px;border:1px solid #ccc;">${fmtDate(e.date)||'-'}</td>
-                <td style="padding:3px 6px;color:#333;font-size:11px;border:1px solid #ccc;">${styleLabel}<br><span style="font-size:10px;color:#888;">${e.factory||''}</span></td>
+                <td style="padding:3px 6px;color:#333;font-size:11px;border:1px solid #ccc;">${styleLabel}${e.absent?'':'<br><span style="font-size:10px;color:#888;">'+(e.factory||'')+'</span>'}</td>
                 <td style="padding:3px 6px;text-align:right;color:#7c3aed;font-weight:700;font-size:11px;border:1px solid #ccc;">${taka(+e.salary||0)}</td>
                 <td style="padding:3px 6px;text-align:right;color:#27ae60;font-size:11px;border:1px solid #ccc;">${(+(e.ot||e.offdayOT)||0)?taka(+(e.ot||e.offdayOT)):'-'}</td>
                 <td style="padding:3px 6px;text-align:right;color:#e67e22;font-size:11px;border:1px solid #ccc;">${(+e.lunch||0)?taka(+e.lunch):'-'}</td>
@@ -3413,8 +3418,8 @@ function genWorkerReport2(){
           <tbody>
             ${ms.map((e,i)=>{
               const ct=contracts[e.ctIdx];
-              const styleLabel=(ct?ct.style:e.style||'-');
-              return `<tr style="background:${i%2===0?'#1e1030':'#17082a'};border-bottom:1px solid #3d1f6a;">
+              const styleLabel=e.absent?'<span style="background:#c0392b;color:#fff;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;">🚫 অনুপস্থিত</span>':(ct?ct.style:e.style||'-');
+              return `<tr style="background:${e.absent?'#3a1414':(i%2===0?'#1e1030':'#17082a')};border-bottom:1px solid #3d1f6a;">
                 <td style="padding:7px 10px;color:#a8c0d6;">${i+1}</td>
                 <td style="padding:7px 10px;color:#c4b5fd;font-weight:600;">${fmtDate(e.date)||'-'}</td>
                 <td style="padding:7px 10px;color:#e2d9f3;">${styleLabel}</td>
