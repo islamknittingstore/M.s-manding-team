@@ -2292,6 +2292,20 @@ function onMSOffdayChange(){
   calcMonthlySalary();
 }
 
+// শুক্রবার বাদ দিয়ে মাসের কার্যদিবস গণনা করো
+function countWorkingDaysExcludingFriday(yearMonth){
+  // yearMonth = "2025-06" format
+  if(!yearMonth) return 26;
+  const [y,m]=yearMonth.split('-').map(Number);
+  const daysInMonth=new Date(y,m,0).getDate();
+  let count=0;
+  for(let d=1;d<=daysInMonth;d++){
+    const day=new Date(y,m-1,d).getDay(); // 0=Sun,5=Fri,6=Sat
+    if(day!==5) count++; // শুক্রবার (5) বাদ
+  }
+  return count;
+}
+
 function onMSAbsentChange(){
   const isAbsent=document.getElementById('ms-absent').checked;
   const infoEl=document.getElementById('ms-salary-info');
@@ -2299,12 +2313,16 @@ function onMSAbsentChange(){
     // অফডে uncheck করো
     const offdayEl=document.getElementById('ms-offday');
     if(offdayEl) offdayEl.checked=false;
-    const worker=document.getElementById('ms-worker').value;
+    const _msWorkerVal=document.getElementById('ms-worker').value;
+    const worker=(_msWorkerVal.includes(' (')?_msWorkerVal.split(' (')[0]:_msWorkerVal);
+    const month=document.getElementById('ms-month').value;
     const w=workers.find(x=>x.name===worker);
     if(w && w.type==='monthly' && w.rate){
-      const cut=-(Math.round(w.rate/26));
+      const workingDays=countWorkingDaysExcludingFriday(month);
+      const perDay=Math.round(w.rate/workingDays);
+      const cut=-perDay;
       document.getElementById('ms-salary').value=cut;
-      if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()}`; infoEl.style.color='#c0392b'; }
+      if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ ${workingDays} কার্যদিবস = ৳${perDay.toLocaleString()} (শুক্রবার বাদে)`; infoEl.style.color='#c0392b'; }
     }
   } else {
     if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
@@ -2351,7 +2369,8 @@ function addMonthlySalary(){
 
   const effectiveMonth=month||date.substring(0,7);
   const payable=(salary+ot)-deduct;
-  const billCut=lunch+travel;
+  // Absent হলে bill কাটা নেই — শুধু worker payable থেকে বাদ যাবে
+  const billCut=isAbsent?0:(lunch+travel);
 
   monthlySalaries.push({
     month:effectiveMonth,date,worker,orderno,ctIdx:+ctIdx,
@@ -2421,14 +2440,17 @@ function rebalanceMonthlySalaries(worker, month){
     e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
   });
 
-  // Absent entries: salary = -(মূল বেতন÷26)
+  // Absent entries: salary = -(মূল বেতন ÷ শুক্রবার বাদে কার্যদিবস) — শুধু worker payable থেকে কাটবে
   allEntries.filter(e=>e.absent).forEach(e=>{
-    const cut=-(Math.round(fullSalary/26));
+    const workingDays=countWorkingDaysExcludingFriday(e.month);
+    const cut=-(Math.round(fullSalary/workingDays));
     e.salary=cut;
     const ot=Number(e.ot)||0;
     const deduct=Number(e.deduct)||0;
-    e.payable=cut+ot-deduct;
-    e.billCut=(Number(e.lunch)||0)+(Number(e.travel)||0);
+    e.payable=cut+ot-deduct; // শুধু worker-এর payable কমবে
+    e.billCut=0; // Style/Supplier/Company থেকে কিছু কাটবে না
+    e.lunch=Number(e.lunch)||0;
+    e.travel=Number(e.travel)||0;
   });
 }
 
