@@ -3581,7 +3581,7 @@ function buildSupplierLedgerTable(sup,mYM,yYear){
   const rows=[];
   challans.filter(c=>c.supplier===sup&&dateInPeriod(c.date,mYM,yYear)).forEach(c=>{
     const ct=contracts[c.ctIdx];
-    rows.push({date:c.date,orderno:(ct&&ct.orderno)||c.orderno||'-',billNo:c.note||'-',label:c.factory||c.style||'-',deposit:+c.value||0,recv:0,_ord:0});
+    rows.push({date:c.date,orderno:(ct&&ct.orderno)||c.orderno||'-',billNo:'-',label:c.factory||c.style||'-',deposit:+c.value||0,recv:0,_ord:0});
   });
   bills.filter(b=>b.supplier===sup&&dateInPeriod(b.date,mYM,yYear)).forEach(b=>{
     rows.push({date:b.date,orderno:b.orderno||'-',billNo:b.billno||b.note||'-',label:'Payment',deposit:0,recv:+b.amount||0,_ord:1});
@@ -3609,7 +3609,7 @@ function buildSupplierLedgerTable(sup,mYM,yYear){
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;">SN</th>
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Date</th>
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Order No</th>
-      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Bill No</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Description</th>
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Factory Name</th>
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">Deposit</th>
       <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">Received Amount</th>
