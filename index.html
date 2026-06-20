@@ -931,6 +931,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
       <div class="form-row">
         <div class="fg"><label>Amount Received (৳)</label><input id="b-amount" type="number" placeholder="কত টাকা পেলেন"></div>
+        <div class="fg"><label>Bill No</label><input id="b-billno" placeholder="যেমন: 83"></div>
         <div class="fg"><label>Note</label><input id="b-note" placeholder="e.g. 1st payment"></div>
         <div class="fg-btn"><button class="btn btn-success" onclick="addBill()">＋ Save</button></div>
       </div>
@@ -950,8 +951,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </span>
       </div>
       <table>
-        <thead><tr><th>#</th><th>Date</th><th>Order No.</th><th>Supplier</th><th>Amount Received</th><th>Note</th><th>Action</th></tr></thead>
-        <tbody id="bill-list"><tr><td colspan="7" class="no-data">No bills</td></tr></tbody>
+        <thead><tr><th>#</th><th>Date</th><th>Order No.</th><th>Supplier</th><th>Bill No</th><th>Amount Received</th><th>Note</th><th>Action</th></tr></thead>
+        <tbody id="bill-list"><tr><td colspan="8" class="no-data">No bills</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1032,7 +1033,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="form-panel">
         <div class="form-row">
           <div class="fg"><label>Supplier</label><select id="rr-supplier"><option value="">All Suppliers</option></select></div>
-          <div class="fg"><label>Month (Optional)</label><input type="month" id="rr-supplier-month"></div>
+          <div class="fg"><label>Month (Optional)</label><input type="month" id="rr-supplier-month" onchange="if(this.value)document.getElementById('rr-supplier-year').value=''"></div>
+          <div class="fg"><label>Year (Optional)</label><select id="rr-supplier-year" onchange="if(this.value)document.getElementById('rr-supplier-month').value=''"><option value="">All Years</option></select></div>
           <div class="fg-btn"><button class="btn btn-info" onclick="genSupplierReport2()">Generate</button></div>
         </div>
         <div id="r-supplier-result2"></div>
@@ -1167,7 +1169,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <div class="form-panel">
       <div class="form-row">
         <div class="fg"><label>Supplier (Optional)</label><select id="r-supplier-sel"><option value="">All Suppliers</option></select></div>
-        <div class="fg"><label>Month (Optional)</label><input type="month" id="r-supplier-month"></div>
+        <div class="fg"><label>Month (Optional)</label><input type="month" id="r-supplier-month" onchange="if(this.value)document.getElementById('r-supplier-year').value=''"></div>
+        <div class="fg"><label>Year (Optional)</label><select id="r-supplier-year" onchange="if(this.value)document.getElementById('r-supplier-month').value=''"><option value="">All Years</option></select></div>
         <div class="fg-btn"><button class="btn btn-info" onclick="genSupplierReport()">Generate</button></div>
       </div>
       <div id="r-supplier-result"></div>
@@ -2230,10 +2233,11 @@ function onMSStyleSelect(){
 }
 
 function calcAutoMonthlySalary(){
-  // অফডে বা এবসেন্ট টিক থাকলে অটো হিসাব করবে না
+  // অফডে টিক থাকলে অটো হিসাব করবে না
   const isOffday=document.getElementById('ms-offday')&&document.getElementById('ms-offday').checked;
   const isAbsent=document.getElementById('ms-absent')&&document.getElementById('ms-absent').checked;
-  if(isOffday||isAbsent) return;
+  if(isOffday) return;
+  if(isAbsent){ calcAbsentCut(); return; }
   const _msWorkerVal=document.getElementById('ms-worker').value;
   const worker=(_msWorkerVal.includes(' (')?_msWorkerVal.split(' (')[0]:_msWorkerVal);
   const ctIdx=document.getElementById('ms-style').value;
@@ -2272,6 +2276,23 @@ function calcAutoMonthlySalary(){
   calcMonthlySalary();
 }
 function toggleOffdayFields(){ /* deprecated */ }
+
+// এবসেন্ট হলে worker-এর rate অনুযায়ী কাটা টাকাটা সবসময় Salary ঘরে দেখাও (worker আগে/পরে যেভাবেই সিলেক্ট হোক না কেন)
+function calcAbsentCut(){
+  const _wv=document.getElementById('ms-worker').value;
+  const worker=(_wv&&_wv.includes(' (')?_wv.split(' (')[0]:_wv);
+  const w=workers.find(x=>x.name===worker);
+  const infoEl=document.getElementById('ms-salary-info');
+  if(w && w.type==='monthly' && w.rate){
+    const cut=-(Math.round(w.rate/26));
+    document.getElementById('ms-salary').value=cut;
+    if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()} (কোনো স্টাইল লাগবে না)`; infoEl.style.color='#c0392b'; }
+  } else {
+    document.getElementById('ms-salary').value='';
+    if(infoEl){ infoEl.textContent='এবসেন্ট — আগে Worker সিলেক্ট করুন'; infoEl.style.color='#c0392b'; }
+  }
+  calcMonthlySalary();
+}
 
 // এবসেন্ট হলে Order/Style/Company/Supplier ফিল্ড লুকিয়ে ফেলো (কোনো স্টাইলের সাথে যুক্ত হবে না)
 function toggleMSStyleFields(){
@@ -2316,13 +2337,7 @@ function onMSAbsentChange(){
     // অফডে uncheck করো
     const offdayEl=document.getElementById('ms-offday');
     if(offdayEl) offdayEl.checked=false;
-    const worker=document.getElementById('ms-worker').value;
-    const w=workers.find(x=>x.name===worker);
-    if(w && w.type==='monthly' && w.rate){
-      const cut=-(Math.round(w.rate/26));
-      document.getElementById('ms-salary').value=cut;
-      if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()} (কোনো স্টাইল লাগবে না)`; infoEl.style.color='#c0392b'; }
-    }
+    calcAbsentCut();
   } else {
     if(infoEl){ infoEl.textContent=''; infoEl.style.color='#2980b9'; }
     calcAutoMonthlySalary();
@@ -2534,8 +2549,10 @@ function addBill(){
   const cts=getContractsByOrder(orderno);
   const supplier=cts[0]?cts[0].supplier:'';
   const bsIdx=document.getElementById('b-submit-sel').value;
-  bills.push({date,orderno,supplier,amount,note:document.getElementById('b-note').value.trim(),bsIdx:bsIdx!==''?+bsIdx:null});
+  const billno=(document.getElementById('b-billno')||{value:''}).value.trim();
+  bills.push({date,orderno,supplier,amount,billno,note:document.getElementById('b-note').value.trim(),bsIdx:bsIdx!==''?+bsIdx:null});
   document.getElementById('b-amount').value='';
+  document.getElementById('b-billno').value='';
   document.getElementById('b-note').value='';
   document.getElementById('b-orderno').value='';
   document.getElementById('b-submit-sel').innerHTML='<option value="">-- Bill Submit সিলেক্ট --</option>';
@@ -2681,6 +2698,15 @@ function populateSelects(){
   ['r-supplier-sel','rr-supplier'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){const v=el.value;el.innerHTML='<option value="">All Suppliers</option>'+supList.map(s=>`<option value="${s}">${s}</option>`).join('');el.value=v;}
+  });
+  // Year filter for Supplier Report (challan/bill/billSubmit/contract তারিখ থেকে যত বছর পাওয়া যায়)
+  const yearSet=new Set([new Date().getFullYear().toString()]);
+  [...challans,...bills,...billSubmits,...contracts].forEach(o=>{ if(o&&o.date) yearSet.add(o.date.substring(0,4)); });
+  const yearList=[...yearSet].sort((a,b)=>b.localeCompare(a));
+  const yearOpts=yearList.map(y=>`<option value="${y}">${y}</option>`).join('');
+  ['r-supplier-year','rr-supplier-year'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){const v=el.value;el.innerHTML='<option value="">All Years</option>'+yearOpts;el.value=v;}
   });
 }
 
@@ -2935,8 +2961,8 @@ function renderBillList(){
     return true;
   }).slice().reverse();
   const tb=document.getElementById('bill-list');
-  tb.innerHTML=list.length===0?'<tr><td colspan="7" class="no-data">No bills</td></tr>':
-    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:#27ae60;font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
+  tb.innerHTML=list.length===0?'<tr><td colspan="8" class="no-data">No bills</td></tr>':
+    list.map((b,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(b.date)}</td><td><strong>${b.orderno||'-'}</strong></td><td>${b.supplier||'-'}</td><td style="color:#e67e22;font-weight:700;">${b.billno||'-'}</td><td style="color:#27ae60;font-weight:700;">${taka(b.amount)}</td><td>${b.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteBill(${bills.indexOf(b)})">❌</button></td></tr>`).join('');
 }
 
 function renderPayments(){
@@ -3542,11 +3568,70 @@ function genMonthlyReport2(){
   document.getElementById('bar-r-monthly-result2').style.display=(h?'flex':'none');
 }
 
+// মাস বা বছর — যেটা সিলেক্ট করা আছে সেই অনুযায়ী তারিখ মিলে কিনা চেক করো
+function dateInPeriod(dateStr,mYM,yYear){
+  if(!dateStr) return false;
+  if(mYM) return dateStr.startsWith(mYM);
+  if(yYear) return dateStr.startsWith(yYear);
+  return true;
+}
+
+// সাপ্লাইয়ারের Bill Statement — Challan (Deposit) ও Bill Payment (Received) তারিখ অনুযায়ী ক্রমানুসারে, রানিং ব্যালেন্সসহ (ছবির মতো ফরম্যাট)
+function buildSupplierLedgerTable(sup,mYM,yYear){
+  const rows=[];
+  challans.filter(c=>c.supplier===sup&&dateInPeriod(c.date,mYM,yYear)).forEach(c=>{
+    const ct=contracts[c.ctIdx];
+    rows.push({date:c.date,orderno:(ct&&ct.orderno)||c.orderno||'-',billNo:c.note||'-',label:c.factory||c.style||'-',deposit:+c.value||0,recv:0,_ord:0});
+  });
+  bills.filter(b=>b.supplier===sup&&dateInPeriod(b.date,mYM,yYear)).forEach(b=>{
+    rows.push({date:b.date,orderno:b.orderno||'-',billNo:b.billno||b.note||'-',label:'Payment',deposit:0,recv:+b.amount||0,_ord:1});
+  });
+  if(!rows.length) return '';
+  rows.sort((a,b)=>a.date===b.date?a._ord-b._ord:a.date.localeCompare(b.date));
+  let bal=0,totD=0,totR=0,trs='';
+  rows.forEach((r,i)=>{
+    bal+=r.deposit-r.recv; totD+=r.deposit; totR+=r.recv;
+    const isPay=r.label==='Payment';
+    trs+=`<tr style="${isPay?'background:#eafaf1;':(i%2===0?'background:#fafbfc;':'')}">
+      <td style="padding:5px 7px;text-align:center;border:1px solid #ccc;font-size:11px;">${i+1}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;font-weight:600;">${fmtDate(r.date)}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;color:#2980b9;font-weight:600;">${r.orderno}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;">${r.billNo}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;${isPay?'font-weight:700;color:#27ae60;':''}">${r.label}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;">${r.deposit?taka(r.deposit):'00'}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;color:#27ae60;">${r.recv?taka(r.recv):'00'}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;font-weight:700;color:${bal>=0?'#c0392b':'#27ae60'};">${taka(bal)}</td>
+    </tr>`;
+  });
+  return `<div style="padding:8px 14px;background:#fff3e0;font-size:12px;font-weight:700;color:#e65100;border-top:3px solid #e65100;text-transform:uppercase;letter-spacing:0.5px;">📋 Bill Statement — তারিখ অনুযায়ী</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+    <thead><tr style="background:#1a2a3a;color:#fff;">
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;">SN</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Date</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Order No</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Bill No</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Factory Name</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">Deposit</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">Received Amount</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">I Will Get Money</th>
+    </tr></thead>
+    <tbody>${trs}
+      <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
+        <td colspan="5" style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">Total =</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totD)}</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totR)}</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(bal)}</td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
 function genSupplierReport2(){
   const supplierF=document.getElementById('rr-supplier').value;
   const m=document.getElementById('rr-supplier-month').value;
+  const y=document.getElementById('rr-supplier-year')?document.getElementById('rr-supplier-year').value:'';
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier Report${m?' — '+fmtMonth(m):''}${supplierF?' — '+supplierF:''}`);
+  let h=rHead(`Supplier Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`);
   let grandC=0,grandB=0,grandW=0;
   supplierList.forEach(sup=>{
     const supContracts=contracts.filter(c=>c.supplier===sup);
@@ -3555,12 +3640,12 @@ function genSupplierReport2(){
     h+=rSub(`🏭 ${sup}`);
     supContracts.forEach(ct=>{
       const idx=contracts.indexOf(ct);
-      const mc=m?challans.filter(c=>c.ctIdx===idx&&c.date.startsWith(m)):challans.filter(c=>c.ctIdx===idx);
-      const mb=m?bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&b.date.startsWith(m)):bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
-      const me=m?takings.filter(e=>e.ctIdx===idx&&e.date.startsWith(m)):takings.filter(e=>e.ctIdx===idx);
+      const mc=challans.filter(c=>c.ctIdx===idx&&dateInPeriod(c.date,m,y));
+      const mb=bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&dateInPeriod(b.date,m,y));
+      const me=takings.filter(e=>e.ctIdx===idx&&dateInPeriod(e.date,m,y));
       const cv=mc.reduce((s,c)=>s+c.value,0),wc=me.reduce((s,e)=>s+e.wearn,0);
       // Proportional bill for shared orders
-      const br=billTotalRecv(idx);
+      const br=(m||y)?mb.reduce((s,b)=>s+b.amount,0):billTotalRecv(idx);
       if(!cv&&!br&&!wc)return;
       sc+=cv;sb+=br;sw+=wc;
       h+=rRow(`  ${ct.style} (${ct.jobtype})`,`Challan:${taka(cv)} | Bill:${taka(br)} | Worker:${taka(wc)}`);
@@ -3570,6 +3655,7 @@ function genSupplierReport2(){
     h+=rRow(`${sup} — Pending`,taka(sc-sb),(sc-sb)>0?'#c0392b':'#27ae60');
     h+=rRow(`${sup} — Worker Cost`,taka(sw),'#c0392b');
     h+=rRow(`${sup} — Net Profit`,taka(sb-sw),(sb-sw)>=0?'#27ae60':'#c0392b');
+    h+=buildSupplierLedgerTable(sup,m,y);
     grandC+=sc;grandB+=sb;grandW+=sw;
   });
   if(supplierList.length>1){
@@ -3583,6 +3669,7 @@ function genSupplierReport2(){
   document.getElementById('r-supplier-result2').innerHTML=rBox(h);
   document.getElementById('bar-r-supplier-result2').style.display=(h?'flex':'none');
 }
+
 
 
 // ===== STYLE-WISE P&L REPORT =====
@@ -3664,8 +3751,9 @@ function genStylePLReport(){
 function genSupplierReport(){
   const supplierF=document.getElementById('r-supplier-sel').value;
   const m=document.getElementById('r-supplier-month').value;
+  const y=document.getElementById('r-supplier-year')?document.getElementById('r-supplier-year').value:'';
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier-wise Report${m?' — '+fmtMonth(m):''}${supplierF?' — '+supplierF:''}`);
+  let h=rHead(`Supplier-wise Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`);
   let grandChallan=0,grandBillRecv=0,grandWorkerCost=0,grandProfit=0;
 
   supplierList.forEach(sup=>{
@@ -3675,9 +3763,9 @@ function genSupplierReport(){
     h+=rSub(`🏭 Supplier: ${sup}`);
     supContracts.forEach((ct,_)=>{
       const idx=contracts.indexOf(ct);
-      const mc=m?challans.filter(c=>c.ctIdx===idx&&c.date.startsWith(m)):challans.filter(c=>c.ctIdx===idx);
-      const mb=m?bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&b.date.startsWith(m)):bills.filter(b=>b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno));
-      const me=m?takings.filter(e=>e.ctIdx===idx&&e.date.startsWith(m)):takings.filter(e=>e.ctIdx===idx);
+      const mc=challans.filter(c=>c.ctIdx===idx&&dateInPeriod(c.date,m,y));
+      const mb=bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&dateInPeriod(b.date,m,y));
+      const me=takings.filter(e=>e.ctIdx===idx&&dateInPeriod(e.date,m,y));
       const cv=mc.reduce((s,c)=>s+c.value,0);
       const br=mb.reduce((s,b)=>s+b.amount,0);
       const wc=me.reduce((s,e)=>s+e.wearn,0);
@@ -3691,6 +3779,7 @@ function genSupplierReport(){
     h+=rRow(`${sup} — Bill Pending`,taka(supChallan-supBill),(supChallan-supBill)>0?'#c0392b':'#27ae60');
     h+=rRow(`${sup} — Worker Cost`,taka(supWcost),'#c0392b');
     h+=rRow(`${sup} — Net Profit (Bill - Worker)`,taka(supProfit),supProfit>=0?'#27ae60':'#c0392b');
+    h+=buildSupplierLedgerTable(sup,m,y);
     grandChallan+=supChallan;grandBillRecv+=supBill;grandWorkerCost+=supWcost;grandProfit+=supProfit;
   });
 
