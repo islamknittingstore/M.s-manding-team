@@ -3576,12 +3576,13 @@ function dateInPeriod(dateStr,mYM,yYear){
   return true;
 }
 
-// সাপ্লাইয়ারের Bill Statement — Challan (Deposit) ও Bill Payment (Received) তারিখ অনুযায়ী ক্রমানুসারে, রানিং ব্যালেন্সসহ (ছবির মতো ফরম্যাট)
+// সাপ্লাইয়ারের Bill Statement — Bill Submit (যেই ডেটে বিল সাবমিট হয়েছে, সেই amount) ও Bill Payment (Received) তারিখ অনুযায়ী ক্রমানুসারে, রানিং ব্যালেন্সসহ
 function buildSupplierLedgerTable(sup,mYM,yYear){
   const rows=[];
-  challans.filter(c=>c.supplier===sup&&dateInPeriod(c.date,mYM,yYear)).forEach(c=>{
-    const ct=contracts[c.ctIdx];
-    rows.push({date:c.date,orderno:(ct&&ct.orderno)||c.orderno||'-',billNo:'-',label:c.factory||c.style||'-',deposit:+c.value||0,recv:0,_ord:0});
+  billSubmits.filter(bs=>bs.supplier===sup&&dateInPeriod(bs.date,mYM,yYear)).forEach(bs=>{
+    const cts=getContractsByOrder(bs.orderno);
+    const factories=[...new Set(cts.map(c=>c.factory).filter(Boolean))].join(', ')||bs.styles||'-';
+    rows.push({date:bs.date,orderno:bs.orderno||'-',billNo:'-',label:factories,deposit:+bs.amount||0,recv:0,_ord:0});
   });
   bills.filter(b=>b.supplier===sup&&dateInPeriod(b.date,mYM,yYear)).forEach(b=>{
     rows.push({date:b.date,orderno:b.orderno||'-',billNo:b.billno||b.note||'-',label:'Payment',deposit:0,recv:+b.amount||0,_ord:1});
