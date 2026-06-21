@@ -2087,6 +2087,80 @@ function getWorkerRate(){
   if(type==='mix') return {rate:+document.getElementById('w-rate-mix-d').value||0,rate2:+document.getElementById('w-rate-mix-p').value||0};
   return {rate:0,rate2:0};
 }
+
+// মান্থলি ওয়ার্কারের জন্য, একটা নির্দিষ্ট মাসে (ym='YYYY-MM') কার্যকর বেতন বের করো — প্রমোশন/rate history থাকলে সেই অনুযায়ী
+function getWorkerRateForMonth(w, ym){
+  if(!w) return 0;
+  if(Array.isArray(w.rateHistory) && w.rateHistory.length){
+    const applicable=w.rateHistory.filter(r=>r.fromMonth && r.fromMonth<=ym);
+    if(applicable.length){
+      applicable.sort((a,b)=>b.fromMonth.localeCompare(a.fromMonth));
+      return +applicable[0].rate||0;
+    }
+  }
+  return +w.rate||0;
+}
+
+// প্রমোশন/বেতন বৃদ্ধি — নির্দিষ্ট মাস থেকে নতুন rate কার্যকর হবে, আগের মাসগুলো অপরিবর্তিত থাকবে
+function addWorkerRatePromotion(workerIdx){
+  const w=workers[workerIdx];
+  if(!w||w.type!=='monthly') return;
+  const fromMonth=prompt('কোন মাস থেকে নতুন বেতন কার্যকর হবে? (YYYY-MM ফরম্যাটে, যেমন: 2026-06)', new Date().toISOString().slice(0,7));
+  if(!fromMonth) return;
+  if(!/^\d{4}-\d{2}$/.test(fromMonth.trim())) return alert('সঠিক ফরম্যাটে দিন: YYYY-MM (যেমন 2026-06)');
+  const newRateStr=prompt(`${fromMonth} মাস থেকে নতুন মাসিক বেতন কত হবে? (এখনকার বেতন: ৳${(w.rate||0).toLocaleString()})`);
+  if(!newRateStr) return;
+  const newRate=+newRateStr;
+  if(!newRate||newRate<=0) return alert('সঠিক বেতনের পরিমাণ দিন');
+  const note=prompt('কারণ/নোট (যেমন: Promotion) — চাইলে খালি রাখতে পারেন','Promotion')||'';
+  if(!Array.isArray(w.rateHistory)) w.rateHistory=[];
+  // আগে থেকে একই মাসের এন্ট্রি থাকলে আপডেট করো, নাহলে নতুন যোগ করো
+  const existing=w.rateHistory.find(r=>r.fromMonth===fromMonth.trim());
+  if(existing){ existing.rate=newRate; existing.note=note; }
+  else { w.rateHistory.push({fromMonth:fromMonth.trim(),rate:newRate,note}); }
+  w.rateHistory.sort((a,b)=>a.fromMonth.localeCompare(b.fromMonth));
+  // সবচেয়ে সাম্প্রতিক rate-টাকেই w.rate হিসেবে রাখো (লিস্টে/লেবেলে "বর্তমান বেতন" হিসেবে দেখানোর জন্য)
+  const latest=w.rateHistory[w.rateHistory.length-1];
+  const currentYM=new Date().toISOString().slice(0,7);
+  if(latest.fromMonth<=currentYM) w.rate=latest.rate;
+  save();
+  showFloatNotif(`✅ ${w.name}-এর বেতন ${fromMonth} মাস থেকে ৳${newRate.toLocaleString()} হয়ে গেছে। আগের মাসগুলো অপরিবর্তিত থাকবে।`,'success');
+}
+
+// ডেইলি/পিস/মিক্স ওয়ার্কারের rate পরিবর্তন — শুধু এখন থেকে নতুন এন্ট্রির জন্য autofill হবে, আগের এন্ট্রিগুলো প্রভাবিত হবে না (কারণ প্রতিটা দিনের এন্ট্রি আলাদাভাবে সেভ থাকে)
+function editWorkerRate(workerIdx){
+  const w=workers[workerIdx];
+  if(!w) return;
+  if(w.type==='monthly'){ addWorkerRatePromotion(workerIdx); return; }
+  if(w.type==='mix'){
+    const newDaily=prompt(`${w.name}-এর নতুন Daily Rate (এখন: ৳${(w.rate||0).toLocaleString()})`, w.rate||'');
+    if(newDaily===null) return;
+    const newPiece=prompt(`${w.name}-এর নতুন Piece Rate (এখন: ৳${(w.rate2||0).toLocaleString()})`, w.rate2||'');
+    if(newPiece===null) return;
+    if(+newDaily>0) w.rate=+newDaily;
+    if(+newPiece>0) w.rate2=+newPiece;
+  } else {
+    const label=w.type==='piece'?'Piece Rate':'Daily Rate';
+    const newRate=prompt(`${w.name}-এর নতুন ${label} (এখন: ৳${(w.rate||0).toLocaleString()})`, w.rate||'');
+    if(newRate===null) return;
+    if(!(+newRate>0)) return alert('সঠিক পরিমাণ দিন');
+    w.rate=+newRate;
+  }
+  save();
+  showFloatNotif(`✅ ${w.name}-এর rate আপডেট হয়েছে। আগের এন্ট্রিগুলো আগের রেট-এই থাকবে (যা সেদিন বসানো হয়েছিল), নতুন এন্ট্রি থেকে এই নতুন rate-টা ফর্মে autofill হবে।`,'success');
+}
+
+function showWorkerRateHistory(workerIdx){
+  const w=workers[workerIdx];
+  if(!w) return;
+  if(!w.rateHistory || !w.rateHistory.length){
+    alert(`${w.name}-এর কোনো বেতন পরিবর্তনের ইতিহাস নেই।\nবর্তমান বেতন: ৳${(w.rate||0).toLocaleString()}/মাস`);
+    return;
+  }
+  const lines=w.rateHistory.map(r=>`${r.fromMonth} থেকে → ৳${r.rate.toLocaleString()}/মাস${r.note?' ('+r.note+')':''}`).join('\n');
+  alert(`${w.name}-এর বেতন পরিবর্তনের ইতিহাস:\n\n${lines}`);
+}
+
 function addWorker(){
   const name=document.getElementById('w-name').value.trim();
   if(!name) return alert('Worker name দিন');
@@ -2145,9 +2219,10 @@ function calcMonthlyAutoDaily(){
   const labelEl=document.getElementById('t-daily-label');
   if(!worker||!dateVal){if(infoEl)infoEl.textContent='';return;}
   const w=workers.find(x=>(x.party&&x.party!=='নিজস্ব'?x.name+' ('+x.party+')':x.name)===worker)||workers.find(x=>x.name===worker);
-  if(!w||w.type!=='monthly'||!w.rate){if(infoEl)infoEl.textContent='';if(labelEl)labelEl.textContent='Auto';return;}
-  const fullSalary=w.rate;
+  if(!w||w.type!=='monthly'){if(infoEl)infoEl.textContent='';if(labelEl)labelEl.textContent='Auto';return;}
   const ym=dateVal.slice(0,7);
+  const fullSalary=getWorkerRateForMonth(w,ym);
+  if(!fullSalary){if(infoEl)infoEl.textContent='';if(labelEl)labelEl.textContent='Auto';return;}
   // এখন পর্যন্ত কতটা entry আছে + নতুন ১টা
   const existingDays=takings.filter(e=>e.worker===worker&&e.date.startsWith(ym)).length;
   const totalDays=existingDays+1;
@@ -2245,10 +2320,11 @@ function calcAutoMonthlySalary(){
   const infoEl=document.getElementById('ms-salary-info');
   if(!worker||!month){if(infoEl)infoEl.textContent='';return;}
 
-  // Worker-এর monthly rate বের করো
+  // Worker-এর monthly rate বের করো (প্রমোশন/rate history থাকলে ওই মাসের কার্যকর rate)
   const w=workers.find(x=>x.name===worker);
-  if(!w||w.type!=='monthly'||!w.rate){if(infoEl)infoEl.textContent='';return;}
-  const fullSalary=w.rate;
+  if(!w||w.type!=='monthly'){if(infoEl)infoEl.textContent='';return;}
+  const fullSalary=getWorkerRateForMonth(w,month);
+  if(!fullSalary){if(infoEl)infoEl.textContent='';return;}
 
   // ওই মাসে এই worker-এর Monthly Salary entry কতটা আছে (সব style মিলিয়ে)
   const existingMS=monthlySalaries.filter(e=>e.worker===worker&&e.month===month).length;
@@ -2282,11 +2358,13 @@ function calcAbsentCut(){
   const _wv=document.getElementById('ms-worker').value;
   const worker=(_wv&&_wv.includes(' (')?_wv.split(' (')[0]:_wv);
   const w=workers.find(x=>x.name===worker);
+  const month=(document.getElementById('ms-month')||{}).value||new Date().toISOString().slice(0,7);
   const infoEl=document.getElementById('ms-salary-info');
-  if(w && w.type==='monthly' && w.rate){
-    const cut=-(Math.round(w.rate/26));
+  const fullSalary=w&&w.type==='monthly'?getWorkerRateForMonth(w,month):0;
+  if(w && w.type==='monthly' && fullSalary){
+    const cut=-(Math.round(fullSalary/26));
     document.getElementById('ms-salary').value=cut;
-    if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${w.rate.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()} (কোনো স্টাইল লাগবে না)`; infoEl.style.color='#c0392b'; }
+    if(infoEl){ infoEl.textContent=`এবসেন্ট কাটা: ৳${fullSalary.toLocaleString()} ÷ 26 = ৳${Math.abs(cut).toLocaleString()} (কোনো স্টাইল লাগবে না)`; infoEl.style.color='#c0392b'; }
   } else {
     document.getElementById('ms-salary').value='';
     if(infoEl){ infoEl.textContent='এবসেন্ট — আগে Worker সিলেক্ট করুন'; infoEl.style.color='#c0392b'; }
@@ -2433,8 +2511,9 @@ function rebalanceAllMonthlySalaries(){
 // ওই মাসের ওই worker-এর সব MS entry সমানভাগে rebalance করো
 function rebalanceMonthlySalaries(worker, month){
   const w=workers.find(x=>x.name===worker);
-  if(!w||w.type!=='monthly'||!w.rate) return;
-  const fullSalary=w.rate;
+  if(!w||w.type!=='monthly') return;
+  const fullSalary=getWorkerRateForMonth(w,month);
+  if(!fullSalary) return;
 
   const allEntries=monthlySalaries.filter(e=>e.worker===worker&&e.month===month);
   if(!allEntries.length) return;
@@ -2887,10 +2966,18 @@ function renderWorkers(){
   tb.innerHTML=workers.length===0?'<tr><td colspan="11" class="no-data">No workers</td></tr>':
     workers.map((w,i)=>{
       const cp=workerConvPaid(w.name),bp=workerBillPaid(w.name),tp=workerTotalPaid(w.name),pay=workerPayable(w.name);
-      const rateLabel=w.type==='mix'?`${taka(w.rate)}/day + ${taka(w.rate2||0)}/pc`:w.type==='piece'?`${taka(w.rate)}/pc`:w.type==='monthly'?`${taka(w.rate)}/mo`:taka(w.rate);
+      const hasHist=w.type==='monthly'&&Array.isArray(w.rateHistory)&&w.rateHistory.length>0;
+      const rateLabel=(w.type==='mix'?`${taka(w.rate)}/day + ${taka(w.rate2||0)}/pc`:w.type==='piece'?`${taka(w.rate)}/pc`:w.type==='monthly'?`${taka(w.rate)}/mo`:taka(w.rate))
+        +(hasHist?` <span title="বেতন পরিবর্তনের ইতিহাস আছে" style="font-size:10px;color:#e67e22;">📈</span>`:'');
+      const promoBtns=w.type==='monthly'?`<div style="display:flex;gap:4px;margin-top:4px;">
+          <button class="btn" style="background:#e67e22;color:#fff;font-size:10px;padding:3px 6px;" onclick="addWorkerRatePromotion(${i})" title="বেতন বৃদ্ধি / প্রমোশন">📈 Promotion</button>
+          <button class="btn" style="background:#6b7f94;color:#fff;font-size:10px;padding:3px 6px;" onclick="showWorkerRateHistory(${i})" title="বেতন পরিবর্তনের ইতিহাস">📜 History</button>
+        </div>`:`<div style="margin-top:4px;">
+          <button class="btn" style="background:#e67e22;color:#fff;font-size:10px;padding:3px 6px;" onclick="editWorkerRate(${i})" title="রেট পরিবর্তন করুন">✏️ Edit Rate</button>
+        </div>`;
       const party=w.party||'নিজস্ব';
       const partyBadge=party==='নিজস্ব'?`<span class="badge badge-green">🏠 নিজস্ব</span>`:`<span class="badge badge-orange">🤝 ${party}</span>`;
-      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${partyBadge}</td><td>${w.phone||'-'}</td><td>${typeBadge(w.type)}</td><td>${rateLabel}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pay)}</td><td><button class="btn btn-danger" onclick="deleteItem(workers,${i})">❌</button></td></tr>`;
+      return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${partyBadge}</td><td>${w.phone||'-'}</td><td>${typeBadge(w.type)}</td><td>${rateLabel}${promoBtns}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pay)}</td><td><button class="btn btn-danger" onclick="deleteItem(workers,${i})">❌</button></td></tr>`;
     }).join('');
 }
 
