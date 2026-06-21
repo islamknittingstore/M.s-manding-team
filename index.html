@@ -1039,7 +1039,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </div>
         <div id="r-supplier-result2"></div>
       <div class="rpt-action-bar" id="bar-r-supplier-result2" style="display:none;">
-        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result2','Supplier Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result2','Order Statement')">🖨️ Browser Print</button>
         <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-supplier-result2','Supplier Report')">📊 Excel Export</button>
       </div>
       </div>
@@ -1175,7 +1175,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
       <div id="r-supplier-result"></div>
       <div class="rpt-action-bar" id="bar-r-supplier-result" style="display:none;">
-        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result','Supplier Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-supplier-result','Order Statement')">🖨️ Browser Print</button>
         <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-supplier-result','Supplier Report')">📊 Excel Export</button>
       </div>
     </div>
@@ -3627,45 +3627,88 @@ function buildSupplierLedgerTable(sup,mYM,yYear){
   </table></div>`;
 }
 
+// একই Order Number-এর একাধিক contract/style থাকলে, সেই অর্ডারের bill amount-কে প্রতিটা contract-এর challan ভ্যালুর অনুপাতে ভাগ করো (নাহলে একই bill একাধিকবার গোনা হয়ে যায়)
+// Worker Report-এর মতো কার্ড-স্টাইল হেডার — সাপ্লাইয়ারের নাম ও পিরিয়ড দেখায়, প্রিন্ট করলে টেবিলের উপরে এটাই আসবে
+function supplierCardHeader(sup,mYM,yYear){
+  const periodLabel=mYM?'Month':(yYear?'Year':'Period');
+  const periodValue=mYM?fmtMonth(mYM):(yYear?yYear:'All Years');
+  return `<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:6px;overflow:hidden;border:1px solid #dde3ea;">
+    <div style="background:#1a2a3a;color:#fff;padding:14px 18px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;">🏭 ${sup}</div>
+    <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #dde3ea;font-size:13px;background:#f7fafd;">
+      <span><strong>Supplier/Buyer:</strong> ${sup}</span>
+      <span><strong>${periodLabel}:</strong> ${periodValue}</span>
+    </div>
+  </div>`;
+}
+
+function periodBillRecvMap(supContracts,m,y){
+  const chByIdx={},chByOrder={};
+  supContracts.forEach(ct=>{
+    const idx=contracts.indexOf(ct);
+    const cv=challans.filter(c=>c.ctIdx===idx&&dateInPeriod(c.date,m,y)).reduce((s,c)=>s+c.value,0);
+    chByIdx[idx]=cv;
+    if(ct.orderno) chByOrder[ct.orderno]=(chByOrder[ct.orderno]||0)+cv;
+  });
+  const billByOrder={};
+  supContracts.forEach(ct=>{
+    if(!ct.orderno||billByOrder[ct.orderno]!==undefined)return;
+    billByOrder[ct.orderno]=bills.filter(b=>b.orderno===ct.orderno&&dateInPeriod(b.date,m,y)).reduce((s,b)=>s+b.amount,0);
+  });
+  const brByIdx={};
+  supContracts.forEach(ct=>{
+    const idx=contracts.indexOf(ct);
+    if(ct.orderno){
+      const totalBill=billByOrder[ct.orderno]||0;
+      const totalCh=chByOrder[ct.orderno]||0;
+      const sibCount=supContracts.filter(c=>c.orderno===ct.orderno).length;
+      brByIdx[idx]=(sibCount>1&&totalCh>0)?totalBill*(chByIdx[idx]/totalCh):totalBill;
+    } else {
+      brByIdx[idx]=bills.filter(b=>b.ctIdx===idx&&!b.orderno&&dateInPeriod(b.date,m,y)).reduce((s,b)=>s+b.amount,0);
+    }
+  });
+  return {chByIdx,brByIdx};
+}
+
 function genSupplierReport2(){
   const supplierF=document.getElementById('rr-supplier').value;
   const m=document.getElementById('rr-supplier-month').value;
   const y=document.getElementById('rr-supplier-year')?document.getElementById('rr-supplier-year').value:'';
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`);
+  let h=`<div class="no-print">${rHead(`Supplier Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`)}</div>`;
   let grandC=0,grandB=0,grandW=0;
   supplierList.forEach(sup=>{
     const supContracts=contracts.filter(c=>c.supplier===sup);
     if(!supContracts.length)return;
     let sc=0,sb=0,sw=0;
-    h+=rSub(`🏭 ${sup}`);
+    h+=supplierCardHeader(sup,m,y);
+    const {chByIdx,brByIdx}=periodBillRecvMap(supContracts,m,y);
+    let detail='';
     supContracts.forEach(ct=>{
       const idx=contracts.indexOf(ct);
-      const mc=challans.filter(c=>c.ctIdx===idx&&dateInPeriod(c.date,m,y));
-      const mb=bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&dateInPeriod(b.date,m,y));
       const me=takings.filter(e=>e.ctIdx===idx&&dateInPeriod(e.date,m,y));
-      const cv=mc.reduce((s,c)=>s+c.value,0),wc=me.reduce((s,e)=>s+e.wearn,0);
-      // Proportional bill for shared orders
-      const br=(m||y)?mb.reduce((s,b)=>s+b.amount,0):billTotalRecv(idx);
+      const cv=chByIdx[idx]||0,wc=me.reduce((s,e)=>s+e.wearn,0);
+      const br=brByIdx[idx]||0;
       if(!cv&&!br&&!wc)return;
       sc+=cv;sb+=br;sw+=wc;
-      h+=rRow(`  ${ct.style} (${ct.jobtype})`,`Challan:${taka(cv)} | Bill:${taka(br)} | Worker:${taka(wc)}`);
+      detail+=rRow(`  ${ct.style} (${ct.jobtype})`,`Challan:${taka(cv)} | Bill:${taka(br)} | Worker:${taka(wc)}`);
     });
-    h+=rRow(`${sup} — Challan`,taka(sc),'#2980b9');
-    h+=rRow(`${sup} — Bill Recv`,taka(sb),'#27ae60');
-    h+=rRow(`${sup} — Pending`,taka(sc-sb),(sc-sb)>0?'#c0392b':'#27ae60');
-    h+=rRow(`${sup} — Worker Cost`,taka(sw),'#c0392b');
-    h+=rRow(`${sup} — Net Profit`,taka(sb-sw),(sb-sw)>=0?'#27ae60':'#c0392b');
+    detail+=rRow(`${sup} — Challan`,taka(sc),'#2980b9');
+    detail+=rRow(`${sup} — Bill Recv`,taka(sb),'#27ae60');
+    detail+=rRow(`${sup} — Pending`,taka(sc-sb),(sc-sb)>0?'#c0392b':'#27ae60');
+    detail+=rRow(`${sup} — Worker Cost`,taka(sw),'#c0392b');
+    detail+=rRow(`${sup} — Net Profit`,taka(sb-sw),(sb-sw)>=0?'#27ae60':'#c0392b');
+    h+=`<div class="no-print">${detail}</div>`;
     h+=buildSupplierLedgerTable(sup,m,y);
     grandC+=sc;grandB+=sb;grandW+=sw;
   });
   if(supplierList.length>1){
-    h+=rSub('GRAND TOTAL');
-    h+=rRow('Total Challan',taka(grandC),'#2980b9');
-    h+=rRow('Total Bill Recv',taka(grandB),'#27ae60');
-    h+=rRow('Total Pending',taka(grandC-grandB),(grandC-grandB)>0?'#c0392b':'#27ae60');
-    h+=rRow('Total Worker Cost',taka(grandW),'#c0392b');
-    h+=rRow('Total Net Profit',taka(grandB-grandW),(grandB-grandW)>=0?'#27ae60':'#c0392b');
+    let gh=rSub('GRAND TOTAL');
+    gh+=rRow('Total Challan',taka(grandC),'#2980b9');
+    gh+=rRow('Total Bill Recv',taka(grandB),'#27ae60');
+    gh+=rRow('Total Pending',taka(grandC-grandB),(grandC-grandB)>0?'#c0392b':'#27ae60');
+    gh+=rRow('Total Worker Cost',taka(grandW),'#c0392b');
+    gh+=rRow('Total Net Profit',taka(grandB-grandW),(grandB-grandW)>=0?'#27ae60':'#c0392b');
+    h+=`<div class="no-print">${gh}</div>`;
   }
   document.getElementById('r-supplier-result2').innerHTML=rBox(h);
   document.getElementById('bar-r-supplier-result2').style.display=(h?'flex':'none');
@@ -3754,43 +3797,45 @@ function genSupplierReport(){
   const m=document.getElementById('r-supplier-month').value;
   const y=document.getElementById('r-supplier-year')?document.getElementById('r-supplier-year').value:'';
   const supplierList=supplierF?[supplierF]:[...new Set(contracts.map(c=>c.supplier))];
-  let h=rHead(`Supplier-wise Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`);
+  let h=`<div class="no-print">${rHead(`Supplier-wise Report${m?' — '+fmtMonth(m):y?' — '+y:''}${supplierF?' — '+supplierF:''}`)}</div>`;
   let grandChallan=0,grandBillRecv=0,grandWorkerCost=0,grandProfit=0;
 
   supplierList.forEach(sup=>{
     const supContracts=contracts.filter(c=>c.supplier===sup);
     if(!supContracts.length)return;
     let supChallan=0,supBill=0,supWcost=0;
-    h+=rSub(`🏭 Supplier: ${sup}`);
+    h+=supplierCardHeader(sup,m,y);
+    const {chByIdx,brByIdx}=periodBillRecvMap(supContracts,m,y);
+    let detail='';
     supContracts.forEach((ct,_)=>{
       const idx=contracts.indexOf(ct);
-      const mc=challans.filter(c=>c.ctIdx===idx&&dateInPeriod(c.date,m,y));
-      const mb=bills.filter(b=>(b.orderno===ct.orderno||(b.ctIdx===idx&&!b.orderno))&&dateInPeriod(b.date,m,y));
       const me=takings.filter(e=>e.ctIdx===idx&&dateInPeriod(e.date,m,y));
-      const cv=mc.reduce((s,c)=>s+c.value,0);
-      const br=mb.reduce((s,b)=>s+b.amount,0);
+      const cv=chByIdx[idx]||0;
+      const br=brByIdx[idx]||0;
       const wc=me.reduce((s,e)=>s+e.wearn,0);
       if(!cv&&!br&&!wc)return;
       supChallan+=cv;supBill+=br;supWcost+=wc;
-      h+=rRow(`${ct.style} (${ct.jobtype})`,`Challan: ${taka(cv)} | Bill: ${taka(br)} | Worker: ${taka(wc)}`);
+      detail+=rRow(`${ct.style} (${ct.jobtype})`,`Challan: ${taka(cv)} | Bill: ${taka(br)} | Worker: ${taka(wc)}`);
     });
     const supProfit=supBill-supWcost;
-    h+=rRow(`${sup} — Sub Total Challan`,taka(supChallan),'#2980b9');
-    h+=rRow(`${sup} — Sub Total Bill Recv`,taka(supBill),'#27ae60');
-    h+=rRow(`${sup} — Bill Pending`,taka(supChallan-supBill),(supChallan-supBill)>0?'#c0392b':'#27ae60');
-    h+=rRow(`${sup} — Worker Cost`,taka(supWcost),'#c0392b');
-    h+=rRow(`${sup} — Net Profit (Bill - Worker)`,taka(supProfit),supProfit>=0?'#27ae60':'#c0392b');
+    detail+=rRow(`${sup} — Sub Total Challan`,taka(supChallan),'#2980b9');
+    detail+=rRow(`${sup} — Sub Total Bill Recv`,taka(supBill),'#27ae60');
+    detail+=rRow(`${sup} — Bill Pending`,taka(supChallan-supBill),(supChallan-supBill)>0?'#c0392b':'#27ae60');
+    detail+=rRow(`${sup} — Worker Cost`,taka(supWcost),'#c0392b');
+    detail+=rRow(`${sup} — Net Profit (Bill - Worker)`,taka(supProfit),supProfit>=0?'#27ae60':'#c0392b');
+    h+=`<div class="no-print">${detail}</div>`;
     h+=buildSupplierLedgerTable(sup,m,y);
     grandChallan+=supChallan;grandBillRecv+=supBill;grandWorkerCost+=supWcost;grandProfit+=supProfit;
   });
 
   if(!supplierF&&supplierList.length>1){
-    h+=rSub('OVERALL GRAND TOTAL');
-    h+=rRow('Total Challan Value',taka(grandChallan),'#2980b9');
-    h+=rRow('Total Bill Received',taka(grandBillRecv),'#27ae60');
-    h+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'#c0392b':'#27ae60');
-    h+=rRow('Total Worker Cost',taka(grandWorkerCost),'#c0392b');
-    h+=rRow('Total Net Profit',taka(grandProfit),grandProfit>=0?'#27ae60':'#c0392b');
+    let gh=rSub('OVERALL GRAND TOTAL');
+    gh+=rRow('Total Challan Value',taka(grandChallan),'#2980b9');
+    gh+=rRow('Total Bill Received',taka(grandBillRecv),'#27ae60');
+    gh+=rRow('Total Bill Pending',taka(grandChallan-grandBillRecv),(grandChallan-grandBillRecv)>0?'#c0392b':'#27ae60');
+    gh+=rRow('Total Worker Cost',taka(grandWorkerCost),'#c0392b');
+    gh+=rRow('Total Net Profit',taka(grandProfit),grandProfit>=0?'#27ae60':'#c0392b');
+    h+=`<div class="no-print">${gh}</div>`;
   }
   if(!supplierList.length||grandChallan+grandBillRecv===0)h+='<div class="no-data">কোনো ডেটা পাওয়া যায়নি</div>';
   document.getElementById('r-supplier-result').innerHTML=rBox(h);
