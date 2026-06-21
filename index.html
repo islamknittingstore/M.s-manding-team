@@ -1236,11 +1236,11 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <input type="date" id="pa-detail-to" onchange="refreshPersonDetail()" style="padding:4px 8px;border:1px solid #dde3ea;border-radius:6px;font-size:12px;">
         <button onclick="document.getElementById('pa-detail-from').value='';document.getElementById('pa-detail-to').value='';refreshPersonDetail();" style="background:#888;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">✕ Clear</button>
       </div>
-      <table>
-        <thead><tr><th>#</th><th>তারিখ</th><th>মাস</th><th>লেনদেন</th><th>পরিমাণ</th><th>কারণ/নোট</th></tr></thead>
-        <tbody id="pa-detail-list"></tbody>
-      </table>
-      <div id="pa-detail-summary" style="padding:10px 14px;background:#f7fafd;border-top:1px solid #dde3ea;font-size:13px;"></div>
+      <div id="pa-statement-result" style="padding:10px 14px;"></div>
+      <div class="rpt-action-bar" id="bar-pa-statement" style="display:none;padding:10px 14px;gap:8px;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('pa-statement-result','Personal Statement')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('pa-statement-result','Personal Statement')">📊 Excel Export</button>
+      </div>
     </div>
   </div>
 
@@ -4009,58 +4009,69 @@ function refreshPersonDetail() {
 
 function _renderPersonDetail() {
   const name = _paDetailName, cat = _paDetailCat;
-  const catLabel = { worker: '👷 শ্রমিক', partner: '🤝 পার্টনার', other: '📌 অন্যান্য' };
+  const catMeta = { worker: {icon:'👷',label:'শ্রমিক (Worker)'}, partner: {icon:'🤝',label:'পার্টনার (Partner)'}, other: {icon:'📌',label:'অন্যান্য (Other)'} };
+  const meta = catMeta[cat]||{icon:'📌',label:cat};
   const fmt = n => n.toLocaleString('en-BD');
   const fromVal = (document.getElementById('pa-detail-from')||{}).value || '';
   const toVal   = (document.getElementById('pa-detail-to')  ||{}).value || '';
 
-  const allTxs = personalTxs.filter(t => t.name === name && t.cat === cat).sort((a,b) => b.date.localeCompare(a.date));
+  const allTxs = personalTxs.filter(t => t.name === name && t.cat === cat);
   const txs = allTxs.filter(t => {
     if(fromVal && t.date < fromVal) return false;
     if(toVal   && t.date > toVal)   return false;
     return true;
-  });
+  }).slice().sort((a,b) => a.date.localeCompare(b.date)); // তারিখ অনুযায়ী পুরনো থেকে নতুন — রানিং ব্যালেন্সের জন্য
 
-  const monthMap = {};
-  txs.forEach(t => {
-    const ym = t.date.slice(0,7);
-    if (!monthMap[ym]) monthMap[ym] = { debit:0, credit:0, txs:[] };
-    monthMap[ym][t.txtype === 'debit' ? 'debit' : 'credit'] += t.amount;
-    monthMap[ym].txs.push(t);
-  });
+  const periodLabel = fromVal||toVal ? `${fromVal||'শুরু'} → ${toVal||'শেষ'}` : 'সর্বকাল (All Time)';
 
-  const detailList = document.getElementById('pa-detail-list');
-  let rows = '';
-  Object.keys(monthMap).sort().reverse().forEach(ym => {
-    const m = monthMap[ym];
-    const due = m.debit - m.credit;
-    rows += `<tr style="background:#eaf3fb;">
-      <td colspan="2"><strong>${ym}</strong></td>
-      <td colspan="2" style="color:#c0392b;">দিয়েছি: ৳${fmt(m.debit)}</td>
-      <td colspan="2" style="color:#27ae60;">ফেরত: ৳${fmt(m.credit)} &nbsp;|&nbsp; <strong style="color:${due>0?'#c0392b':'#27ae60'};">বকেয়া: ৳${fmt(Math.abs(due))}</strong></td>
+  let bal=0,totD=0,totC=0,trs='';
+  txs.forEach((t,i)=>{
+    const isDebit=t.txtype==='debit';
+    bal += isDebit ? t.amount : -t.amount;
+    totD += isDebit ? t.amount : 0;
+    totC += !isDebit ? t.amount : 0;
+    trs += `<tr style="${isDebit?'':'background:#eafaf1;'}${!isDebit&&i%2===0?'':''}">
+      <td style="padding:5px 7px;text-align:center;border:1px solid #ccc;font-size:11px;">${i+1}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;font-weight:600;">${fmtDate(t.date)}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;${isDebit?'':'font-weight:700;color:#27ae60;'}">${isDebit?'💸 দিয়েছি':'💚 ফেরত পেয়েছি'}</td>
+      <td style="padding:5px 7px;border:1px solid #ccc;font-size:11px;color:#6b7f94;">${t.note||'-'}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;">${isDebit?taka(t.amount):'00'}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;color:#27ae60;">${!isDebit?taka(t.amount):'00'}</td>
+      <td style="padding:5px 7px;text-align:right;border:1px solid #ccc;font-size:11px;font-weight:700;color:${bal>=0?'#c0392b':'#27ae60'};">${taka(bal)}</td>
     </tr>`;
-    m.txs.forEach((t,i) => {
-      rows += `<tr>
-        <td style="color:#6b7f94;font-size:11px;">${i+1}</td>
-        <td>${t.date}</td>
-        <td>${ym}</td>
-        <td>${t.txtype==='debit'?'<span class="badge badge-red">💸 দিয়েছি</span>':'<span class="badge badge-green">💚 ফেরত</span>'}</td>
-        <td style="font-weight:700;color:${t.txtype==='debit'?'#c0392b':'#27ae60'};">${t.txtype==='debit'?'-':'+'}৳${fmt(t.amount)}</td>
-        <td style="font-size:12px;color:#6b7f94;">${t.note||'—'}</td>
-      </tr>`;
-    });
   });
 
-  detailList.innerHTML = rows || '<tr><td colspan="6" class="no-data">কোনো ডেটা নেই</td></tr>';
+  const cardHead=`<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:6px;overflow:hidden;border:1px solid #dde3ea;">
+    <div style="background:#1a2a3a;color:#fff;padding:14px 18px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;">${meta.icon} ${name}</div>
+    <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;border-bottom:2px solid #dde3ea;font-size:13px;background:#f7fafd;">
+      <span><strong>Name:</strong> ${name} <span style="color:#6b7f94;">(${meta.label})</span></span>
+      <span><strong>Period:</strong> ${periodLabel}</span>
+    </div>
+  </div>`;
 
-  const totalD = txs.filter(t=>t.txtype==='debit').reduce((s,t)=>s+t.amount,0);
-  const totalC = txs.filter(t=>t.txtype==='credit').reduce((s,t)=>s+t.amount,0);
-  const totalDue = totalD - totalC;
-  const rangeLabel = fromVal||toVal ? ` [${fromVal||'শুরু'} → ${toVal||'শেষ'}]` : ' (সর্বকাল)';
-  document.getElementById('pa-detail-summary').innerHTML =
-    `<strong>${name}</strong> (${catLabel[cat]||cat})${rangeLabel} — দিয়েছি: <strong style="color:#c0392b;">৳${fmt(totalD)}</strong> &nbsp;|&nbsp;
-     ফেরত: <strong style="color:#27ae60;">৳${fmt(totalC)}</strong> &nbsp;|&nbsp;
-     বকেয়া: <strong style="color:${totalDue>0?'#c0392b':'#27ae60'};">৳${fmt(Math.abs(totalDue))}</strong>`;
+  const tableHtml = txs.length ? `<div style="padding:8px 14px;background:#fff3e0;font-size:12px;font-weight:700;color:#e65100;border-top:3px solid #e65100;text-transform:uppercase;letter-spacing:0.5px;">📋 Statement — তারিখ অনুযায়ী</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+    <thead><tr style="background:#1a2a3a;color:#fff;">
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;">SN</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Date</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Transaction</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:left;">Note</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">দিয়েছি</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">ফেরত</th>
+      <th style="padding:6px 7px;border:1px solid #4a6080;font-size:11px;text-align:right;">বকেয়া</th>
+    </tr></thead>
+    <tbody>${trs}
+      <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
+        <td colspan="4" style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">Total =</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totD)}</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totC)}</td>
+        <td style="padding:6px 7px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(bal)}</td>
+      </tr>
+    </tbody>
+  </table></div>` : '<div class="no-data">এই পিরিয়ডে কোনো লেনদেন নেই</div>';
+
+  document.getElementById('pa-statement-result').innerHTML = cardHead+tableHtml;
+  document.getElementById('bar-pa-statement').style.display = txs.length ? 'flex' : 'none';
 
   document.getElementById('pa-detail-header').innerHTML =
     `📊 ${name} — বিস্তারিত<span class="ph-right"><button onclick="document.getElementById('pa-person-detail').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ বন্ধ</button></span>`;
