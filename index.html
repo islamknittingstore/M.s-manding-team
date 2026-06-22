@@ -1063,11 +1063,23 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     </div>
   </div>
   <div class="panel">
-    <div class="panel-header">Worker Payable Summary</div>
-    <table>
-      <thead><tr><th>#</th><th>Worker</th><th>Salary Type</th><th>Conv. Paid</th><th>Bill Paid</th><th>Total Paid</th><th>Payable</th><th>Status</th></tr></thead>
-      <tbody id="due-list"><tr><td colspan="8" class="no-data">No data</td></tr></tbody>
-    </table>
+    <div class="panel-header">Worker Payable Summary
+      <span class="ph-right">
+        <input type="month" id="wp-month" class="fs-sel" onchange="renderPayments()">
+        <button onclick="document.getElementById('wp-month').value='';renderPayments();" style="background:#888;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">✕ Clear</button>
+      </span>
+    </div>
+    <div id="wp-summary-result">
+      <table>
+        <thead><tr><th>#</th><th>Worker</th><th>Salary Type</th><th>Conv. Paid</th><th>Bill Paid</th><th>Total Paid</th><th>Payable</th><th>Status</th></tr></thead>
+        <tbody id="due-list"><tr><td colspan="8" class="no-data">No data</td></tr></tbody>
+        <tfoot id="due-list-total"></tfoot>
+      </table>
+    </div>
+    <div class="rpt-action-bar" id="bar-wp-summary" style="display:none;padding:10px 14px;gap:8px;">
+      <button class="rpt-btn rpt-btn-print" onclick="printReport('wp-summary-result','Worker Payable Summary')">🖨️ Browser Print</button>
+      <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('wp-summary-result','Worker Payable Summary')">📊 Excel Export</button>
+    </div>
   </div>
   <div class="panel">
     <div class="panel-header">Payment History</div>
@@ -2719,10 +2731,10 @@ function billTotalRecv(idx){
   return _billRecvCache[idx]||0;
 }
 function _clearBillRecvCache(){ _billRecvCache=null; }
-function workerConvPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.conv,0);}
-function workerBillPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.bill,0);}
-function workerTotalPaid(wn){return payments.filter(p=>p.worker===wn).reduce((s,p)=>s+p.total,0);}
-function workerPayable(wn){return takings.filter(e=>e.worker===wn).reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0)+monthlySalaries.filter(e=>e.worker===wn).reduce((s,e)=>s+(+e.payable||0),0)-workerTotalPaid(wn);}
+function workerConvPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.conv,0);}
+function workerBillPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.bill,0);}
+function workerTotalPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.total,0);}
+function workerPayable(wn,m){return takings.filter(e=>e.worker===wn&&(!m||e.date.startsWith(m))).reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0)+monthlySalaries.filter(e=>e.worker===wn&&(!m||(e.month?e.month===m:(e.date||'').startsWith(m)))).reduce((s,e)=>s+(+e.payable||0),0)-workerTotalPaid(wn,m);}
 
 function populateSelects(){
   const suppliers=companies.filter(c=>c.type==='supplier').map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
@@ -3054,11 +3066,30 @@ function renderBillList(){
 
 function renderPayments(){
   const tb=document.getElementById('due-list');
-  tb.innerHTML=workers.length===0?'<tr><td colspan="8" class="no-data">No workers</td></tr>':
-    workers.map((w,i)=>{
-      const cp=workerConvPaid(w.name),bp=workerBillPaid(w.name),tp=workerTotalPaid(w.name),pay=workerPayable(w.name);
+  const totFoot=document.getElementById('due-list-total');
+  const barEl=document.getElementById('bar-wp-summary');
+  const wpM=(document.getElementById('wp-month')||{}).value||'';
+  if(workers.length===0){
+    tb.innerHTML='<tr><td colspan="8" class="no-data">No workers</td></tr>';
+    if(totFoot) totFoot.innerHTML='';
+    if(barEl) barEl.style.display='none';
+  } else {
+    let totCp=0,totBp=0,totTp=0,totPay=0;
+    tb.innerHTML=workers.map((w,i)=>{
+      const cp=workerConvPaid(w.name,wpM),bp=workerBillPaid(w.name,wpM),tp=workerTotalPaid(w.name,wpM),pay=workerPayable(w.name,wpM);
+      totCp+=cp;totBp+=bp;totTp+=tp;totPay+=pay;
       return `<tr><td>${i+1}</td><td><strong>${w.name}</strong></td><td>${typeBadge(w.type)}</td><td>${taka(cp)}</td><td>${taka(bp)}</td><td>${taka(tp)}</td><td style="color:${pay>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pay)}</td><td><span class="badge ${pay<=0?'badge-green':'badge-red'}">${pay<=0?'Cleared':'Due'}</span></td></tr>`;
     }).join('');
+    if(totFoot) totFoot.innerHTML=`<tr style="background:#1a2a3a;color:#fff;font-weight:700;">
+      <td colspan="3" style="text-align:right;padding:8px 10px;">Total =</td>
+      <td style="padding:8px 10px;">${taka(totCp)}</td>
+      <td style="padding:8px 10px;">${taka(totBp)}</td>
+      <td style="padding:8px 10px;">${taka(totTp)}</td>
+      <td style="padding:8px 10px;color:${totPay>0?'#ff6b6b':'#6fe3a0'};">${taka(totPay)}</td>
+      <td></td>
+    </tr>`;
+    if(barEl) barEl.style.display='flex';
+  }
   const wF=document.getElementById('pf-worker').value,mF=document.getElementById('pf-month').value;
   const list=payments.filter(p=>{if(wF&&p.worker!==wF)return false;if(mF&&!p.date.startsWith(mF))return false;return true;}).slice().reverse();
   const pb=document.getElementById('payment-list');
@@ -4843,41 +4874,41 @@ function exportReportExcel(resultDivId, reportTitle) {
     // rRow:  key-value pair row (two columns)
     const container = resultEl;
 
-    // Walk all direct child divs inside the rBox container
+    // Walk all direct child divs inside the rBox container (যদি থাকে — pure-table report হলে নাও থাকতে পারে)
     const box = container.querySelector('div');
-    if (!box) { alert('রিপোর্টে কোনো ডেটা নেই।'); return; }
+    if (box) {
+      const children = box.children;
+      for (let i = 0; i < children.length; i++) {
+        const el = children[i];
+        const style = el.getAttribute('style') || '';
+        const text = el.innerText || el.textContent || '';
 
-    const children = box.children;
-    for (let i = 0; i < children.length; i++) {
-      const el = children[i];
-      const style = el.getAttribute('style') || '';
-      const text = el.innerText || el.textContent || '';
-
-      // Detect element type by background color or style pattern
-      if (style.includes('background:#1a2a3a') || style.includes('background: #1a2a3a')) {
-        // rHead — section title
-        rows.push([]);
-        rows.push(['=== ' + text.trim() + ' ===']);
-      } else if (style.includes('background:#f7fafd') || style.includes('background: #f7fafd')) {
-        // rSub — subsection header
-        rows.push(['--- ' + text.trim() + ' ---', '']);
-      } else if (el.style && el.style.display === 'flex' || style.includes('display:flex') || style.includes('justify-content:space-between')) {
-        // rRow — key:value pair
-        const spans = el.querySelectorAll('span, strong');
-        if (spans.length >= 2) {
-          const key = (spans[0].innerText || spans[0].textContent || '').trim();
-          const val = (spans[spans.length-1].innerText || spans[spans.length-1].textContent || '').trim();
-          rows.push([key, val]);
-        } else {
-          const parts = text.split('\n').map(s => s.trim()).filter(Boolean);
-          if (parts.length >= 2) {
-            rows.push([parts[0], parts[1]]);
+        // Detect element type by background color or style pattern
+        if (style.includes('background:#1a2a3a') || style.includes('background: #1a2a3a')) {
+          // rHead — section title
+          rows.push([]);
+          rows.push(['=== ' + text.trim() + ' ===']);
+        } else if (style.includes('background:#f7fafd') || style.includes('background: #f7fafd')) {
+          // rSub — subsection header
+          rows.push(['--- ' + text.trim() + ' ---', '']);
+        } else if (el.style && el.style.display === 'flex' || style.includes('display:flex') || style.includes('justify-content:space-between')) {
+          // rRow — key:value pair
+          const spans = el.querySelectorAll('span, strong');
+          if (spans.length >= 2) {
+            const key = (spans[0].innerText || spans[0].textContent || '').trim();
+            const val = (spans[spans.length-1].innerText || spans[spans.length-1].textContent || '').trim();
+            rows.push([key, val]);
           } else {
-            rows.push([text.trim()]);
+            const parts = text.split('\n').map(s => s.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+              rows.push([parts[0], parts[1]]);
+            } else {
+              rows.push([text.trim()]);
+            }
           }
+        } else if (el.tagName!=='TABLE' && text.trim()) {
+          rows.push([text.trim()]);
         }
-      } else if (text.trim()) {
-        rows.push([text.trim()]);
       }
     }
 
