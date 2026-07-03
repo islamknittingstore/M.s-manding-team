@@ -1842,6 +1842,11 @@ function initApp() {
     const d=snap.val();
     if(_isSaving){setSyncStatus('ok');_isSaving=false;showSaveNotify();return;}
     if(d){
+      // Firebase থেকে আসা ডেটা সবসময় বিশ্বাসযোগ্য — local খালি হলেও replace করবো
+      const fbTotal=(d.contracts||[]).length+(d.workers||[]).length+(d.takings||[]).length+(d.challans||[]).length;
+      const localTotal=contracts.length+workers.length+takings.length+challans.length;
+      // Safety log: নতুন ডিভাইসে খালি local কিন্তু Firebase-এ ডেটা আছে — কোনো সমস্যা নেই, Firebase-ই জিতবে
+      if(fbTotal>0 && localTotal===0) console.log('[SAFE] নতুন/খালি ডিভাইস — Firebase ডেটা লোড হচ্ছে।');
       companies      = d.companies       || [];
       contracts      = d.contracts       || [];
       workers        = d.workers         || [];
@@ -1960,6 +1965,22 @@ function save(){
   // Firebase না থাকলে বা paused থাকলে skip
   if(!DATA_REF){setSyncStatus('error');console.error('DATA_REF not ready');return;}
   if(_fbPaused){setSyncStatus('paused');return;}
+
+  // 🛡️ SAFETY: Firebase থেকে একবারও ডেটা load না হলে save করবো না
+  // এটা নতুন/খালি ডিভাইসে Firebase ডেটা মুছে যাওয়া থেকে বাঁচায়
+  if(!_fbLoaded){
+    setSyncStatus('loading');
+    console.warn('[PROTECTED] Firebase এখনো load হয়নি — save blocked। Firebase load হলে স্বয়ংক্রিয়ভাবে আবার try করবে।');
+    // Firebase load হলে আবার save করবো
+    const waitAndSave=setInterval(()=>{
+      if(_fbLoaded){
+        clearInterval(waitAndSave);
+        save();
+      }
+    },500);
+    return;
+  }
+
   _isSaving=true;
   setSyncStatus('saving');
   // Firebase এ পাঠানোর আগে sanitize — invalid value থাকলে reject হবে না
