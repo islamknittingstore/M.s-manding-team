@@ -3039,7 +3039,7 @@ function renderChallanList(){
   }).slice().reverse();
   const tb=document.getElementById('challan-list');
   tb.innerHTML=list.length===0?'<tr><td colspan="11" class="no-data">No challans</td></tr>':
-    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(c.date)}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:#2980b9;font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
+    list.map((c,i)=>`<tr><td>${list.length-i}</td><td>${fmtDate(c.date)}</td><td><strong>${c.style}</strong></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.jobtype}</td><td>${c.pcs}</td><td>${taka(c.rate)}</td><td style="color:#2980b9;font-weight:700;">${taka(c.value)}</td><td>${c.note||'-'}</td><td style="display:flex;gap:4px;"><button class="btn" style="background:#1a6fc4;color:#fff;font-size:11px;padding:4px 8px;" onclick="editChallan(${challans.indexOf(c)})">✏️</button><button class="btn btn-danger" onclick="deleteChallan(${challans.indexOf(c)})">❌</button></td></tr>`).join('');
 
   const tb2=document.getElementById('challan-summary');
   const rows=contracts.map((ct,idx)=>{
@@ -5099,6 +5099,63 @@ function saveContractEdit(){
   save();
   closeContractEdit();
   showFloatNotif('✅ Contract আপডেট হয়েছে — সব সংশ্লিষ্ট ডেটা আপডেট করা হয়েছে।','success');
+}
+</script>
+
+<!-- ===== CHALLAN EDIT MODAL ===== -->
+<div id="challan-edit-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:95%;max-width:460px;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:16px;color:#1a2a3a;">✏️ Edit Challan Entry</h3>
+      <button onclick="closeChallanEdit()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;">✕ Close</button>
+    </div>
+    <input type="hidden" id="che-idx">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Date</label><input type="date" id="che-date" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Pieces (পিছ)</label><input id="che-pcs" type="number" min="0" oninput="updateChallanPreview()" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Rate (৳)</label><input id="che-rate" type="number" min="0" oninput="updateChallanPreview()" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:200px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Note</label><input id="che-note" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div id="che-value-preview" style="margin-top:12px;padding:8px 12px;background:#eaf6ff;border-radius:8px;font-size:13px;color:#1a6fc4;font-weight:600;"></div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeChallanEdit()" style="background:#888;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;">বাতিল</button>
+      <button onclick="saveChallanEdit()" style="background:#1a6fc4;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">💾 Save</button>
+    </div>
+  </div>
+</div>
+<script>
+function editChallan(idx){
+  const c=challans[idx];
+  if(!c) return;
+  document.getElementById('che-idx').value=idx;
+  document.getElementById('che-date').value=c.date||'';
+  document.getElementById('che-pcs').value=c.pcs||0;
+  document.getElementById('che-rate').value=c.rate||0;
+  document.getElementById('che-note').value=c.note||'';
+  updateChallanPreview();
+  document.getElementById('challan-edit-modal').style.display='flex';
+}
+function updateChallanPreview(){
+  const pcs=+document.getElementById('che-pcs').value||0;
+  const rate=+document.getElementById('che-rate').value||0;
+  document.getElementById('che-value-preview').textContent=`Challan Value: ${pcs} × ৳${rate} = ৳${(pcs*rate).toLocaleString()}`;
+}
+function closeChallanEdit(){
+  document.getElementById('challan-edit-modal').style.display='none';
+}
+function saveChallanEdit(){
+  const idx=+document.getElementById('che-idx').value;
+  const c=challans[idx];
+  if(!c) return;
+  const date=document.getElementById('che-date').value;
+  const pcs=+document.getElementById('che-pcs').value||0;
+  const rate=+document.getElementById('che-rate').value||0;
+  const note=document.getElementById('che-note').value.trim();
+  if(!date||!pcs||!rate) return alert('Date, Pieces ও Rate আবশ্যক');
+  challans[idx]={...c,date,pcs,rate,value:pcs*rate,note};
+  save();
+  closeChallanEdit();
+  showFloatNotif('✅ Challan আপডেট হয়েছে।','success');
 }
 </script>
 
