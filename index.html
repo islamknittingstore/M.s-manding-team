@@ -2989,7 +2989,7 @@ function renderContracts(){
       const idx=contracts.indexOf(c);
       const cv=challanTotalValue(idx),br=billTotalRecv(idx),pending=cv-br,pcs=challanTotalPcs(idx);
       const unitLabel=c.unit==='goj'?'গজ':'পিছ';
-      return `<tr><td>${i+1}</td><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:#2980b9;font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td><td><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
+      return `<tr><td>${i+1}</td><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}/<span style="color:#2980b9;font-size:11px;">${unitLabel}</span></td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td><td style="display:flex;gap:4px;"><button class="btn" style="background:#1a6fc4;color:#fff;font-size:11px;padding:4px 8px;" onclick="editContract(${idx})">✏️</button><button class="btn btn-danger" onclick="deleteContract(${idx})">❌</button></td></tr>`;
     }).join('');
 }
 
@@ -4974,5 +4974,133 @@ function exportReportExcel(resultDivId, reportTitle) {
 // ===== END PRINT & EXCEL EXPORT SYSTEM =====
 
 </script>
+
+<!-- ===== CONTRACT EDIT MODAL ===== -->
+<div id="contract-edit-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:95%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:16px;color:#1a2a3a;">✏️ Edit Order / Contract</h3>
+      <button onclick="closeContractEdit()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;">✕ Close</button>
+    </div>
+    <input type="hidden" id="ce-idx">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Date</label><input type="date" id="ce-date" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Order Number</label><input id="ce-orderno" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Supplier</label><select id="ce-supplier" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"><option value="">-- Select --</option></select></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Factory</label><select id="ce-factory" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"><option value="">-- Select --</option></select></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Buyer</label><input id="ce-buyer" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Style Number</label><input id="ce-style" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Job Type</label>
+        <select id="ce-jobtype" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;">
+          <option value="">-- Select --</option>
+          <option>Part Shading</option><option>Colour Touch up</option><option>Hole Mending</option>
+          <option>Foreign Yarn</option><option>Fabric Spot</option><option>Stop Mark</option>
+          <option>Line Mark</option><option>Dying Spot</option><option>Fabric Fault</option>
+          <option>Missing Yarn</option><option>Slub Yarn</option><option>Needle Mark</option>
+          <option>Lackra Damage</option><option>All Kind of Mending</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Rate (৳)</label><input id="ce-rate" type="number" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:120px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Unit</label>
+        <select id="ce-unit" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;">
+          <option value="piece">পিছ</option><option value="goj">গজ</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:18px;padding:10px 14px;background:#fff8e1;border-radius:8px;font-size:11px;color:#b7770d;">
+      ⚠️ এডিট করলে এই Contract-এর সাথে যুক্ত সব Challan, Bill ও Report-এ নতুন Style/Factory/Supplier তথ্য প্রতিফলিত হবে।
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeContractEdit()" style="background:#888;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;">বাতিল</button>
+      <button onclick="saveContractEdit()" style="background:#1a6fc4;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function editContract(idx){
+  const c=contracts[idx];
+  if(!c) return;
+  document.getElementById('ce-idx').value=idx;
+  document.getElementById('ce-date').value=c.date||'';
+  document.getElementById('ce-orderno').value=c.orderno||'';
+  document.getElementById('ce-buyer').value=c.buyer||'';
+  document.getElementById('ce-style').value=c.style||'';
+  document.getElementById('ce-rate').value=c.rate||'';
+  document.getElementById('ce-unit').value=c.unit||'piece';
+
+  // Supplier dropdown পপুলেট করো
+  const supSel=document.getElementById('ce-supplier');
+  const sups=[...new Set(companies.filter(c=>c.type==='supplier').map(c=>c.name))];
+  supSel.innerHTML='<option value="">-- Select --</option>'+sups.map(s=>`<option value="${s}"${s===c.supplier?' selected':''}>${s}</option>`).join('');
+  if(!sups.includes(c.supplier)) supSel.innerHTML+=`<option value="${c.supplier}" selected>${c.supplier}</option>`;
+  supSel.value=c.supplier||'';
+
+  // Factory dropdown পপুলেট করো
+  const facSel=document.getElementById('ce-factory');
+  const facs=[...new Set(companies.filter(c=>c.type==='factory').map(c=>c.name))];
+  facSel.innerHTML='<option value="">-- Select --</option>'+facs.map(f=>`<option value="${f}"${f===c.factory?' selected':''}>${f}</option>`).join('');
+  if(!facs.includes(c.factory)) facSel.innerHTML+=`<option value="${c.factory}" selected>${c.factory}</option>`;
+  facSel.value=c.factory||'';
+
+  document.getElementById('ce-jobtype').value=c.jobtype||'';
+
+  const modal=document.getElementById('contract-edit-modal');
+  modal.style.display='flex';
+}
+
+function closeContractEdit(){
+  document.getElementById('contract-edit-modal').style.display='none';
+}
+
+function saveContractEdit(){
+  const idx=+document.getElementById('ce-idx').value;
+  const c=contracts[idx];
+  if(!c) return;
+
+  const date=document.getElementById('ce-date').value;
+  const orderno=document.getElementById('ce-orderno').value.trim();
+  const supplier=document.getElementById('ce-supplier').value;
+  const factory=document.getElementById('ce-factory').value;
+  const buyer=document.getElementById('ce-buyer').value.trim();
+  const style=document.getElementById('ce-style').value.trim();
+  const jobtype=document.getElementById('ce-jobtype').value;
+  const rate=+document.getElementById('ce-rate').value||0;
+  const unit=document.getElementById('ce-unit').value;
+
+  if(!supplier||!factory||!style||!jobtype||!rate) return alert('Supplier, Factory, Style, Job Type ও Rate আবশ্যক');
+
+  // Contract আপডেট
+  contracts[idx]={...c,date,orderno,supplier,factory,buyer,style,jobtype,rate,unit};
+
+  // এই contract-এর সাথে যুক্ত Challan-এর supplier/factory/style আপডেট
+  challans.forEach(ch=>{
+    if(ch.ctIdx===idx){
+      ch.supplier=supplier;
+      ch.factory=factory;
+      ch.style=style;
+    }
+  });
+
+  // BillSubmits-এর supplier আপডেট (orderno ম্যাচ করলে)
+  if(orderno){
+    billSubmits.forEach(bs=>{
+      if(bs.orderno===c.orderno) bs.supplier=supplier;
+    });
+  }
+
+  // Bills-এর supplier আপডেট (orderno ম্যাচ করলে)
+  if(orderno){
+    bills.forEach(b=>{
+      if(b.orderno===c.orderno) b.supplier=supplier;
+    });
+  }
+
+  save();
+  closeContractEdit();
+  showFloatNotif('✅ Contract আপডেট হয়েছে — সব সংশ্লিষ্ট ডেটা আপডেট করা হয়েছে।','success');
+}
+</script>
+
 </body>
 </html>
