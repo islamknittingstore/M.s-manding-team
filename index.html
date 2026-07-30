@@ -1270,7 +1270,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
       <div class="fg" style="min-width:160px;">
         <label>নাম</label>
-        <input id="pa-name" placeholder="ব্যক্তির নাম লিখুন">
+        <input id="pa-name" list="pa-name-list" placeholder="নাম লিখুন বা সিলেক্ট করুন" autocomplete="off">
+        <datalist id="pa-name-list"></datalist>
       </div>
       <div class="fg" style="min-width:120px;">
         <label>লেনদেন</label>
@@ -4040,6 +4041,13 @@ function deletePersonalTx(id) {
 }
 
 function renderPersonalAccount() {
+  // নামের datalist আপডেট করো — আগে যত নাম এন্ট্রি হয়েছে সব দেখাবে
+  const nameList=document.getElementById('pa-name-list');
+  if(nameList){
+    const uniqueNames=[...new Set(personalTxs.map(t=>t.name))].sort();
+    nameList.innerHTML=uniqueNames.map(n=>`<option value="${n}">`).join('');
+  }
+
   const filterName   = ((document.getElementById('pa-filter-name')   || {}).value || '').toLowerCase().trim();
   const filterCat    = (document.getElementById('pa-filter-cat')    || {}).value || '';
   const filterMonth  = (document.getElementById('pa-filter-month')   || {}).value || '';
@@ -5073,12 +5081,34 @@ function saveContractEdit(){
   // Contract আপডেট
   contracts[idx]={...c,date,orderno,supplier,factory,buyer,style,jobtype,rate,unit};
 
-  // এই contract-এর সাথে যুক্ত Challan-এর supplier/factory/style আপডেট
+  // এই contract-এর সাথে যুক্ত Challan-এর supplier/factory/style/rate/value আপডেট
   challans.forEach(ch=>{
     if(ch.ctIdx===idx){
       ch.supplier=supplier;
       ch.factory=factory;
       ch.style=style;
+      ch.rate=rate;
+      ch.value=ch.pcs*rate;
+    }
+  });
+
+  // Takings (Daily/Piece Worker Entry)-এর style/orderno/supplier/factory আপডেট
+  takings.forEach(t=>{
+    if(t.ctIdx===idx){
+      t.style=style;
+      t.supplier=supplier;
+      t.factory=factory;
+      // wrate ও wearn পুনঃগণনা শুধু piece type-এ (daily-তে wrate আলাদা, পরিবর্তন করবো না)
+    }
+  });
+
+  // Monthly Salaries-এর style/orderno আপডেট
+  monthlySalaries.forEach(ms=>{
+    if(ms.ctIdx===idx){
+      ms.style=style;
+      ms.orderno=orderno;
+      ms.supplier=supplier;
+      ms.factory=factory||ms.factory;
     }
   });
 
