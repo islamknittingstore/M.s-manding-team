@@ -1795,6 +1795,7 @@ let companies=[], contracts=[], workers=[], takings=[], payments=[];
 let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
+let _fbHadData=false; // Firebase-এ কখনো ডেটা ছিল কিনা — এই session-এ জানতে
 let _isSaving=false;
 let _fbPaused=false; // Firebase manually paused flag
 
@@ -1848,6 +1849,7 @@ function initApp() {
       const localTotal=contracts.length+workers.length+takings.length+challans.length;
       // Safety log: নতুন ডিভাইসে খালি local কিন্তু Firebase-এ ডেটা আছে — কোনো সমস্যা নেই, Firebase-ই জিতবে
       if(fbTotal>0 && localTotal===0) console.log('[SAFE] নতুন/খালি ডিভাইস — Firebase ডেটা লোড হচ্ছে।');
+      if(fbTotal>0) _fbHadData=true; // Firebase-এ ডেটা আছে বলে চিহ্নিত করো
       companies      = d.companies       || [];
       contracts      = d.contracts       || [];
       workers        = d.workers         || [];
@@ -1963,35 +1965,41 @@ function save(){
   localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
   localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
   renderAll();
+
   // Firebase না থাকলে বা paused থাকলে skip
   if(!DATA_REF){setSyncStatus('error');console.error('DATA_REF not ready');return;}
   if(_fbPaused){setSyncStatus('paused');return;}
 
-  // 🛡️ SAFETY: Firebase থেকে একবারও ডেটা load না হলে save করবো না
-  // এটা নতুন/খালি ডিভাইসে Firebase ডেটা মুছে যাওয়া থেকে বাঁচায়
+  // 🛡️ SAFETY: Firebase থেকে একবারও ডেটা load না হলে Firebase-এ পুশ করবো না।
+  // কারণ: নতুন/পুরনো ডিভাইসে LocalStorage খালি বা পুরনো থাকতে পারে।
+  // Firebase load হওয়ার আগেই save() করলে ফাঁকা ডেটা Firebase-এর আসল ডেটা মুছে দেবে।
   if(!_fbLoaded){
     setSyncStatus('loading');
-    console.warn('[PROTECTED] Firebase এখনো load হয়নি — save blocked। Firebase load হলে স্বয়ংক্রিয়ভাবে আবার try করবে।');
-    // Firebase load হলে আবার save করবো
-    const waitAndSave=setInterval(()=>{
-      if(_fbLoaded){
-        clearInterval(waitAndSave);
-        save();
-      }
-    },500);
+    console.warn('[PROTECTED] Firebase এখনো load হয়নি — Firebase push blocked। ব্যবহারকারীকে এন্ট্রি করতে দেওয়া হবে না।');
+    // ⚠️ waitAndSave করবো না — কারণ Firebase load হলে সে ডেটা replace করবে,
+    // তারপর user নতুন করে entry দিলে সেটা সঠিকভাবে save হবে।
+    return;
+  }
+
+  // ✅ অতিরিক্ত নিরাপত্তা: সব অ্যারে মিলিয়ে ডেটা আছে কিনা চেক করো।
+  // Firebase-এ আগে ডেটা ছিল কিন্তু এখন সব খালি হলে push করবো না।
+  const localTotal=companies.length+contracts.length+workers.length+
+    takings.length+challans.length+bills.length+monthlySalaries.length;
+  if(_fbHadData && localTotal===0){
+    setSyncStatus('error');
+    console.error('[BLOCKED] Firebase-এ আগে ডেটা ছিল কিন্তু এখন সব খালি — push blocked! রিফ্রেশ করুন।');
+    showFloatNotif('⚠️ সতর্কতা: ডেটা খালি দেখাচ্ছে! Firebase-এ push করা হয়নি। পেজ রিফ্রেশ করুন।','error');
     return;
   }
 
   _isSaving=true;
   setSyncStatus('saving');
-  // Firebase এ পাঠানোর আগে sanitize — invalid value থাকলে reject হবে না
   try{
     DATA_REF.set({
       companies,contracts,workers,takings,payments,
-      challans,bills,
-      billSubmits,
+      challans,bills,billSubmits,
       monthlySalaries:sanitizeForFirebase(monthlySalaries)
-    }).then(()=>{/* listener on('value') এ setSyncStatus('ok') হবে */})
+    }).then(()=>{})
       .catch(e=>{setSyncStatus('error');_isSaving=false;console.error('Firebase save error:',e);});
   }catch(e){
     setSyncStatus('error');
