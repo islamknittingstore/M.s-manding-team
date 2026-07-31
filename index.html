@@ -1292,7 +1292,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         <label>কারণ / নোট</label>
         <input id="pa-note" placeholder="যেমন: বাজার খরচ, ধার...">
       </div>
-      <div class="fg-btn"><button class="btn btn-success" onclick="addPersonalTx()">＋ Add</button></div>
+      <div class="fg-btn" style="display:flex;gap:6px;">
+        <button class="btn btn-success" onclick="addPersonalTx()">＋ Add</button>
+        <button class="btn" style="background:#e67e22;color:#fff;" onclick="showGivingSlipModal()">🧾 Giving Slip</button>
+      </div>
     </div>
   </div>
 
@@ -1691,7 +1694,7 @@ function saveAllNow(){
   setSyncStatus('saving');
   DATA_REF.set({
     companies,contracts,workers,takings,payments,
-    challans,bills,billSubmits,monthlySalaries
+    challans,bills,billSubmits,monthlySalaries,gsData
   }).then(async ()=>{
     setSyncStatus('ok');
     // Local file কানেক্টেড থাকলে সেখানেও লিখো — download নয়
@@ -1795,7 +1798,8 @@ let companies=[], contracts=[], workers=[], takings=[], payments=[];
 let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
-let _fbHadData=false; // Firebase-এ কখনো ডেটা ছিল কিনা — এই session-এ জানতে
+let _fbHadData=false;
+let gsData={companies:[],workers:[],factories:[],lastCompany:'M.S Mending Team'}; // Giving Slip suggestions — Firebase-এ সেভ হবে
 let _isSaving=false;
 let _fbPaused=false; // Firebase manually paused flag
 
@@ -1859,6 +1863,7 @@ function initApp() {
       bills          = d.bills           || [];
       billSubmits    = d.billSubmits     || [];
       monthlySalaries= d.monthlySalaries || [];
+      if(d.gsData) gsData=d.gsData; // Giving Slip suggestions লোড করো
       // localStorage backup
       localStorage.setItem('companies',       JSON.stringify(companies));
       localStorage.setItem('contracts',       JSON.stringify(contracts));
@@ -1873,11 +1878,21 @@ function initApp() {
     const firstLoad = !_fbLoaded;
     _fbLoaded = true;
     setSyncStatus('ok');
-    if(firstLoad) rebalanceAllMonthlySalaries(); // শুধু প্রথম load-এ একবার
-    scheduleRender(); // debounced — একবারই render হবে
+    if(firstLoad){
+      rebalanceAllMonthlySalaries();
+      // প্রথম লোডে নোটিফিকেশন দেখাও
+      const totalRecords=(contracts.length||0)+(workers.length||0)+(takings.length||0)+(challans.length||0);
+      if(totalRecords>0){
+        showFloatNotif(`✅ Firebase থেকে ডেটা লোড হয়েছে!\nContracts: ${contracts.length} | Workers: ${workers.length} | Challans: ${challans.length}`, 'success');
+      } else {
+        showFloatNotif('⚠️ Firebase কানেক্ট হয়েছে — কিন্তু কোনো ডেটা পাওয়া যায়নি।\nনতুন অ্যাকাউন্ট বা খালি ডেটাবেস।', 'warning');
+      }
+    }
+    scheduleRender();
   }, err=>{
     setSyncStatus('error');
     console.error('Firebase read error:', err);
+    showFloatNotif('❌ Firebase থেকে ডেটা লোড হয়নি!\nকারণ: '+err.message+'\nইন্টারনেট কানেকশন চেক করুন।','error');
   });
 } // end initApp()
 
@@ -1998,7 +2013,8 @@ function save(){
     DATA_REF.set({
       companies,contracts,workers,takings,payments,
       challans,bills,billSubmits,
-      monthlySalaries:sanitizeForFirebase(monthlySalaries)
+      monthlySalaries:sanitizeForFirebase(monthlySalaries),
+      gsData
     }).then(()=>{})
       .catch(e=>{setSyncStatus('error');_isSaving=false;console.error('Firebase save error:',e);});
   }catch(e){
@@ -5194,6 +5210,150 @@ function saveChallanEdit(){
   save();
   closeChallanEdit();
   showFloatNotif('✅ Challan আপডেট হয়েছে।','success');
+}
+</script>
+
+<!-- ===== GIVING SLIP MODAL ===== -->
+<div id="giving-slip-modal" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.65);align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:96%;max-width:620px;box-shadow:0 8px 40px rgba(0,0,0,0.4);margin:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:16px;color:#1a2a3a;">🧾 Giving Slip</h3>
+      <button onclick="closeGivingSlip()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;">✕ Close</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <div style="flex:2;min-width:180px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Company Name</label><input id="gs-company" placeholder="M.S Mending Team" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:130px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Month / Period</label><input id="gs-period" placeholder="যেমন: June 2026" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:#6b7f94;margin-bottom:6px;">Worker Entries — প্রতিটা আলাদা স্লিপে প্রিন্ট হবে</div>
+    <div id="gs-rows"></div>
+    <button onclick="addGivingRow()" style="margin-top:8px;background:#2980b9;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;">＋ Add Worker Row</button>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeGivingSlip()" style="background:#888;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;">বাতিল</button>
+      <button onclick="printGivingSlip()" style="background:#1a6fc4;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _gsRowCount=0;
+function showGivingSlipModal(){
+  _gsRowCount=0;
+  document.getElementById('gs-rows').innerHTML='';
+  // পুরনো এন্ট্রি থেকে suggestions লোড করো
+  _gsLoadSuggestions();
+  const lastCompany=(gsData&&gsData.lastCompany)||'M.S Mending Team';
+  document.getElementById('gs-company').value=lastCompany;
+  document.getElementById('gs-period').value='';
+  addGivingRow();
+  document.getElementById('giving-slip-modal').style.display='flex';
+}
+
+function _gsLoadSuggestions(){
+  // Firebase gsData থেকে suggestions লোড করো
+  const workers_list=[...new Set([...(gsData.workers||[]),...(window.personalTxs||[]).map(t=>t.name)])];
+  let wdl=document.getElementById('gs-worker-list');
+  if(!wdl){wdl=document.createElement('datalist');wdl.id='gs-worker-list';document.body.appendChild(wdl);}
+  wdl.innerHTML=workers_list.map(n=>`<option value="${n}">`).join('');
+  let fdl=document.getElementById('gs-factory-list');
+  if(!fdl){fdl=document.createElement('datalist');fdl.id='gs-factory-list';document.body.appendChild(fdl);}
+  fdl.innerHTML=(gsData.factories||[]).map(n=>`<option value="${n}">`).join('');
+  let cdl=document.getElementById('gs-company-list');
+  if(!cdl){cdl=document.createElement('datalist');cdl.id='gs-company-list';document.body.appendChild(cdl);}
+  cdl.innerHTML=(gsData.companies||[]).map(n=>`<option value="${n}">`).join('');
+  document.getElementById('gs-company').setAttribute('list','gs-company-list');
+}
+
+function _gsSaveSuggestions(){
+  const company=document.getElementById('gs-company').value.trim();
+  const rows=[...document.getElementById('gs-rows').children];
+  const wnames=rows.map(r=>(r.querySelector('.gs-wname')||{value:''}).value.trim()).filter(Boolean);
+  const facs=rows.map(r=>(r.querySelector('.gs-fac')||{value:''}).value.trim()).filter(Boolean);
+  const addUnique=(arr,newVals)=>[...new Set([...(arr||[]),...newVals])];
+  if(company){ gsData.lastCompany=company; gsData.companies=addUnique(gsData.companies,[company]); }
+  gsData.workers=addUnique(gsData.workers,wnames);
+  gsData.factories=addUnique(gsData.factories,facs);
+  save(); // Firebase-এ gsData সহ সেভ হবে
+}
+function closeGivingSlip(){
+  document.getElementById('giving-slip-modal').style.display='none';
+}
+function addGivingRow(){
+  _gsRowCount++;
+  const id=_gsRowCount;
+  const div=document.createElement('div');
+  div.id='gs-row-'+id;
+  div.style.cssText='background:#f7fafd;border:1px solid #dde3ea;border-radius:10px;padding:12px;margin-bottom:10px;';
+  const today=new Date().toISOString().slice(0,10);
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <strong style="font-size:12px;color:#1a2a3a;">Worker #${id}</strong>
+    <button onclick="document.getElementById('gs-row-${id}').remove()" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <div style="flex:2;min-width:140px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">Worker Name</label><input placeholder="নাম" list="gs-worker-list" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-wname"></div>
+    <div style="flex:2;min-width:140px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">Factory Name</label><input placeholder="ফ্যাক্টরি" list="gs-factory-list" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-fac"></div>
+    <div style="flex:1;min-width:110px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">Date</label><input type="date" value="${today}" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-date"></div>
+    <div style="flex:1;min-width:90px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">Conveyance (৳)</label><input type="number" placeholder="0" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-conv"></div>
+    <div style="flex:1;min-width:90px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">Daily Salary (৳)</label><input type="number" placeholder="0" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-salary"></div>
+    <div style="flex:1;min-width:80px;"><label style="font-size:10px;font-weight:600;color:#6b7f94;display:block;margin-bottom:3px;">OT (৳)</label><input type="number" placeholder="0" style="width:100%;padding:7px;border:1px solid #dde3ea;border-radius:7px;font-size:12px;" class="gs-ot"></div>
+  </div>`;
+  document.getElementById('gs-rows').appendChild(div);
+}
+function printGivingSlip(){
+  _gsSaveSuggestions();
+  const company=document.getElementById('gs-company').value||'M.S Mending Team';
+  const period=document.getElementById('gs-period').value||'';
+  const rows=[...document.getElementById('gs-rows').children];
+  if(!rows.length) return alert('কমপক্ষে একটা Worker Row যোগ করুন');
+  let workerTables='';
+  let sn=1;
+  rows.forEach(row=>{
+    const wname=(row.querySelector('.gs-wname')||{value:'-'}).value||'-';
+    const fac=(row.querySelector('.gs-fac')||{value:'-'}).value||'-';
+    const date=(row.querySelector('.gs-date')||{value:'-'}).value||'-';
+    const conv=+(row.querySelector('.gs-conv')||{value:0}).value||0;
+    const salary=+(row.querySelector('.gs-salary')||{value:0}).value||0;
+    const ot=+(row.querySelector('.gs-ot')||{value:0}).value||0;
+    const total=salary+ot-conv;
+    workerTables+=`<div class="slip-card">
+      <table class="slip-table">
+        <thead><tr><th colspan="2" class="slip-head">👷 ${wname}</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">S.N</td><td>${sn++}</td></tr>
+          <tr><td class="lbl">Date</td><td>${date}</td></tr>
+          <tr><td class="lbl">Worker Name</td><td>${wname}</td></tr>
+          <tr><td class="lbl">Factory Name</td><td>${fac}</td></tr>
+          <tr><td class="lbl">Conveyance</td><td>৳${conv.toLocaleString()}</td></tr>
+          <tr><td class="lbl">Daily Salary</td><td>৳${salary.toLocaleString()}</td></tr>
+          <tr><td class="lbl">OT</td><td>৳${ot.toLocaleString()}</td></tr>
+        </tbody>
+        <tfoot><tr class="slip-total"><td>Total</td><td>৳${total.toLocaleString()}</td></tr></tfoot>
+      </table>
+      <div class="sig-row"><span>Received By: ________________</span><span>Authorized: ________________</span></div>
+    </div>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Giving Slip</title>
+  <style>
+    @page{size:A4 portrait;margin:16mm 14mm;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#111;}
+    .page-header{text-align:center;border-bottom:2.5px solid #1a2a3a;padding-bottom:10px;margin-bottom:20px;}
+    .page-header h2{font-size:22px;color:#1a2a3a;font-weight:700;letter-spacing:1px;}
+    .page-header p{font-size:12px;color:#555;margin-top:5px;}
+    .slip-card{break-inside:avoid;margin-bottom:24px;border:1.5px solid #bbb;border-radius:6px;overflow:hidden;}
+    .slip-table{width:100%;border-collapse:collapse;}
+    .slip-head{background:#1a2a3a;color:#fff;padding:9px 13px;font-size:14px;font-weight:700;text-align:left;}
+    .slip-table td{padding:8px 13px;border-bottom:1px solid #e0e0e0;font-size:12px;}
+    .lbl{font-weight:600;color:#444;width:42%;background:#f9f9f9;}
+    .slip-total td{padding:9px 13px;background:#eef2f7;font-weight:700;font-size:13px;border-top:2px solid #1a2a3a;}
+    .sig-row{display:flex;justify-content:space-between;padding:11px 14px;font-size:11px;color:#555;border-top:1px dashed #ccc;background:#fafafa;}
+  </style></head><body>
+  <div class="page-header"><h2>${company}</h2><p>Giving Slip &nbsp;|&nbsp; ${period}</p></div>
+  ${workerTables}
+  </body></html>`;
+  const w=window.open('','_blank','width=800,height=900');
+  w.document.write(html);
+  w.document.close();
+  w.onload=()=>{w.focus();w.print();};
 }
 </script>
 
