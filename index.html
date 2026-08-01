@@ -1057,7 +1057,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div class="fg"><label>Conveyance Paid (৳)</label><input id="p-conv" type="number" placeholder="0" value="0" oninput="calcPayTotal()"></div>
       <div class="fg"><label>Bill Payment (৳)</label><input id="p-bill" type="number" placeholder="0" value="0" oninput="calcPayTotal()"></div>
       <div class="fg"><label>Total (Auto ৳)</label><input id="p-total" readonly style="background:#eafaf1;font-weight:700;color:#27ae60;"></div>
-      <div class="fg"><label>Date</label><input id="p-date" type="date"></div>
+      <div class="fg"><label>Payment Date</label><input id="p-date" type="date"></div>
+      <div class="fg"><label>For Month <small style="color:#e67e22;">(কোন মাসের বেতন)</small></label><input id="p-salary-month" type="month" placeholder="যেমন: 2026-07"></div>
       <div class="fg"><label>Note</label><input id="p-note" placeholder="Optional"></div>
       <div class="fg-btn"><button class="btn btn-success" onclick="addPayment()">＋ Pay</button></div>
     </div>
@@ -1088,8 +1089,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <input type="month" id="pf-month" onchange="renderPayments()">
     </div>
     <table>
-      <thead><tr><th>#</th><th>Worker</th><th>Conv.</th><th>Bill</th><th>Total</th><th>Date</th><th>Note</th><th>Action</th></tr></thead>
-      <tbody id="payment-list"><tr><td colspan="8" class="no-data">No payments</td></tr></tbody>
+      <thead><tr><th>#</th><th>Worker</th><th>Conv.</th><th>Bill</th><th>Total</th><th>Payment Date</th><th>For Month</th><th>Note</th><th>Action</th></tr></thead>
+      <tbody id="payment-list"><tr><td colspan="9" class="no-data">No payments</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1467,6 +1468,10 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
     <h5>Data Management</h5>
     <p style="font-size:13px;color:#6b7f94;margin-bottom:14px;">Warning: Firebase ও Local দুটো থেকেই সব data মুছে যাবে।</p>
     <button class="btn btn-danger" onclick="confirmDelete(()=>{DATA_REF.remove();localStorage.clear();location.reload();},'Firebase ও Local সব data মুছবেন? ফিরে পাওয়া যাবে না!')">🗑️ Clear All Data</button>
+    <div style="margin-top:12px;padding:12px;background:#fff8e1;border-radius:8px;border:1px solid #f0d060;">
+      <p style="font-size:12px;color:#b7770d;margin-bottom:8px;">🔧 Orphan Challan Cleanup — যেসব Challan-এর Contract মুছে গেছে কিন্তু Challan রয়ে গেছে সেগুলো পরিষ্কার করে।</p>
+      <button class="btn" style="background:#e67e22;color:#fff;" onclick="cleanOrphanChallans()">🧹 Clean Orphan Challans</button>
+    </div>
   </div>
 </div>
 
@@ -2706,10 +2711,12 @@ function addPayment(){
   const _pWorkerVal=document.getElementById('p-worker').value;
   const worker=(_pWorkerVal.includes(' (')?_pWorkerVal.split(' (')[0]:_pWorkerVal),date=document.getElementById('p-date').value;
   const conv=+document.getElementById('p-conv').value||0,bill=+document.getElementById('p-bill').value||0;
+  const salaryMonth=(document.getElementById('p-salary-month')||{}).value||'';
   if(!worker||(!conv&&!bill)||!date) return alert('Worker, Date ও Amount দিন');
-  payments.push({worker,conv,bill,total:conv+bill,date,note:document.getElementById('p-note').value.trim()});
+  payments.push({worker,conv,bill,total:conv+bill,date,salaryMonth,note:document.getElementById('p-note').value.trim()});
   document.getElementById('p-conv').value='0';document.getElementById('p-bill').value='0';
   document.getElementById('p-total').value='';document.getElementById('p-note').value='';
+  if(document.getElementById('p-salary-month')) document.getElementById('p-salary-month').value='';
   save();
 }
 
@@ -2718,7 +2725,32 @@ function deleteTaking(i){confirmDelete(()=>{takings.splice(i,1);save();},'এই
 function deletePayment(i){confirmDelete(()=>{payments.splice(i,1);save();},'এই পেমেন্ট মুছবেন?');}
 function deleteChallan(i){confirmDelete(()=>{challans.splice(i,1);save();},'এই চালান মুছবেন?');}
 function deleteBill(i){confirmDelete(()=>{bills.splice(i,1);save();},'এই বিল মুছবেন?');}
-function deleteContract(i){confirmDelete(()=>{contracts.splice(i,1);save();},'এই contract মুছবেন?');}
+
+function cleanOrphanChallans(){
+  const before=challans.length;
+  challans=challans.filter(c=>c.ctIdx!=null && c.ctIdx>=0 && c.ctIdx<contracts.length);
+  const removed=before-challans.length;
+  if(removed===0){
+    showFloatNotif('✅ কোনো orphan challan পাওয়া যায়নি — ডেটা পরিষ্কার আছে।','success');
+  } else {
+    save();
+    showFloatNotif(`🧹 ${removed}টি orphan challan মুছে দেওয়া হয়েছে।`,'success');
+  }
+}
+
+function deleteContract(idx){confirmDelete(()=>{
+  // Contract মুছার আগে সংশ্লিষ্ট সব ডেটা সরাও
+  challans=challans.filter(c=>c.ctIdx!==idx);
+  takings=takings.filter(t=>t.ctIdx!==idx);
+  monthlySalaries=monthlySalaries.filter(m=>m.ctIdx!==idx&&m.ctIdx!==null||m.absent);
+  // বাকি entries-এর ctIdx re-index করো (মুছা contract-এর পরের index গুলো ১ কমাও)
+  challans.forEach(c=>{if(c.ctIdx>idx)c.ctIdx--;});
+  takings.forEach(t=>{if(t.ctIdx>idx)t.ctIdx--;});
+  monthlySalaries.forEach(m=>{if(m.ctIdx!=null&&m.ctIdx>idx)m.ctIdx--;});
+  contracts.splice(idx,1);
+  save();
+  showFloatNotif('✅ Contract ও সংশ্লিষ্ট সব Challan/Entry মুছে গেছে।','success');
+},'এই contract ও এর সব Challan, Worker Entry মুছবেন?');}
 
 function taka(n){return '৳'+(+n||0).toLocaleString();}
 // Date format helpers
@@ -3140,8 +3172,11 @@ function renderPayments(){
   const wF=document.getElementById('pf-worker').value,mF=document.getElementById('pf-month').value;
   const list=payments.filter(p=>{if(wF&&p.worker!==wF)return false;if(mF&&!p.date.startsWith(mF))return false;return true;}).slice().reverse();
   const pb=document.getElementById('payment-list');
-  pb.innerHTML=list.length===0?'<tr><td colspan="8" class="no-data">No payments</td></tr>':
-    list.map((p,i)=>`<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${fmtDate(p.date)}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`).join('');
+  pb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No payments</td></tr>':
+    list.map((p,i)=>{
+      const smLabel=p.salaryMonth?`<span style="background:#fff3e0;color:#e67e22;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;">${fmtMonth(p.salaryMonth)}</span>`:'<span style="color:#aaa;font-size:11px;">—</span>';
+      return `<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${fmtDate(p.date)}</td><td>${smLabel}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`;
+    }).join('');
 }
 
 function renderDashboard(){
@@ -5103,57 +5138,71 @@ function saveContractEdit(){
 
   if(!supplier||!factory||!style||!jobtype||!rate) return alert('Supplier, Factory, Style, Job Type ও Rate আবশ্যক');
 
-  // Contract আপডেট
+  const oldOrderno=c.orderno;
+  const oldRate=c.rate;
+  const rateChanged=(rate!==oldRate);
+  const ordernoChanged=(orderno!==oldOrderno);
+
+  // ১. Contract আপডেট
   contracts[idx]={...c,date,orderno,supplier,factory,buyer,style,jobtype,rate,unit};
 
-  // এই contract-এর সাথে যুক্ত Challan-এর supplier/factory/style/rate/value আপডেট
+  // ২. Challans — সব ফিল্ড আপডেট, rate বদলালে value রিক্যালকুলেট
   challans.forEach(ch=>{
     if(ch.ctIdx===idx){
-      ch.supplier=supplier;
-      ch.factory=factory;
-      ch.style=style;
-      ch.rate=rate;
-      ch.value=ch.pcs*rate;
+      ch.supplier=supplier; ch.factory=factory; ch.style=style;
+      ch.rate=rate; ch.value=ch.pcs*rate;
     }
   });
 
-  // Takings (Daily/Piece Worker Entry)-এর style/orderno/supplier/factory আপডেট
+  // ৩. Takings (Daily/Piece Worker Entry)
   takings.forEach(t=>{
     if(t.ctIdx===idx){
-      t.style=style;
-      t.supplier=supplier;
-      t.factory=factory;
-      // wrate ও wearn পুনঃগণনা শুধু piece type-এ (daily-তে wrate আলাদা, পরিবর্তন করবো না)
+      t.style=style; t.supplier=supplier; t.factory=factory; t.jobtype=jobtype;
+      // Piece worker হলে rate বদলালে earnings রিক্যালকুলেট করো
+      if(rateChanged && t.salaryType==='piece' && t.pcs){
+        t.wrate=rate;
+        t.wearn=t.pcs*rate;
+        t.payable=Math.max(0,t.wearn-t.conv);
+      }
     }
   });
 
-  // Monthly Salaries-এর style/orderno আপডেট
+  // ৪. Monthly Salaries
   monthlySalaries.forEach(ms=>{
     if(ms.ctIdx===idx){
-      ms.style=style;
-      ms.orderno=orderno;
-      ms.supplier=supplier;
-      ms.factory=factory||ms.factory;
+      ms.style=style; ms.orderno=orderno;
+      ms.supplier=supplier; ms.factory=factory||ms.factory;
     }
   });
 
-  // BillSubmits-এর supplier আপডেট (orderno ম্যাচ করলে)
-  if(orderno){
-    billSubmits.forEach(bs=>{
-      if(bs.orderno===c.orderno) bs.supplier=supplier;
-    });
-  }
+  // ৫. BillSubmits — orderno ও supplier উভয়ই আপডেট
+  billSubmits.forEach(bs=>{
+    if(bs.orderno===oldOrderno){
+      bs.supplier=supplier;
+      if(ordernoChanged) bs.orderno=orderno;
+    }
+  });
 
-  // Bills-এর supplier আপডেট (orderno ম্যাচ করলে)
-  if(orderno){
-    bills.forEach(b=>{
-      if(b.orderno===c.orderno) b.supplier=supplier;
-    });
-  }
+  // ৬. Bills (Bill Receive) — orderno ও supplier উভয়ই আপডেট
+  bills.forEach(b=>{
+    if(b.orderno===oldOrderno){
+      b.supplier=supplier;
+      if(ordernoChanged) b.orderno=orderno;
+    }
+  });
+
+  // ৭. Challan-এর note-এ orderno থাকলে সেটাও আপডেট (কিছু এন্ট্রিতে note-এ orderno থাকে)
+  // (এটা optional — skip করা হলো কারণ note user-defined)
+
+  const changes=[];
+  if(ordernoChanged) changes.push(`Order No: ${oldOrderno} → ${orderno}`);
+  if(rateChanged) changes.push(`Rate: ৳${oldRate} → ৳${rate}`);
+  if(c.style!==style) changes.push(`Style: ${c.style} → ${style}`);
+  if(c.supplier!==supplier) changes.push(`Supplier: ${c.supplier} → ${supplier}`);
 
   save();
   closeContractEdit();
-  showFloatNotif('✅ Contract আপডেট হয়েছে — সব সংশ্লিষ্ট ডেটা আপডেট করা হয়েছে।','success');
+  showFloatNotif(`✅ Contract আপডেট হয়েছে।${changes.length?' পরিবর্তন: '+changes.join(', '):''}`, 'success');
 }
 </script>
 
