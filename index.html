@@ -2864,13 +2864,14 @@ function onBillSubmitOrderSelect(){
   const cts=getContractsByOrder(ord);
   supEl.value=cts[0]?cts[0].supplier:'';
   const idxs=contracts.reduce((a,c,i)=>c.orderno===ord?[...a,i]:a,[]);
-  const rows=challans.filter(c=>idxs.includes(c.ctIdx));
+  // challan-এর নিজস্ব index সংরক্ষণ করো যাতে সঠিক চালান সিলেক্ট হয়
+  const rows=challans.map((c,i)=>({...c,_challanIdx:i})).filter(c=>idxs.includes(c.ctIdx));
   const tb=document.getElementById('bs-challan-rows');
   if(rows.length===0){
     wrap.style.display='none';
   } else {
-    tb.innerHTML=rows.map((c,i)=>`<tr>
-      <td><input type="checkbox" class="bs-ch-chk" data-val="${c.value}" onchange="calcBsSelected()"></td>
+    tb.innerHTML=rows.map((c)=>`<tr>
+      <td><input type="checkbox" class="bs-ch-chk" data-val="${c.value}" data-idx="${c._challanIdx}" onchange="calcBsSelected()"></td>
       <td>${c.style}</td><td>${c.factory}</td><td>${c.note||'-'}</td>
       <td>${c.pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(c.value)}</td><td>${fmtDate(c.date)}</td>
     </tr>`).join('');
