@@ -475,6 +475,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 
   <!-- Personal Account -->
   <a onclick="showPage('personal')" id="nav-personal" style="margin-top:8px;border:1px solid #c0392b44;background:#1f1010;"><span class="icon">💰</span> My Personal Account</a>
+  <a onclick="showPage('giving')" id="nav-giving" style="border:1px solid #1a6fc444;background:#0f1f10;"><span class="icon">🤝</span> Giving Account</a>
 
   <!-- Settings -->
   <a onclick="showPage('settings')" id="nav-settings"><span class="icon">⚙️</span> Settings</a>
@@ -1326,6 +1327,85 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   </div>
 </div>
 
+
+<!-- GIVING ACCOUNT PAGE -->
+<div id="page-giving" class="page">
+  <div class="page-header">
+    <h2>🤝 Giving Account</h2>
+    <p style="font-size:12px;color:#a8c0d6;margin-top:4px;">Company থেকে লোক এনে Factory-তে দেওয়া এবং পাওনার হিসাব</p>
+  </div>
+
+  <!-- Entry Form -->
+  <div class="form-panel">
+    <h5>➕ নতুন এন্ট্রি</h5>
+    <div class="form-row">
+      <div class="fg"><label>Worker Name</label><input id="gv-worker" list="gs-worker-list" placeholder="Worker নাম" autocomplete="off"></div>
+      <div class="fg"><label>Company Name</label><input id="gv-company" list="gs-company-list" placeholder="কোম্পানি নাম" autocomplete="off"></div>
+      <div class="fg"><label>Factory Name</label><input id="gv-factory" list="gs-factory-list" placeholder="ফ্যাক্টরি নাম" autocomplete="off"></div>
+      <div class="fg"><label>লেনদেন</label>
+        <select id="gv-txtype">
+          <option value="giving">💸 Giving (দিয়েছি)</option>
+          <option value="taking">💚 Taking (পেয়েছি)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Amount (৳)</label><input id="gv-amount" type="number" placeholder="0" value="0"></div>
+      <div class="fg"><label>Date</label><input id="gv-date" type="date"></div>
+      <div class="fg"><label>Month</label><input id="gv-month" type="month"></div>
+      <div class="fg"><label>Note</label><input id="gv-note" placeholder="যেমন: July salary, Factory payment..."></div>
+      <div class="fg-btn"><button class="btn btn-success" onclick="addGivingTx()">＋ Add</button></div>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div class="panel">
+    <div class="panel-header">📊 ব্যক্তি-ভিত্তিক বকেয়া সারসংক্ষেপ
+      <span class="ph-right">
+        <input type="month" id="gv-filter-month" class="fs-sel" onchange="renderGivingAccount()">
+        <select id="gv-filter-company" class="fs-sel" onchange="renderGivingAccount()"><option value="">All Companies</option></select>
+        <button onclick="document.getElementById('gv-filter-month').value='';document.getElementById('gv-filter-company').value='';renderGivingAccount();" style="background:#888;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">✕ Clear</button>
+      </span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>নাম</th><th>Company</th><th>মোট দিয়েছি</th><th>মোট ফেরত</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead>
+      <tbody id="gv-summary-list"><tr><td colspan="7" class="no-data">No data</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Detail View -->
+  <div id="gv-detail-panel" style="display:none;margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-header" id="gv-detail-header">📋 বিস্তারিত
+        <span class="ph-right">
+          <input type="date" id="gv-detail-from" onchange="renderGivingDetail()" style="padding:4px 8px;border:1px solid #3a5068;background:#243447;color:#a8c0d6;border-radius:5px;font-size:11px;">
+          <span style="color:#a8c0d6;font-size:11px;">→</span>
+          <input type="date" id="gv-detail-to" onchange="renderGivingDetail()" style="padding:4px 8px;border:1px solid #3a5068;background:#243447;color:#a8c0d6;border-radius:5px;font-size:11px;">
+          <button onclick="document.getElementById('gv-detail-from').value='';document.getElementById('gv-detail-to').value='';renderGivingDetail();" style="background:#888;color:#fff;border:none;border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;">✕</button>
+          <button onclick="document.getElementById('gv-detail-panel').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">✕ বন্ধ</button>
+        </span>
+      </div>
+      <div id="gv-statement-result" style="padding:10px 14px;"></div>
+      <div class="rpt-action-bar" id="bar-gv-statement" style="display:none;padding:10px 14px;">
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('gv-statement-result','Giving Statement')">🖨️ Print</button>
+        <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('gv-statement-result','Giving Statement')">📊 Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="panel">
+    <div class="panel-header">📝 লেনদেনের ইতিহাস
+      <span class="ph-right">
+        <input type="text" id="gvh-worker-filter" placeholder="নাম খুঁজুন..." class="fs-sel" oninput="renderGivingHistory()">
+        <input type="month" id="gvh-month-filter" class="fs-sel" onchange="renderGivingHistory()">
+      </span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Date</th><th>Worker</th><th>Company</th><th>Factory</th><th>লেনদেন</th><th>Amount</th><th>Note</th><th>Action</th></tr></thead>
+      <tbody id="gv-history-list"><tr><td colspan="9" class="no-data">No entries</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div id="page-settings" class="page">
   <div class="page-header"><h2>⚙️ Settings</h2></div>
@@ -1699,7 +1779,7 @@ function saveAllNow(){
   setSyncStatus('saving');
   DATA_REF.set({
     companies,contracts,workers,takings,payments,
-    challans,bills,billSubmits,monthlySalaries,gsData
+    challans,bills,billSubmits,monthlySalaries,gsData,givingTxs
   }).then(async ()=>{
     setSyncStatus('ok');
     // Local file কানেক্টেড থাকলে সেখানেও লিখো — download নয়
@@ -1804,7 +1884,8 @@ let challans=[], bills=[], billSubmits=[], monthlySalaries=[];
 let currentSalaryType='daily';
 let _fbLoaded=false;
 let _fbHadData=false;
-let gsData={companies:[],workers:[],factories:[],lastCompany:'M.S Mending Team'}; // Giving Slip suggestions — Firebase-এ সেভ হবে
+let gsData={companies:[],workers:[],factories:[],lastCompany:'M.S Mending Team'};
+let givingTxs=[]; // Giving Slip suggestions — Firebase-এ সেভ হবে
 let _isSaving=false;
 let _fbPaused=false; // Firebase manually paused flag
 
@@ -1868,7 +1949,8 @@ function initApp() {
       bills          = d.bills           || [];
       billSubmits    = d.billSubmits     || [];
       monthlySalaries= d.monthlySalaries || [];
-      if(d.gsData) gsData=d.gsData; // Giving Slip suggestions লোড করো
+      if(d.gsData) gsData=d.gsData;
+      givingTxs=d.givingTxs||[];
       // localStorage backup
       localStorage.setItem('companies',       JSON.stringify(companies));
       localStorage.setItem('contracts',       JSON.stringify(contracts));
@@ -2019,7 +2101,7 @@ function save(){
       companies,contracts,workers,takings,payments,
       challans,bills,billSubmits,
       monthlySalaries:sanitizeForFirebase(monthlySalaries),
-      gsData
+      gsData,givingTxs
     }).then(()=>{})
       .catch(e=>{setSyncStatus('error');_isSaving=false;console.error('Firebase save error:',e);});
   }catch(e){
@@ -2058,6 +2140,13 @@ function showPage(id){
   document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   const navEl=document.getElementById('nav-'+id);if(navEl)navEl.classList.add('active');
+  if(id==='giving'){
+    renderGivingAccount();
+    const gvDate=document.getElementById('gv-date');
+    if(gvDate&&!gvDate.value) gvDate.value=new Date().toISOString().slice(0,10);
+    const gvMonth=document.getElementById('gv-month');
+    if(gvMonth&&!gvMonth.value) gvMonth.value=new Date().toISOString().slice(0,7);
+  }
   // Auto-open the group containing this page
   const grp=pageGroupMap[id];
   if(grp){
@@ -4291,6 +4380,179 @@ function _renderPersonDetail() {
 setSalaryType('daily');
 renderAll();
 renderPersonalAccount();
+
+// ===== GIVING ACCOUNT =====
+let _gvDetailWorker='',_gvDetailCompany='';
+
+function addGivingTx(){
+  const worker=document.getElementById('gv-worker').value.trim();
+  const company=document.getElementById('gv-company').value.trim();
+  const factory=document.getElementById('gv-factory').value.trim();
+  const txtype=document.getElementById('gv-txtype').value;
+  const amount=+document.getElementById('gv-amount').value||0;
+  const date=document.getElementById('gv-date').value;
+  const month=document.getElementById('gv-month').value||date.slice(0,7);
+  const note=document.getElementById('gv-note').value.trim();
+  if(!worker||!company||!amount||!date) return alert('Worker, Company, Amount ও Date আবশ্যক');
+  givingTxs.push({worker,company,factory,txtype,amount,date,month,note});
+  // suggestions আপডেট
+  if(!gsData.workers.includes(worker)) gsData.workers.push(worker);
+  if(!gsData.companies.includes(company)) gsData.companies.push(company);
+  if(factory&&!gsData.factories.includes(factory)) gsData.factories.push(factory);
+  _gsLoadSuggestions();
+  document.getElementById('gv-amount').value='0';
+  document.getElementById('gv-note').value='';
+  save();
+}
+
+function renderGivingAccount(){
+  const mF=document.getElementById('gv-filter-month').value;
+  const cF=document.getElementById('gv-filter-company').value;
+
+  // Company filter dropdown populate
+  const allCompanies=[...new Set(givingTxs.map(t=>t.company))].sort();
+  const cSel=document.getElementById('gv-filter-company');
+  const cVal=cSel.value;
+  cSel.innerHTML='<option value="">All Companies</option>'+allCompanies.map(c=>`<option value="${c}"${c===cVal?' selected':''}>${c}</option>`).join('');
+
+  // Group by worker+company
+  const groups={};
+  givingTxs.filter(t=>(!mF||t.month===mF)&&(!cF||t.company===cF)).forEach(t=>{
+    const key=`${t.worker}||${t.company}`;
+    if(!groups[key]) groups[key]={worker:t.worker,company:t.company,giving:0,taking:0};
+    if(t.txtype==='giving') groups[key].giving+=t.amount;
+    else groups[key].taking+=t.amount;
+  });
+
+  const list=Object.values(groups).sort((a,b)=>a.worker.localeCompare(b.worker));
+  const tb=document.getElementById('gv-summary-list');
+  if(!list.length){tb.innerHTML='<tr><td colspan="7" class="no-data">No data</td></tr>';return;}
+  tb.innerHTML=list.map((g,i)=>{
+    const bal=g.giving-g.taking;
+    const isOver=bal<=0;
+    return `<tr style="cursor:pointer;" onclick="showGivingDetail('${g.worker.replace(/'/g,"\\'")}','${g.company.replace(/'/g,"\\'")}')">
+      <td>${i+1}</td>
+      <td style="color:#4fc3f7;font-weight:600;">${g.worker}<br><small style="color:#6b7f94;font-size:10px;">(${mF||'সর্বকাল'})</small></td>
+      <td style="font-size:11px;color:#a8c0d6;">${g.company}</td>
+      <td style="color:#c0392b;font-weight:700;">${taka(g.giving)}</td>
+      <td style="color:#27ae60;font-weight:700;">${taka(g.taking)}</td>
+      <td style="color:${isOver?'#27ae60':'#c0392b'};font-weight:700;">${taka(bal)}</td>
+      <td><span class="badge ${isOver?'badge-green':'badge-red'}">${isOver?'অতিরিক্ত নিয়েছে':'বকেয়া আছে'}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderGivingHistory();
+}
+
+function showGivingDetail(worker,company){
+  _gvDetailWorker=worker;_gvDetailCompany=company;
+  document.getElementById('gv-detail-from').value='';
+  document.getElementById('gv-detail-to').value='';
+  document.getElementById('gv-detail-header').innerHTML=`📋 ${worker} — ${company} &nbsp;<span style="font-size:11px;color:#a8c0d6;font-weight:400;">বিস্তারিত</span>
+    <span class="ph-right">
+      <input type="date" id="gv-detail-from" onchange="renderGivingDetail()" style="padding:4px 8px;border:1px solid #3a5068;background:#243447;color:#a8c0d6;border-radius:5px;font-size:11px;">
+      <span style="color:#a8c0d6;font-size:11px;">→</span>
+      <input type="date" id="gv-detail-to" onchange="renderGivingDetail()" style="padding:4px 8px;border:1px solid #3a5068;background:#243447;color:#a8c0d6;border-radius:5px;font-size:11px;">
+      <button onclick="document.getElementById('gv-detail-from').value='';document.getElementById('gv-detail-to').value='';renderGivingDetail();" style="background:#888;color:#fff;border:none;border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;">✕</button>
+      <button onclick="document.getElementById('gv-detail-panel').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">✕ বন্ধ</button>
+    </span>`;
+  document.getElementById('gv-detail-panel').style.display='block';
+  renderGivingDetail();
+  document.getElementById('gv-detail-panel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderGivingDetail(){
+  const worker=_gvDetailWorker,company=_gvDetailCompany;
+  const fromV=(document.getElementById('gv-detail-from')||{}).value||'';
+  const toV=(document.getElementById('gv-detail-to')||{}).value||'';
+  const txs=givingTxs.filter(t=>t.worker===worker&&t.company===company&&(!fromV||t.date>=fromV)&&(!toV||t.date<=toV)).slice().sort((a,b)=>a.date.localeCompare(b.date));
+
+  const periodLabel=fromV||toV?`${fromV||'শুরু'} → ${toV||'শেষ'}`:'সর্বকাল (All Time)';
+  const cardHead=`<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);margin-bottom:6px;overflow:hidden;border:1px solid #dde3ea;">
+    <div style="background:#1a2a3a;color:#fff;padding:14px 18px;font-size:15px;font-weight:700;">🤝 ${worker}</div>
+    <div style="padding:10px 16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13px;background:#f7fafd;">
+      <span><strong>Worker:</strong> ${worker} &nbsp;|&nbsp; <strong>Company:</strong> ${company}</span>
+      <span><strong>Period:</strong> ${periodLabel}</span>
+    </div>
+  </div>`;
+
+  if(!txs.length){
+    document.getElementById('gv-statement-result').innerHTML=cardHead+'<div class="no-data">এই পিরিয়ডে কোনো এন্ট্রি নেই</div>';
+    document.getElementById('bar-gv-statement').style.display='none';
+    return;
+  }
+
+  let bal=0,totG=0,totT=0,trs='';
+  txs.forEach((t,i)=>{
+    const isGiving=t.txtype==='giving';
+    bal+=isGiving?t.amount:-t.amount;
+    totG+=isGiving?t.amount:0; totT+=isGiving?0:t.amount;
+    trs+=`<tr style="${isGiving?i%2===0?'background:#fafbfc;':'':'background:#eafaf1;'}">
+      <td style="padding:5px 8px;text-align:center;border:1px solid #dde3ea;font-size:11px;">${i+1}</td>
+      <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;font-weight:600;">${fmtDate(t.date)}</td>
+      <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;">${t.month||t.date.slice(0,7)}</td>
+      <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;${isGiving?'':'color:#27ae60;font-weight:700;'}">${isGiving?'💸 Giving':'💚 Taking'}</td>
+      <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;color:#6b7f94;">${t.factory||'-'}</td>
+      <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;">${t.note||'-'}</td>
+      <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;">${isGiving?taka(t.amount):'00'}</td>
+      <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;color:#27ae60;">${!isGiving?taka(t.amount):'00'}</td>
+      <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;font-weight:700;color:${bal>=0?'#c0392b':'#27ae60'};">${taka(bal)}</td>
+    </tr>`;
+  });
+
+  const tableHtml=`<div style="padding:8px 14px;background:#fff3e0;font-size:12px;font-weight:700;color:#e65100;border-top:3px solid #e65100;text-transform:uppercase;">📋 Statement — Chronological Order</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+    <thead><tr style="background:#1a2a3a;color:#fff;">
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;">SN</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Date</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Month</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Transaction</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Factory</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Note</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Giving</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Taking</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Balance</th>
+    </tr></thead>
+    <tbody>${trs}
+      <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
+        <td colspan="6" style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">Total =</td>
+        <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totG)}</td>
+        <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totT)}</td>
+        <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;color:${bal>=0?'#ff8888':'#88ffaa'};">${taka(bal)}</td>
+      </tr>
+    </tbody>
+  </table></div>`;
+
+  document.getElementById('gv-statement-result').innerHTML=cardHead+tableHtml;
+  document.getElementById('bar-gv-statement').style.display='flex';
+}
+
+function renderGivingHistory(){
+  const wF=(document.getElementById('gvh-worker-filter')||{value:''}).value.toLowerCase();
+  const mF=(document.getElementById('gvh-month-filter')||{value:''}).value;
+  const list=givingTxs.filter(t=>(!wF||(t.worker.toLowerCase().includes(wF)||t.company.toLowerCase().includes(wF)))&&(!mF||t.month===mF||t.date.startsWith(mF))).slice().reverse();
+  const tb=document.getElementById('gv-history-list');
+  tb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No entries</td></tr>':
+    list.map((t,i)=>{
+      const isG=t.txtype==='giving';
+      return `<tr>
+        <td>${list.length-i}</td>
+        <td>${fmtDate(t.date)}</td>
+        <td style="color:#4fc3f7;font-weight:600;">${t.worker}</td>
+        <td style="font-size:11px;color:#a8c0d6;">${t.company}</td>
+        <td style="font-size:11px;">${t.factory||'-'}</td>
+        <td>${isG?'<span class="badge badge-red">💸 Giving</span>':'<span class="badge badge-green">💚 Taking</span>'}</td>
+        <td style="font-weight:700;color:${isG?'#c0392b':'#27ae60'};">${taka(t.amount)}</td>
+        <td style="font-size:11px;color:#6b7f94;">${t.note||'-'}</td>
+        <td><button class="btn btn-danger" onclick="deleteGivingTx(${givingTxs.indexOf(t)})">❌</button></td>
+      </tr>`;
+    }).join('');
+}
+
+function deleteGivingTx(idx){confirmDelete(()=>{givingTxs.splice(idx,1);save();},'এই এন্ট্রি মুছবেন?');}
+
+function renderAll_giving(){renderGivingAccount();}
+// ===== END GIVING ACCOUNT =====
 
 function forceSync(){
   setSyncStatus('saving');
