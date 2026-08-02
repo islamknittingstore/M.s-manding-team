@@ -1339,9 +1339,9 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   <div class="form-panel">
     <h5>➕ নতুন এন্ট্রি</h5>
     <div class="form-row">
-      <div class="fg"><label>Worker Name</label><input id="gv-worker" list="gs-worker-list" placeholder="Worker নাম" autocomplete="off"></div>
-      <div class="fg"><label>Company Name</label><input id="gv-company" list="gs-company-list" placeholder="কোম্পানি নাম" autocomplete="off"></div>
-      <div class="fg"><label>Factory Name</label><input id="gv-factory" list="gs-factory-list" placeholder="ফ্যাক্টরি নাম" autocomplete="off"></div>
+      <div class="fg"><label>Worker Name</label><input id="gv-worker" list="gv-worker-list" placeholder="Worker নাম" autocomplete="off"><datalist id="gv-worker-list"></datalist></div>
+      <div class="fg"><label>Company Name</label><input id="gv-company" list="gv-company-list" placeholder="কোম্পানি নাম" autocomplete="off"><datalist id="gv-company-list"></datalist></div>
+      <div class="fg"><label>Factory Name</label><input id="gv-factory" list="gv-factory-list" placeholder="ফ্যাক্টরি নাম" autocomplete="off"><datalist id="gv-factory-list"></datalist></div>
       <div class="fg"><label>লেনদেন</label>
         <select id="gv-txtype">
           <option value="giving">💸 Giving (দিয়েছি)</option>
@@ -1349,6 +1349,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
         </select>
       </div>
       <div class="fg"><label>Amount (৳)</label><input id="gv-amount" type="number" placeholder="0" value="0"></div>
+      <div class="fg"><label>Conveyance (৳)</label><input id="gv-conv" type="number" placeholder="0" value="0"></div>
       <div class="fg"><label>Date</label><input id="gv-date" type="date"></div>
       <div class="fg"><label>Month</label><input id="gv-month" type="month"></div>
       <div class="fg"><label>Note</label><input id="gv-note" placeholder="যেমন: July salary, Factory payment..."></div>
@@ -1400,8 +1401,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </span>
     </div>
     <table>
-      <thead><tr><th>#</th><th>Date</th><th>Worker</th><th>Company</th><th>Factory</th><th>লেনদেন</th><th>Amount</th><th>Note</th><th>Action</th></tr></thead>
-      <tbody id="gv-history-list"><tr><td colspan="9" class="no-data">No entries</td></tr></tbody>
+      <thead><tr><th>#</th><th>Date</th><th>Worker</th><th>Company</th><th>Factory</th><th>লেনদেন</th><th>Amount</th><th>Conv.</th><th>Note</th><th>Action</th></tr></thead>
+      <tbody id="gv-history-list"><tr><td colspan="10" class="no-data">No entries</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1671,6 +1672,7 @@ function setSyncStatus(s){
     dot.classList.add('ok');
     _fbConnected=true;
     _lastSyncTime=new Date();
+    _unlockForms();
   } else if(s==='saving'){
     el.textContent='☁️ সেভ হচ্ছে...';el.style.color='#e67e22';
     dot.classList.add('saving');
@@ -1683,15 +1685,52 @@ function setSyncStatus(s){
     dot.classList.add('error');
     _fbConnected=false;
   } else if(s==='loading'){
-    el.textContent='⏳ Loading...';el.style.color='#2980b9';
+    el.textContent='⏳ Firebase লোড হচ্ছে...';el.style.color='#2980b9';
     dot.classList.add('loading');
     _fbConnected=false;
+    _lockForms();
   } else if(s==='paused'){
     el.textContent='⏸️ Firebase বন্ধ';el.style.color='#888';
     dot.classList.add('error');
     _fbConnected=false;
   }
   updateSyncPopupInfo(s);
+}
+
+// Firebase লোড না হওয়া পর্যন্ত সব Save/Add বাটন disable করো
+function _lockForms(){
+  if(_fbLoaded) return; // আগেই লোড হয়ে গেলে lock করবো না
+  let overlay=document.getElementById('fb-loading-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='fb-loading-overlay';
+    overlay.style.cssText='position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    overlay.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 36px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);max-width:320px;">
+      <div style="font-size:36px;margin-bottom:12px;">☁️</div>
+      <div style="font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:8px;">Firebase লোড হচ্ছে...</div>
+      <div style="font-size:13px;color:#6b7f94;line-height:1.5;">ডেটা না আসা পর্যন্ত নতুন এন্ট্রি দেওয়া যাবে না।<br>এটা আপনার ডেটা সুরক্ষার জন্য।</div>
+      <div style="margin-top:16px;height:4px;background:#eee;border-radius:2px;overflow:hidden;"><div id="fb-load-bar" style="height:100%;width:0%;background:#2980b9;border-radius:2px;transition:width 0.5s;"></div></div>
+    </div>`;
+    document.body.appendChild(overlay);
+    // Progress animation
+    let pct=0;
+    const bar=setInterval(()=>{
+      pct=Math.min(pct+Math.random()*8,90);
+      const b=document.getElementById('fb-load-bar');
+      if(b) b.style.width=pct+'%';
+      if(_fbLoaded) clearInterval(bar);
+    },300);
+  }
+  overlay.style.display='flex';
+}
+
+function _unlockForms(){
+  const overlay=document.getElementById('fb-loading-overlay');
+  if(overlay){
+    const bar=document.getElementById('fb-load-bar');
+    if(bar) bar.style.width='100%';
+    setTimeout(()=>{ overlay.style.display='none'; },400);
+  }
 }
 
 
@@ -1900,6 +1939,7 @@ function loadLocal(){
   bills       =JSON.parse(localStorage.getItem('bills')          ||'[]');
   billSubmits =JSON.parse(localStorage.getItem('billSubmits')    ||'[]');
   monthlySalaries=JSON.parse(localStorage.getItem('monthlySalaries')||'[]');
+  givingTxs=JSON.parse(localStorage.getItem('givingTxs')||'[]');
 }
 
 // initApp() — called after successful login
@@ -1961,6 +2001,7 @@ function initApp() {
       localStorage.setItem('bills',           JSON.stringify(bills));
       localStorage.setItem('billSubmits',     JSON.stringify(billSubmits));
       localStorage.setItem('monthlySalaries', JSON.stringify(monthlySalaries));
+      localStorage.setItem('givingTxs',       JSON.stringify(givingTxs));
     }
     const firstLoad = !_fbLoaded;
     _fbLoaded = true;
@@ -2066,6 +2107,7 @@ function save(){
   localStorage.setItem('bills',JSON.stringify(bills));
   localStorage.setItem('billSubmits',JSON.stringify(billSubmits));
   localStorage.setItem('monthlySalaries',JSON.stringify(monthlySalaries));
+  localStorage.setItem('givingTxs',JSON.stringify(givingTxs));
   renderAll();
 
   // Firebase না থাকলে বা paused থাকলে skip
@@ -2142,6 +2184,7 @@ function showPage(id){
   const navEl=document.getElementById('nav-'+id);if(navEl)navEl.classList.add('active');
   if(id==='giving'){
     renderGivingAccount();
+    _refreshGivingDatalist();
     const gvDate=document.getElementById('gv-date');
     if(gvDate&&!gvDate.value) gvDate.value=new Date().toISOString().slice(0,10);
     const gvMonth=document.getElementById('gv-month');
@@ -4384,23 +4427,36 @@ renderPersonalAccount();
 // ===== GIVING ACCOUNT =====
 let _gvDetailWorker='',_gvDetailCompany='';
 
+function _refreshGivingDatalist(){
+  const workers=[...new Set(givingTxs.map(t=>t.worker))].sort();
+  const companies=[...new Set(givingTxs.map(t=>t.company))].sort();
+  const factories=[...new Set(givingTxs.filter(t=>t.factory).map(t=>t.factory))].sort();
+  const set=(id,vals)=>{const el=document.getElementById(id);if(el)el.innerHTML=vals.map(v=>`<option value="${v}">`).join('');};
+  set('gv-worker-list',workers);
+  set('gv-company-list',companies);
+  set('gv-factory-list',factories);
+}
+
 function addGivingTx(){
   const worker=document.getElementById('gv-worker').value.trim();
   const company=document.getElementById('gv-company').value.trim();
   const factory=document.getElementById('gv-factory').value.trim();
   const txtype=document.getElementById('gv-txtype').value;
   const amount=+document.getElementById('gv-amount').value||0;
+  const conv=+(document.getElementById('gv-conv')||{value:0}).value||0;
   const date=document.getElementById('gv-date').value;
   const month=document.getElementById('gv-month').value||date.slice(0,7);
   const note=document.getElementById('gv-note').value.trim();
   if(!worker||!company||!amount||!date) return alert('Worker, Company, Amount ও Date আবশ্যক');
-  givingTxs.push({worker,company,factory,txtype,amount,date,month,note});
-  // suggestions আপডেট
+  givingTxs.push({worker,company,factory,txtype,amount,conv,date,month,note});
+  // suggestions আপডেট (gsData-এ)
   if(!gsData.workers.includes(worker)) gsData.workers.push(worker);
   if(!gsData.companies.includes(company)) gsData.companies.push(company);
   if(factory&&!gsData.factories.includes(factory)) gsData.factories.push(factory);
   _gsLoadSuggestions();
+  _refreshGivingDatalist();
   document.getElementById('gv-amount').value='0';
+  if(document.getElementById('gv-conv')) document.getElementById('gv-conv').value='0';
   document.getElementById('gv-note').value='';
   save();
 }
@@ -4532,7 +4588,7 @@ function renderGivingHistory(){
   const mF=(document.getElementById('gvh-month-filter')||{value:''}).value;
   const list=givingTxs.filter(t=>(!wF||(t.worker.toLowerCase().includes(wF)||t.company.toLowerCase().includes(wF)))&&(!mF||t.month===mF||t.date.startsWith(mF))).slice().reverse();
   const tb=document.getElementById('gv-history-list');
-  tb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No entries</td></tr>':
+  tb.innerHTML=list.length===0?'<tr><td colspan="10" class="no-data">No entries</td></tr>':
     list.map((t,i)=>{
       const isG=t.txtype==='giving';
       return `<tr>
@@ -4543,6 +4599,7 @@ function renderGivingHistory(){
         <td style="font-size:11px;">${t.factory||'-'}</td>
         <td>${isG?'<span class="badge badge-red">💸 Giving</span>':'<span class="badge badge-green">💚 Taking</span>'}</td>
         <td style="font-weight:700;color:${isG?'#c0392b':'#27ae60'};">${taka(t.amount)}</td>
+        <td style="font-size:11px;color:#6b7f94;">${t.conv?taka(t.conv):'-'}</td>
         <td style="font-size:11px;color:#6b7f94;">${t.note||'-'}</td>
         <td><button class="btn btn-danger" onclick="deleteGivingTx(${givingTxs.indexOf(t)})">❌</button></td>
       </tr>`;
