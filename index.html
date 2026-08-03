@@ -4476,7 +4476,7 @@ function renderGivingAccount(){
   givingTxs.filter(t=>(!mF||t.month===mF)&&(!cF||t.company===cF)).forEach(t=>{
     const key=`${t.worker}||${t.company}`;
     if(!groups[key]) groups[key]={worker:t.worker,company:t.company,giving:0,taking:0};
-    if(t.txtype==='giving') groups[key].giving+=t.amount;
+    if(t.txtype==='giving') groups[key].giving+=(t.amount-(+t.conv||0));
     else groups[key].taking+=t.amount;
   });
 
@@ -4538,11 +4538,13 @@ function renderGivingDetail(){
     return;
   }
 
-  let bal=0,totG=0,totT=0,trs='';
+  let bal=0,totG=0,totT=0,totConv=0,trs='';
   txs.forEach((t,i)=>{
     const isGiving=t.txtype==='giving';
-    bal+=isGiving?t.amount:-t.amount;
-    totG+=isGiving?t.amount:0; totT+=isGiving?0:t.amount;
+    const conv=+t.conv||0;
+    const net=isGiving?t.amount-conv:t.amount; // Giving হলে Conveyance মাইনাস হবে
+    bal+=isGiving?net:-net;
+    totG+=isGiving?net:0; totT+=isGiving?0:t.amount; totConv+=isGiving?conv:0;
     trs+=`<tr style="${isGiving?i%2===0?'background:#fafbfc;':'':'background:#eafaf1;'}">
       <td style="padding:5px 8px;text-align:center;border:1px solid #dde3ea;font-size:11px;">${i+1}</td>
       <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;font-weight:600;">${fmtDate(t.date)}</td>
@@ -4551,6 +4553,8 @@ function renderGivingDetail(){
       <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;color:#6b7f94;">${t.factory||'-'}</td>
       <td style="padding:5px 8px;border:1px solid #dde3ea;font-size:11px;">${t.note||'-'}</td>
       <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;">${isGiving?taka(t.amount):'00'}</td>
+      <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;color:#e67e22;">${isGiving&&conv?taka(conv):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;font-weight:700;color:${isGiving?'#c0392b':'#27ae60'};">${isGiving?taka(net):'00'}</td>
       <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;color:#27ae60;">${!isGiving?taka(t.amount):'00'}</td>
       <td style="padding:5px 8px;text-align:right;border:1px solid #dde3ea;font-size:11px;font-weight:700;color:${bal>=0?'#c0392b':'#27ae60'};">${taka(bal)}</td>
     </tr>`;
@@ -4566,12 +4570,16 @@ function renderGivingDetail(){
       <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Factory</th>
       <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:left;">Note</th>
       <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Giving</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;color:#f0d060;">Conv.</th>
+      <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Net Giving</th>
       <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Taking</th>
       <th style="padding:6px 8px;border:1px solid #4a6080;font-size:11px;text-align:right;">Balance</th>
     </tr></thead>
     <tbody>${trs}
       <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
         <td colspan="6" style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">Total =</td>
+        <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totG+totConv)}</td>
+        <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;color:#f0d060;">${taka(totConv)}</td>
         <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totG)}</td>
         <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;">${taka(totT)}</td>
         <td style="padding:6px 8px;text-align:right;border:1px solid #4a6080;font-size:11px;color:${bal>=0?'#ff8888':'#88ffaa'};">${taka(bal)}</td>
