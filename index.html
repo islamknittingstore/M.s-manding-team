@@ -1348,7 +1348,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
           <option value="taking">💚 Taking (পেয়েছি)</option>
         </select>
       </div>
-      <div class="fg"><label>Amount (৳)</label><input id="gv-amount" type="number" placeholder="0" value="0"></div>
+      <div class="fg"><label>Amount / Salary (৳)</label><input id="gv-amount" type="number" placeholder="0" value="0"></div>
+      <div class="fg"><label>OT (৳)</label><input id="gv-ot" type="number" placeholder="0" value="0"></div>
       <div class="fg"><label>Conveyance (৳)</label><input id="gv-conv" type="number" placeholder="0" value="0"></div>
       <div class="fg"><label>Date</label><input id="gv-date" type="date"></div>
       <div class="fg"><label>Month</label><input id="gv-month" type="month"></div>
@@ -1386,7 +1387,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
       <div id="gv-statement-result" style="padding:10px 14px;"></div>
       <div class="rpt-action-bar" id="bar-gv-statement" style="display:none;padding:10px 14px;">
-        <button class="rpt-btn rpt-btn-print" onclick="printReport('gv-statement-result','Giving Statement')">🖨️ Print</button>
+        <button class="rpt-btn rpt-btn-print" onclick="printReport('gv-statement-result','Giving Statement')">🖨️ Statement Print</button>
+        <button class="rpt-btn" style="background:#e67e22;color:#fff;" onclick="printGivingLedger()">📋 Ledger Print</button>
         <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('gv-statement-result','Giving Statement')">📊 Excel</button>
       </div>
     </div>
@@ -4444,11 +4446,12 @@ function addGivingTx(){
   const txtype=document.getElementById('gv-txtype').value;
   const amount=+document.getElementById('gv-amount').value||0;
   const conv=+(document.getElementById('gv-conv')||{value:0}).value||0;
+  const ot=+(document.getElementById('gv-ot')||{value:0}).value||0;
   const date=document.getElementById('gv-date').value;
   const month=document.getElementById('gv-month').value||date.slice(0,7);
   const note=document.getElementById('gv-note').value.trim();
   if(!worker||!company||!amount||!date) return alert('Worker, Company, Amount ও Date আবশ্যক');
-  givingTxs.push({worker,company,factory,txtype,amount,conv,date,month,note});
+  givingTxs.push({worker,company,factory,txtype,amount,ot,conv,date,month,note});
   // suggestions আপডেট (gsData-এ)
   if(!gsData.workers.includes(worker)) gsData.workers.push(worker);
   if(!gsData.companies.includes(company)) gsData.companies.push(company);
@@ -4456,6 +4459,7 @@ function addGivingTx(){
   _gsLoadSuggestions();
   _refreshGivingDatalist();
   document.getElementById('gv-amount').value='0';
+  if(document.getElementById('gv-ot')) document.getElementById('gv-ot').value='0';
   if(document.getElementById('gv-conv')) document.getElementById('gv-conv').value='0';
   document.getElementById('gv-note').value='';
   save();
@@ -4612,6 +4616,111 @@ function renderGivingHistory(){
         <td><button class="btn btn-danger" onclick="deleteGivingTx(${givingTxs.indexOf(t)})">❌</button></td>
       </tr>`;
     }).join('');
+}
+
+function printGivingLedger(){
+  const worker=_gvDetailWorker, company=_gvDetailCompany;
+  const fromV=(document.getElementById('gv-detail-from')||{}).value||'';
+  const toV=(document.getElementById('gv-detail-to')||{}).value||'';
+  const txs=givingTxs.filter(t=>t.worker===worker&&t.company===company&&t.txtype==='giving'&&(!fromV||t.date>=fromV)&&(!toV||t.date<=toV)).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(!txs.length) return alert('কোনো Giving এন্ট্রি নেই');
+
+  // Month of first entry for highlighting
+  const entryMonth=txs[0].month||txs[0].date.slice(0,7);
+  const entryMonthNum=+entryMonth.split('-')[1];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let totSalary=0,totOT=0,totConv=0;
+  let rows='';
+  txs.forEach((t,i)=>{
+    const salary=+t.amount||0;
+    const ot=+t.ot||0;
+    const conv=+t.conv||0;
+    const net=salary+ot-conv;
+    totSalary+=salary; totOT+=ot; totConv+=conv;
+    const d=t.date?t.date.slice(2).replace(/-/g,'.'):'';
+    rows+=`<tr>
+      <td class="td">${d}</td>
+      <td class="td">${t.worker}</td>
+      <td class="td num">${salary?salary.toLocaleString():''}</td>
+      <td class="td num">${ot?ot.toLocaleString():'-'}</td>
+      <td class="td num">${conv?conv.toLocaleString():'-'}</td>
+      <td class="td num bold">${net?net.toLocaleString():''}</td>
+    </tr>`;
+  });
+  // blank rows to fill the page
+  const blankRows=Math.max(0,18-txs.length);
+  for(let i=0;i<blankRows;i++) rows+=`<tr><td class="td"></td><td class="td"></td><td class="td"></td><td class="td"></td><td class="td"></td><td class="td"></td></tr>`;
+
+  const totNet=totSalary+totOT-totConv;
+  const monthBoxes=months.map((m,i)=>`<span class="mbox${i+1===entryMonthNum?' mbox-sel':''}">${m}</span>`).join('');
+
+  // First entry date for top-right
+  const topDate=txs[0]?txs[0].date.slice(2).replace(/-/g,'/'):'-';
+  // Factory (from first tx)
+  const factory=txs[0]&&txs[0].factory?txs[0].factory:'';
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ledger — ${company}</title>
+  <style>
+    @page{size:A4 portrait;margin:10mm 10mm;}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
+    body{font-size:12px;color:#111;background:#fff;}
+    .top-bar{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:4px;}
+    .subject{font-size:15px;font-weight:700;}
+    .subject span{font-size:12px;font-weight:400;color:#333;}
+    .month-row{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px;}
+    .mbox{border:1px solid #555;padding:1px 4px;font-size:10px;border-radius:2px;}
+    .mbox-sel{background:#1a2a3a;color:#fff;font-weight:700;}
+    .day-row{display:flex;gap:6px;font-size:10px;color:#333;}
+    .top-right{text-align:right;font-size:13px;font-weight:700;}
+    table{width:100%;border-collapse:collapse;margin-top:6px;}
+    th{background:#1a2a3a;color:#fff;padding:7px 8px;font-size:12px;border:1px solid #000;text-align:left;}
+    .th-num{text-align:right;}
+    .td{padding:6px 8px;border:1px solid #888;font-size:12px;min-height:22px;}
+    .num{text-align:right;}
+    .bold{font-weight:700;}
+    .total-row td{border:2px solid #000;padding:7px 8px;font-weight:700;font-size:13px;background:#f0f0f0;}
+    .total-row .num{text-align:right;}
+  </style></head><body>
+  <div class="top-bar">
+    <div>
+      <div class="subject">Subject: Buyer Name: <span>${company}${factory?' / '+factory:''}</span></div>
+      <div style="margin-top:4px;">
+        <div class="month-row">${monthBoxes}</div>
+        <div class="day-row">
+          <span>☐ Sun</span><span>☐ Mon</span><span>☐ Tue</span><span>☐ Wed</span><span>☐ Thu</span><span>☐ Fri</span><span>☐ Sat</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-right">DATE:<br>${topDate}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:12%;">Date</th>
+        <th style="width:22%;">Worker Name</th>
+        <th class="th-num" style="width:16%;">Daily Salary</th>
+        <th class="th-num" style="width:12%;">OT</th>
+        <th class="th-num" style="width:16%;">Conveyance</th>
+        <th class="th-num" style="width:14%;">Total</th>
+      </tr>
+    </thead>
+    <tbody>${rows}
+      <tr class="total-row">
+        <td class="td" colspan="2" style="text-align:right;border:2px solid #000;">-</td>
+        <td class="td num">${totSalary.toLocaleString()}</td>
+        <td class="td num">${totOT?totOT.toLocaleString():'-'}</td>
+        <td class="td num">${totConv.toLocaleString()}</td>
+        <td class="td num">${totNet.toLocaleString()}</td>
+      </tr>
+    </tbody>
+  </table>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height:960');
+  w.document.write(html);
+  w.document.close();
+  w.onload=()=>{w.focus();w.print();};
 }
 
 function deleteGivingTx(idx){confirmDelete(()=>{givingTxs.splice(idx,1);save();},'এই এন্ট্রি মুছবেন?');}
