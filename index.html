@@ -2857,6 +2857,34 @@ function addPayment(){
 function deleteItem(arr,i){confirmDelete(()=>{arr.splice(i,1);save();},'এটা মুছে ফেলবেন?');}
 function deleteTaking(i){confirmDelete(()=>{takings.splice(i,1);save();},'এই এন্ট্রি মুছবেন?');}
 function deletePayment(i){confirmDelete(()=>{payments.splice(i,1);save();},'এই পেমেন্ট মুছবেন?');}
+
+function editPayment(idx){
+  const p=payments[idx];
+  if(!p) return;
+  document.getElementById('pe-idx').value=idx;
+  document.getElementById('pe-worker').textContent=p.worker;
+  document.getElementById('pe-date').value=p.date||'';
+  document.getElementById('pe-salary-month').value=p.salaryMonth||'';
+  document.getElementById('pe-conv').value=p.conv||0;
+  document.getElementById('pe-bill').value=p.bill||0;
+  document.getElementById('pe-note').value=p.note||'';
+  document.getElementById('payment-edit-modal').style.display='flex';
+}
+
+function savePaymentEdit(){
+  const idx=+document.getElementById('pe-idx').value;
+  const p=payments[idx];
+  if(!p) return;
+  p.date=document.getElementById('pe-date').value||p.date;
+  p.salaryMonth=document.getElementById('pe-salary-month').value||'';
+  p.conv=+document.getElementById('pe-conv').value||0;
+  p.bill=+document.getElementById('pe-bill').value||0;
+  p.total=p.conv+p.bill;
+  p.note=document.getElementById('pe-note').value.trim();
+  document.getElementById('payment-edit-modal').style.display='none';
+  save();
+  showFloatNotif('✅ পেমেন্ট আপডেট হয়েছে।','success');
+}
 function deleteChallan(i){confirmDelete(()=>{challans.splice(i,1);save();},'এই চালান মুছবেন?');}
 function deleteBill(i){confirmDelete(()=>{bills.splice(i,1);save();},'এই বিল মুছবেন?');}
 
@@ -2943,9 +2971,26 @@ function billTotalRecv(idx){
   return _billRecvCache[idx]||0;
 }
 function _clearBillRecvCache(){ _billRecvCache=null; }
-function workerConvPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.conv,0);}
-function workerBillPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.bill,0);}
-function workerTotalPaid(wn,m){return payments.filter(p=>p.worker===wn&&(!m||p.date.startsWith(m))).reduce((s,p)=>s+p.total,0);}
+function workerConvPaid(wn,m){return payments.filter(p=>{
+  if(p.worker!==wn) return false;
+  if(!m) return true;
+  if(p.salaryMonth) return p.salaryMonth===m;
+  return p.date.startsWith(m);
+}).reduce((s,p)=>s+p.conv,0);}
+function workerBillPaid(wn,m){return payments.filter(p=>{
+  if(p.worker!==wn) return false;
+  if(!m) return true;
+  if(p.salaryMonth) return p.salaryMonth===m;
+  return p.date.startsWith(m);
+}).reduce((s,p)=>s+p.bill,0);}
+function workerTotalPaid(wn,m){return payments.filter(p=>{
+  if(p.worker!==wn) return false;
+  if(!m) return true;
+  // salaryMonth থাকলে সেটা দিয়ে ম্যাচ করো (আগস্টে দেওয়া জুলাইয়ের বিলও ধরবে)
+  if(p.salaryMonth) return p.salaryMonth===m;
+  // পুরনো পেমেন্ট (salaryMonth নেই): payment তারিখ দিয়ে ম্যাচ করো
+  return p.date.startsWith(m);
+}).reduce((s,p)=>s+p.total,0);}
 function workerPayable(wn,m){return takings.filter(e=>e.worker===wn&&(!m||e.date.startsWith(m))).reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0)+monthlySalaries.filter(e=>e.worker===wn&&(!m||(e.month?e.month===m:(e.date||'').startsWith(m)))).reduce((s,e)=>s+(+e.payable||0),0)-workerTotalPaid(wn,m);}
 
 function populateSelects(){
@@ -3309,7 +3354,7 @@ function renderPayments(){
   pb.innerHTML=list.length===0?'<tr><td colspan="9" class="no-data">No payments</td></tr>':
     list.map((p,i)=>{
       const smLabel=p.salaryMonth?`<span style="background:#fff3e0;color:#e67e22;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;">${fmtMonth(p.salaryMonth)}</span>`:'<span style="color:#aaa;font-size:11px;">—</span>';
-      return `<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${fmtDate(p.date)}</td><td>${smLabel}</td><td>${p.note||'-'}</td><td><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`;
+      return `<tr><td>${list.length-i}</td><td>${p.worker}</td><td>${taka(p.conv)}</td><td>${taka(p.bill)}</td><td style="font-weight:700;">${taka(p.total)}</td><td>${fmtDate(p.date)}</td><td>${smLabel}</td><td>${p.note||'-'}</td><td style="display:flex;gap:4px;"><button class="btn" style="background:#1a6fc4;color:#fff;font-size:11px;padding:4px 8px;" onclick="editPayment(${payments.indexOf(p)})">✏️</button><button class="btn btn-danger" onclick="deletePayment(${payments.indexOf(p)})">❌</button></td></tr>`;
     }).join('');
 }
 
@@ -5952,6 +5997,29 @@ function printGivingSlip(mode){
   w.onload=()=>{w.focus();w.print();};
 }
 </script>
+
+<!-- ===== PAYMENT EDIT MODAL ===== -->
+<div id="payment-edit-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:95%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:16px;color:#1a2a3a;">✏️ Payment Edit</h3>
+      <button onclick="document.getElementById('payment-edit-modal').style.display='none'" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;">✕</button>
+    </div>
+    <input type="hidden" id="pe-idx">
+    <div style="font-size:12px;font-weight:600;color:#6b7f94;margin-bottom:12px;">Worker: <span id="pe-worker" style="color:#1a2a3a;"></span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Payment Date</label><input type="date" id="pe-date" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:140px;"><label style="font-size:11px;font-weight:600;color:#e67e22;display:block;margin-bottom:4px;">For Month (কোন মাসের বেতন) ⭐</label><input type="month" id="pe-salary-month" style="width:100%;padding:8px;border:2px solid #e67e22;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:120px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Conveyance (৳)</label><input type="number" id="pe-conv" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:1;min-width:120px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Bill Payment (৳)</label><input type="number" id="pe-bill" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+      <div style="flex:2;min-width:200px;"><label style="font-size:11px;font-weight:600;color:#6b7f94;display:block;margin-bottom:4px;">Note</label><input id="pe-note" style="width:100%;padding:8px;border:1px solid #dde3ea;border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="document.getElementById('payment-edit-modal').style.display='none'" style="background:#888;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;">বাতিল</button>
+      <button onclick="savePaymentEdit()" style="background:#1a6fc4;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">💾 Save</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
