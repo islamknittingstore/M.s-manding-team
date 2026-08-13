@@ -3554,7 +3554,12 @@ function genWorkerReport(){
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m))).slice().sort((a,b)=>a.date.localeCompare(b.date));
     const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
+    const wp=payments.filter(p=>{
+      if(p.worker!==name) return false;
+      if(!m) return true;
+      if(p.salaryMonth) return p.salaryMonth===m;
+      return p.date.startsWith(m);
+    });
 
     if(!wt.length&&!ms.length&&!wp.length) return;
 
@@ -3762,7 +3767,12 @@ function genWorkerReport2(){
   wList.forEach(name=>{
     const wt=takings.filter(e=>e.worker===name&&(!m||e.date.startsWith(m)));
     const ms=monthlySalaries.filter(e=>e.worker===name&&(!m||e.month===m));
-    const wp=payments.filter(p=>p.worker===name&&(!m||p.date.startsWith(m)));
+    const wp=payments.filter(p=>{
+      if(p.worker!==name) return false;
+      if(!m) return true;
+      if(p.salaryMonth) return p.salaryMonth===m;
+      return p.date.startsWith(m);
+    });
 
     // taking থেকে totals
     const wtPayable=wt.reduce((s,e)=>s+(e.payable!==undefined?e.payable:Math.max(0,e.wearn-e.conv)),0);
