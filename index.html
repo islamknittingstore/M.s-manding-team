@@ -3746,6 +3746,34 @@ function genWorkerReport(){
           </div>`:''}
         </div>
       </div>
+      ${wp.length>0?`<div style="padding:10px 16px;border-top:2px solid #dde3ea;">
+        <div style="font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">💰 Payment History (${monthLabel})</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead><tr style="background:#1a2a3a;color:#fff;">
+            <th style="padding:5px 8px;text-align:left;border:1px solid #4a6080;">#</th>
+            <th style="padding:5px 8px;text-align:left;border:1px solid #4a6080;">Payment Date</th>
+            <th style="padding:5px 8px;text-align:left;border:1px solid #4a6080;">For Month</th>
+            <th style="padding:5px 8px;text-align:right;border:1px solid #4a6080;">Conv.</th>
+            <th style="padding:5px 8px;text-align:right;border:1px solid #4a6080;">Amount</th>
+            <th style="padding:5px 8px;text-align:left;border:1px solid #4a6080;">Note</th>
+          </tr></thead>
+          <tbody>
+            ${wp.slice().sort((a,b)=>a.date.localeCompare(b.date)).map((p,i)=>`<tr style="${i%2===0?'background:#f9f9f9;':''}">
+              <td style="padding:5px 8px;border:1px solid #dde3ea;">${i+1}</td>
+              <td style="padding:5px 8px;border:1px solid #dde3ea;font-weight:600;">${fmtDate(p.date)}</td>
+              <td style="padding:5px 8px;border:1px solid #dde3ea;"><span style="background:#fff3e0;color:#e67e22;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;">${p.salaryMonth?fmtMonth(p.salaryMonth):'-'}</span></td>
+              <td style="padding:5px 8px;border:1px solid #dde3ea;text-align:right;">${p.conv?taka(p.conv):'-'}</td>
+              <td style="padding:5px 8px;border:1px solid #dde3ea;text-align:right;font-weight:700;color:#27ae60;">${taka(p.total)}</td>
+              <td style="padding:5px 8px;border:1px solid #dde3ea;color:#6b7f94;">${p.note||'-'}</td>
+            </tr>`).join('')}
+            <tr style="background:#1a2a3a;color:#fff;font-weight:700;">
+              <td colspan="4" style="padding:5px 8px;border:1px solid #4a6080;text-align:right;">Total Paid =</td>
+              <td style="padding:5px 8px;border:1px solid #4a6080;text-align:right;">${taka(tp)}</td>
+              <td style="padding:5px 8px;border:1px solid #4a6080;"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`:''}
       <div style="padding:8px 24px;border-top:1px solid #dde3ea;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;text-align:center;font-size:12px;color:#555;">
         <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:14px;">Received By Mendar</div></div>
         <div><div style="border-top:1px solid #888;padding-top:6px;margin-top:14px;">Managing Director</div></div>
