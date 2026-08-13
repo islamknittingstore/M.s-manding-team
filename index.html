@@ -1142,7 +1142,8 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       </div>
       <div id="r-worker-result"></div>
       <div class="rpt-action-bar" id="bar-r-worker-result" style="display:none;">
-        <button class="rpt-btn rpt-btn-print" onclick="printReport('r-worker-result','Worker Report')">🖨️ Browser Print</button>
+        <button class="rpt-btn rpt-btn-print" onclick="printWorkerReport(false)">🖨️ Print (পেমেন্ট ছাড়া)</button>
+        <button class="rpt-btn" style="background:#27ae60;color:#fff;" onclick="printWorkerReport(true)">💰 Print (পেমেন্ট সহ)</button>
         <button class="rpt-btn rpt-btn-excel" onclick="exportReportExcel('r-worker-result','Worker Report')">📊 Excel Export</button>
       </div>
     </div>
@@ -3746,7 +3747,7 @@ function genWorkerReport(){
           </div>`:''}
         </div>
       </div>
-      ${wp.length>0?`<div style="padding:10px 16px;border-top:2px solid #dde3ea;">
+      ${wp.length>0?`<div class="wp-payment-section" style="padding:10px 16px;border-top:2px solid #dde3ea;">
         <div style="font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">💰 Payment History (${monthLabel})</div>
         <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead><tr style="background:#1a2a3a;color:#fff;">
@@ -4807,6 +4808,16 @@ function printGivingLedger(){
 }
 
 function deleteGivingTx(idx){confirmDelete(()=>{givingTxs.splice(idx,1);save();},'এই এন্ট্রি মুছবেন?');}
+
+function printWorkerReport(withPayments){
+  // পেমেন্ট সেকশন show/hide করো
+  const resultDiv=document.getElementById('r-worker-result');
+  const paymentSections=resultDiv.querySelectorAll('.wp-payment-section');
+  paymentSections.forEach(el=>{el.style.display=withPayments?'':'none';});
+  printReport('r-worker-result', withPayments?'Worker Report (with Payments)':'Worker Report');
+  // প্রিন্টের পর আবার দেখাও
+  setTimeout(()=>{paymentSections.forEach(el=>{el.style.display='';});},1000);
+}
 
 function renderAll_giving(){renderGivingAccount();}
 // ===== END GIVING ACCOUNT =====
