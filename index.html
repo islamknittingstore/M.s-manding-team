@@ -485,50 +485,114 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 
 <!-- DASHBOARD -->
 <div id="page-dashboard" class="page active">
-  <div class="page-header"><h2>Dashboard</h2><p id="today-date"></p></div>
-  <div id="due-alert-box"></div>
-  <div id="bill-alert-box"></div>
-  <div class="stat-grid">
-    <div class="stat-card c-blue">
-      <div class="lbl">Active Contracts</div>
-      <div class="val" id="d-contracts">0</div>
-      <div class="sub">Total styles/contracts</div>
+
+  <!-- Hero Header Card -->
+  <div id="db-hero" style="background:linear-gradient(135deg,#0f2c4a 0%,#1a4a6a 50%,#0d3d5a 100%);border-radius:16px;padding:24px 20px 20px;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <!-- Background decoration -->
+    <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
+    <div style="position:absolute;bottom:-20px;left:30%;width:200px;height:200px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+    <!-- Company Name -->
+    <div style="text-align:center;position:relative;z-index:1;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">ERP System</div>
+      <div style="font-size:26px;font-weight:800;color:#f0c040;font-family:'Poppins',sans-serif;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,0.3);">M.S Mending Team</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;">All Kind of Garments Foreing Yarn, Touch-up, Sheding, Spot & Hole Mending Co.</div>
+      <div style="margin-top:14px;padding:8px 16px;background:rgba(255,255,255,0.08);border-radius:10px;display:inline-block;border:1px solid rgba(255,255,255,0.12);">
+        <div id="db-welcome" style="font-size:15px;font-weight:700;color:#6dd5fa;">🌅 শুভ সকাল! স্বাগতম</div>
+        <div id="db-datetime" style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:2px;"></div>
+      </div>
     </div>
-    <div class="stat-card c-green">
-      <div class="lbl">Challan Value</div>
-      <div class="val">৳<span id="d-challan-val">0</span></div>
-      <div class="sub">Total submitted</div>
-    </div>
-    <div class="stat-card c-red">
-      <div class="lbl">Bill Pending</div>
-      <div class="val">৳<span id="d-bill-due">0</span></div>
-      <div class="sub">Not yet received</div>
-    </div>
-    <div class="stat-card c-orange">
-      <div class="lbl">Worker Payable</div>
-      <div class="val">৳<span id="d-worker-due">0</span></div>
-      <div class="sub">You owe to workers</div>
+    <!-- Weather -->
+    <div id="db-weather" style="margin-top:14px;text-align:center;display:none;">
+      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:8px 16px;display:inline-flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,0.1);">
+        <span id="db-weather-icon" style="font-size:24px;">🌤️</span>
+        <div>
+          <div id="db-weather-temp" style="font-size:20px;font-weight:700;color:#fff;"></div>
+          <div id="db-weather-desc" style="font-size:11px;color:rgba(255,255,255,0.7);"></div>
+          <div id="db-weather-loc" style="font-size:10px;color:rgba(255,255,255,0.55);"></div>
+        </div>
+        <div style="border-left:1px solid rgba(255,255,255,0.2);padding-left:12px;">
+          <div id="db-weather-hl" style="font-size:11px;color:rgba(255,255,255,0.7);"></div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-header">📋 Contract-wise Summary</div>
-    <table>
-      <thead><tr><th>Date</th><th>Order No.</th><th>Supplier</th><th>Factory</th><th>Buyer</th><th>Style</th><th>Job Type</th><th>Rate</th><th>Challan Pcs</th><th>Challan Value</th><th>Bill Recv.</th><th>Pending</th></tr></thead>
-      <tbody id="d-contract-summary"><tr><td colspan="12" class="no-data">No contracts yet</td></tr></tbody>
-    </table>
+
+  <!-- Alert Boxes -->
+  <div id="due-alert-box" style="margin-bottom:8px;"></div>
+  <div id="bill-alert-box" style="margin-bottom:12px;"></div>
+
+  <!-- Quick Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+    <div onclick="showPage('contracts')" style="cursor:pointer;background:linear-gradient(135deg,#1a6fc4,#2980b9);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(26,111,196,0.3);">
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Active Contracts</div>
+      <div id="d-contracts" style="font-size:28px;font-weight:800;color:#fff;">0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">📋 Styles & Orders</div>
+    </div>
+    <div onclick="showPage('challan')" style="cursor:pointer;background:linear-gradient(135deg,#1a7a3a,#27ae60);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(39,174,96,0.3);">
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Challan Value</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-challan-val">0</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">📦 Total Submitted</div>
+    </div>
+    <div onclick="showPage('payments')" style="cursor:pointer;background:linear-gradient(135deg,#c0392b,#e74c3c);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(192,57,43,0.3);">
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Worker Payable</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-worker-due">0</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">👷 বেতন বাকি</div>
+    </div>
+    <div onclick="showPage('reports')" style="cursor:pointer;background:linear-gradient(135deg,#b7770d,#e67e22);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(230,126,34,0.3);">
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Bill Pending</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-bill-due">0</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">🧾 Bill বাকি</div>
+    </div>
   </div>
-  <div class="two-col">
+
+  <!-- Quick Nav Cards -->
+  <div style="font-size:12px;font-weight:700;color:#a8c0d6;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Quick Access</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+    <div onclick="showPage('workentry')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">✏️</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Work Entry</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Daily & Monthly</div>
+    </div>
+    <div onclick="showPage('challan')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">📦</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Challan & Bill</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Submit & Receive</div>
+    </div>
+    <div onclick="showPage('payments')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">💰</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Payments</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Worker Payment</div>
+    </div>
+    <div onclick="showPage('contracts')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">📋</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Orders</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Contracts</div>
+    </div>
+    <div onclick="showPage('reports')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">📊</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Reports</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Analytics</div>
+    </div>
+    <div onclick="showPage('personal')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:6px;">🤝</div>
+      <div style="font-size:11px;font-weight:700;color:#fff;">Personal</div>
+      <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Account</div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
     <div class="panel">
-      <div class="panel-header">📥 Recent Work Entries</div>
+      <div class="panel-header" style="font-size:12px;">📥 Recent Work Entries</div>
       <table>
-        <thead><tr><th>Worker</th><th>Style</th><th>Type</th><th>Payable</th></tr></thead>
-        <tbody id="d-recent-taking"><tr><td colspan="4" class="no-data">No entries</td></tr></tbody>
+        <thead><tr><th>Worker</th><th>Style</th><th>Payable</th></tr></thead>
+        <tbody id="d-recent-taking"><tr><td colspan="3" class="no-data">No entries</td></tr></tbody>
       </table>
     </div>
     <div class="panel">
-      <div class="panel-header">🧾 Recent Bills</div>
+      <div class="panel-header" style="font-size:12px;">🧾 Recent Bills</div>
       <table>
-        <thead><tr><th>Style</th><th>Amount</th><th>Date</th></tr></thead>
+        <thead><tr><th>Order</th><th>Amount</th><th>Date</th></tr></thead>
         <tbody id="d-recent-bills"><tr><td colspan="3" class="no-data">No bills</td></tr></tbody>
       </table>
     </div>
@@ -3372,19 +3436,68 @@ function renderDashboard(){
   const pendingB=contracts.filter((_,i)=>{const cv=challanTotalValue(i);return cv>0&&billTotalRecv(i)<cv;});
   document.getElementById('bill-alert-box').innerHTML=pendingB.length>0?`<div class="info-alert">🧾 <strong>${pendingB.length}টি Contract</strong> এর বিল বাকি: ${pendingB.map(c=>c.style).join(', ')}</div>`:'';
 
-  const tb=document.getElementById('d-contract-summary');
-  tb.innerHTML=contracts.length===0?'<tr><td colspan="12" class="no-data">No contracts</td></tr>':
-    contracts.map((c,i)=>{
-      const pcs=challanTotalPcs(i),cv=challanTotalValue(i),br=billTotalRecv(i),pending=cv-br;
-      return `<tr><td>${fmtDate(c.date)}</td><td><span class="badge badge-blue">${c.orderno||'-'}</span></td><td>${c.supplier}</td><td>${c.factory}</td><td>${c.buyer||'-'}</td><td><strong>${c.style}</strong></td><td>${c.jobtype}</td><td>${taka(c.rate)}</td><td>${pcs}</td><td style="color:#2980b9;font-weight:700;">${taka(cv)}</td><td style="color:#27ae60;font-weight:700;">${taka(br)}</td><td style="color:${pending>0?'#c0392b':'#27ae60'};font-weight:700;">${taka(pending)}</td></tr>`;
-    }).join('');
-
   const rt=document.getElementById('d-recent-taking');
   const rta=takings.slice(-5).reverse();
-  rt.innerHTML=rta.length===0?'<tr><td colspan="4" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td>${e.worker}</td><td>${e.style}</td><td>${stypeBadge(e.salaryType)}</td><td style="color:#27ae60;font-weight:700;">${taka(e.wearn)}</td></tr>`).join('');
+  rt.innerHTML=rta.length===0?'<tr><td colspan="3" class="no-data">No entries</td></tr>':rta.map(e=>`<tr><td style="font-size:11px;">${e.worker}</td><td style="font-size:11px;">${e.style}</td><td style="color:#27ae60;font-weight:700;font-size:11px;">${taka(e.wearn)}</td></tr>`).join('');
   const rb=document.getElementById('d-recent-bills');
   const rba=bills.slice(-5).reverse();
-  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td><strong>${b.style||b.orderno||'-'}</strong></td><td style="color:#27ae60;font-weight:700;">${taka(b.amount)}</td><td>${fmtDate(b.date)}</td></tr>`).join('');
+  rb.innerHTML=rba.length===0?'<tr><td colspan="3" class="no-data">No bills</td></tr>':rba.map(b=>`<tr><td style="font-size:11px;"><strong>${b.orderno||'-'}</strong></td><td style="color:#27ae60;font-weight:700;font-size:11px;">${taka(b.amount)}</td><td style="font-size:11px;">${fmtDate(b.date)}</td></tr>`).join('');
+
+  // Clock & Greeting
+  _startDashboardClock();
+  // Weather
+  _fetchWeather();
+}
+
+let _clockInterval=null;
+function _startDashboardClock(){
+  if(_clockInterval) clearInterval(_clockInterval);
+  function _tick(){
+    const el=document.getElementById('db-datetime');
+    if(!el) return;
+    const now=new Date();
+    const days=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+    const months=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+    const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+    const ampm=h>=12?'PM':'AM',hh=h%12||12;
+    const dateStr=`${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    const timeStr=`${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
+    el.textContent=`${dateStr} — ${timeStr}`;
+    // Greeting
+    const grEl=document.getElementById('db-welcome');
+    if(grEl){
+      const gr=h<6?'🌙 শুভ রাত্রি!':h<12?'🌅 শুভ সকাল!':h<17?'☀️ শুভ দুপুর!':h<20?'🌇 শুভ বিকাল!':'🌙 শুভ সন্ধ্যা!';
+      grEl.textContent=gr+' স্বাগতম';
+    }
+  }
+  _tick();
+  _clockInterval=setInterval(_tick,1000);
+}
+
+function _fetchWeather(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:lat,longitude:lon}=pos.coords;
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,apparent_temperature&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`)
+    .then(r=>r.json()).then(d=>{
+      const temp=Math.round(d.current.temperature_2m);
+      const feels=Math.round(d.current.apparent_temperature);
+      const max=Math.round(d.daily.temperature_2m_max[0]);
+      const min=Math.round(d.daily.temperature_2m_min[0]);
+      const code=d.current.weather_code;
+      const icons={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',61:'🌧️',71:'❄️',80:'🌧️',95:'⛈️'};
+      const icon=icons[code]||icons[Math.floor(code/10)*10]||'🌤️';
+      const descs={0:'맑음',1:'대체로 맑음',2:'구름 조금',3:'흐림',45:'안개',51:'이슬비',61:'비',71:'눈',80:'소나기',95:'뇌우'};
+      const descBn={0:'맑은',1:'হালকা মেঘলা',2:'আংশিক মেঘলা',3:'মেঘাচ্ছন্ন',45:'কুয়াশা',51:'গুঁড়িগুঁড়ি বৃষ্টি',61:'বৃষ্টি',71:'তুষারপাত',80:'ঝড়ো বৃষ্টি',95:'বজ্রপাত'};
+      const desc=descBn[code]||descBn[Math.floor(code/10)*10]||'আবহাওয়া';
+      document.getElementById('db-weather-icon').textContent=icon;
+      document.getElementById('db-weather-temp').textContent=`${temp}°C`;
+      document.getElementById('db-weather-desc').textContent=desc;
+      document.getElementById('db-weather-loc').textContent=`অনুভূত: ${feels}°C`;
+      document.getElementById('db-weather-hl').innerHTML=`সর্বোচ্চ ${max}°C<br>সর্বনিম্ন ${min}°C`;
+      document.getElementById('db-weather').style.display='block';
+    }).catch(()=>{});
+  },()=>{},{timeout:5000});
 }
 
 // REPORTS
