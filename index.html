@@ -1628,7 +1628,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 <script>
 function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleString('en-BD',{weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
 updateClock();setInterval(updateClock,1000);
-document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+{const _td=document.getElementById('today-date');if(_td)_td.textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
 const todayStr=new Date().toISOString().split('T')[0];
 const ymStr=todayStr.slice(0,7);
 ['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date','ms-date','pa-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
