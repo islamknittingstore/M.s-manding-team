@@ -1766,12 +1766,10 @@ function setSyncStatus(s){
 
 // Firebase লোড না হওয়া পর্যন্ত সব Save/Add বাটন disable করো
 function _lockForms(){
-  if(_fbLoaded) return; // আগেই লোড হয়ে গেলে lock করবো না
-  // লগিন স্ক্রিন দেখা যাচ্ছে থাকলে overlay দেখাবো না
-  const loginScreen=document.getElementById('login-screen');
-  if(loginScreen && loginScreen.style.display!=='none') return;
+  if(_fbLoaded) return;
+  // app-wrapper দৃশ্যমান না হলে overlay দেখাবো না (লগিন স্ক্রিন দেখা যাচ্ছে)
   const appWrapper=document.getElementById('app-wrapper');
-  if(appWrapper && appWrapper.style.display==='none') return;
+  if(!appWrapper || appWrapper.style.display==='none' || appWrapper.style.display==='') return;
   let overlay=document.getElementById('fb-loading-overlay');
   if(!overlay){
     overlay=document.createElement('div');
