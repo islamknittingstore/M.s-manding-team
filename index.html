@@ -1755,7 +1755,6 @@ function setSyncStatus(s){
     el.textContent='⏳ Firebase লোড হচ্ছে...';el.style.color='#2980b9';
     dot.classList.add('loading');
     _fbConnected=false;
-    _lockForms();
   } else if(s==='paused'){
     el.textContent='⏸️ Firebase বন্ধ';el.style.color='#888';
     dot.classList.add('error');
@@ -2029,6 +2028,8 @@ function initApp() {
   loadLocal();
   renderAll();
   populateJobTypeSelects();
+  // Firebase লোড না হওয়া পর্যন্ত এন্ট্রি block করো
+  _lockForms();
 
   // Local file indicator update করো (login হওয়ার পর)
   _refreshLocalFileIndicator();
