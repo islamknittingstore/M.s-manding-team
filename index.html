@@ -523,7 +523,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 
   <!-- Quick Stats -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
-    <div onclick="showPage('contracts')" style="cursor:pointer;background:linear-gradient(135deg,#1a6fc4,#2980b9);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(26,111,196,0.3);">
+    <div onclick="showPage('orders')" style="cursor:pointer;background:linear-gradient(135deg,#1a6fc4,#2980b9);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(26,111,196,0.3);">
       <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Active Contracts</div>
       <div id="d-contracts" style="font-size:28px;font-weight:800;color:#fff;">0</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">📋 Styles & Orders</div>
@@ -533,12 +533,12 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-challan-val">0</span></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">📦 Total Submitted</div>
     </div>
-    <div onclick="showPage('payments')" style="cursor:pointer;background:linear-gradient(135deg,#c0392b,#e74c3c);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(192,57,43,0.3);">
+    <div onclick="showPage('payment')" style="cursor:pointer;background:linear-gradient(135deg,#c0392b,#e74c3c);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(192,57,43,0.3);">
       <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Worker Payable</div>
       <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-worker-due">0</span></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">👷 বেতন বাকি</div>
     </div>
-    <div onclick="showPage('reports')" style="cursor:pointer;background:linear-gradient(135deg,#b7770d,#e67e22);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(230,126,34,0.3);">
+    <div onclick="showPage('report')" style="cursor:pointer;background:linear-gradient(135deg,#b7770d,#e67e22);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(230,126,34,0.3);">
       <div style="font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Bill Pending</div>
       <div style="font-size:22px;font-weight:800;color:#fff;">৳<span id="d-bill-due">0</span></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">🧾 Bill বাকি</div>
@@ -548,7 +548,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
   <!-- Quick Nav Cards -->
   <div style="font-size:12px;font-weight:700;color:#a8c0d6;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Quick Access</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
-    <div onclick="showPage('workentry')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+    <div onclick="showPage('entry')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
       <div style="font-size:26px;margin-bottom:6px;">✏️</div>
       <div style="font-size:11px;font-weight:700;color:#fff;">Work Entry</div>
       <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Daily & Monthly</div>
@@ -558,17 +558,17 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
       <div style="font-size:11px;font-weight:700;color:#fff;">Challan & Bill</div>
       <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Submit & Receive</div>
     </div>
-    <div onclick="showPage('payments')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+    <div onclick="showPage('payment')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
       <div style="font-size:26px;margin-bottom:6px;">💰</div>
       <div style="font-size:11px;font-weight:700;color:#fff;">Payments</div>
       <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Worker Payment</div>
     </div>
-    <div onclick="showPage('contracts')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+    <div onclick="showPage('orders')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
       <div style="font-size:26px;margin-bottom:6px;">📋</div>
       <div style="font-size:11px;font-weight:700;color:#fff;">Orders</div>
       <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Contracts</div>
     </div>
-    <div onclick="showPage('reports')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
+    <div onclick="showPage('report')" style="cursor:pointer;background:#1a2a3a;border:1px solid #2a3f54;border-radius:12px;padding:16px 10px;text-align:center;">
       <div style="font-size:26px;margin-bottom:6px;">📊</div>
       <div style="font-size:11px;font-weight:700;color:#fff;">Reports</div>
       <div style="font-size:10px;color:#6b7f94;margin-top:2px;">Analytics</div>
@@ -1628,7 +1628,7 @@ table tr:last-child td{border-bottom:none;}table tr:hover td{background:#f7fafd;
 <script>
 function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleString('en-BD',{weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
 updateClock();setInterval(updateClock,1000);
-document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+{const _td=document.getElementById('today-date');if(_td)_td.textContent=new Date().toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
 const todayStr=new Date().toISOString().split('T')[0];
 const ymStr=todayStr.slice(0,7);
 ['t-date','p-date','r-daily-date','ct-date','ch-date','b-date','bs-date','ms-date','pa-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=todayStr;});
@@ -1755,6 +1755,7 @@ function setSyncStatus(s){
     el.textContent='⏳ Firebase লোড হচ্ছে...';el.style.color='#2980b9';
     dot.classList.add('loading');
     _fbConnected=false;
+    _lockForms();
   } else if(s==='paused'){
     el.textContent='⏸️ Firebase বন্ধ';el.style.color='#888';
     dot.classList.add('error');
@@ -1764,8 +1765,40 @@ function setSyncStatus(s){
 }
 
 // Firebase লোড না হওয়া পর্যন্ত সব Save/Add বাটন disable করো
-function _lockForms(){} // নিরাপত্তা: save() এর ভেতরে _fbLoaded check-ই যথেষ্ট
-function _unlockForms(){} // overlay সরিয়ে দেওয়া হয়েছে
+function _lockForms(){
+  if(_fbLoaded) return; // আগেই লোড হয়ে গেলে lock করবো না
+  let overlay=document.getElementById('fb-loading-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='fb-loading-overlay';
+    overlay.style.cssText='position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    overlay.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 36px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);max-width:320px;">
+      <div style="font-size:36px;margin-bottom:12px;">☁️</div>
+      <div style="font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:8px;">Firebase লোড হচ্ছে...</div>
+      <div style="font-size:13px;color:#6b7f94;line-height:1.5;">ডেটা না আসা পর্যন্ত নতুন এন্ট্রি দেওয়া যাবে না।<br>এটা আপনার ডেটা সুরক্ষার জন্য।</div>
+      <div style="margin-top:16px;height:4px;background:#eee;border-radius:2px;overflow:hidden;"><div id="fb-load-bar" style="height:100%;width:0%;background:#2980b9;border-radius:2px;transition:width 0.5s;"></div></div>
+    </div>`;
+    document.body.appendChild(overlay);
+    // Progress animation
+    let pct=0;
+    const bar=setInterval(()=>{
+      pct=Math.min(pct+Math.random()*8,90);
+      const b=document.getElementById('fb-load-bar');
+      if(b) b.style.width=pct+'%';
+      if(_fbLoaded) clearInterval(bar);
+    },300);
+  }
+  overlay.style.display='flex';
+}
+
+function _unlockForms(){
+  const overlay=document.getElementById('fb-loading-overlay');
+  if(overlay){
+    const bar=document.getElementById('fb-load-bar');
+    if(bar) bar.style.width='100%';
+    setTimeout(()=>{ overlay.style.display='none'; },400);
+  }
+}
 
 
 let _saveNotifyTimer=null;
@@ -1993,8 +2026,6 @@ function initApp() {
   loadLocal();
   renderAll();
   populateJobTypeSelects();
-  // Firebase লোড না হওয়া পর্যন্ত এন্ট্রি block করো
-  _lockForms();
 
   // Local file indicator update করো (login হওয়ার পর)
   _refreshLocalFileIndicator();
