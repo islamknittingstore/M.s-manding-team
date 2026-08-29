@@ -1764,43 +1764,8 @@ function setSyncStatus(s){
 }
 
 // Firebase লোড না হওয়া পর্যন্ত সব Save/Add বাটন disable করো
-function _lockForms(){
-  if(_fbLoaded) return;
-  // app-wrapper দৃশ্যমান না হলে overlay দেখাবো না (লগিন স্ক্রিন দেখা যাচ্ছে)
-  const appWrapper=document.getElementById('app-wrapper');
-  if(!appWrapper || appWrapper.style.display==='none' || appWrapper.style.display==='') return;
-  let overlay=document.getElementById('fb-loading-overlay');
-  if(!overlay){
-    overlay=document.createElement('div');
-    overlay.id='fb-loading-overlay';
-    overlay.style.cssText='position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;';
-    overlay.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 36px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);max-width:320px;">
-      <div style="font-size:36px;margin-bottom:12px;">☁️</div>
-      <div style="font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:8px;">Firebase লোড হচ্ছে...</div>
-      <div style="font-size:13px;color:#6b7f94;line-height:1.5;">ডেটা না আসা পর্যন্ত নতুন এন্ট্রি দেওয়া যাবে না।<br>এটা আপনার ডেটা সুরক্ষার জন্য।</div>
-      <div style="margin-top:16px;height:4px;background:#eee;border-radius:2px;overflow:hidden;"><div id="fb-load-bar" style="height:100%;width:0%;background:#2980b9;border-radius:2px;transition:width 0.5s;"></div></div>
-    </div>`;
-    document.body.appendChild(overlay);
-    // Progress animation
-    let pct=0;
-    const bar=setInterval(()=>{
-      pct=Math.min(pct+Math.random()*8,90);
-      const b=document.getElementById('fb-load-bar');
-      if(b) b.style.width=pct+'%';
-      if(_fbLoaded) clearInterval(bar);
-    },300);
-  }
-  overlay.style.display='flex';
-}
-
-function _unlockForms(){
-  const overlay=document.getElementById('fb-loading-overlay');
-  if(overlay){
-    const bar=document.getElementById('fb-load-bar');
-    if(bar) bar.style.width='100%';
-    setTimeout(()=>{ overlay.style.display='none'; },400);
-  }
-}
+function _lockForms(){} // নিরাপত্তা: save() এর ভেতরে _fbLoaded check-ই যথেষ্ট
+function _unlockForms(){} // overlay সরিয়ে দেওয়া হয়েছে
 
 
 let _saveNotifyTimer=null;
